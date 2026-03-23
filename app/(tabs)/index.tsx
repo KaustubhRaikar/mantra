@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -227,9 +228,16 @@ export default function HomeScreen() {
       >
         {/* ── Header ───────────────────────────────────────────────────── */}
         <View style={s.header}>
-          <View>
-            <Text style={s.headerGreeting}>नमस्ते 🙏</Text>
-            <Text style={s.headerSub}>Find your inner peace</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Image 
+              source={require('../../assets/images/logo.png')} 
+              style={{ width: 44, height: 44, marginRight: 12, borderRadius: 22 }} 
+              resizeMode="contain" 
+            />
+            <View>
+              <Text style={s.headerGreeting}>नमस्ते 🙏</Text>
+              <Text style={s.headerSub}>Find your inner peace</Text>
+            </View>
           </View>
           <View style={s.headerActions}>
             <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/search/' as any)}>

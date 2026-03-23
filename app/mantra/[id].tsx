@@ -39,12 +39,6 @@ const { width, height } = Dimensions.get('window');
 const HEADER_MAX = 280;
 const HEADER_MIN = 80;
 
-const RELATED = [
-  { id: '2', name: 'Mahamrityunjaya', god: 'Shiva', sanskrit: 'ॐ त्र्यम्बकं यजामहे', category: 'Shiva' },
-  { id: '3', name: 'Om Namah Shivaya', god: 'Shiva', sanskrit: 'ॐ नमः शिवाय', category: 'Shiva' },
-  { id: '4', name: 'Hare Krishna', god: 'Krishna', sanskrit: 'हरे कृष्ण हरे कृष्ण', category: 'Vishnu' },
-];
-
 export default function MantraDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -218,14 +212,6 @@ export default function MantraDetailScreen() {
     regional: MANTRA_DATA.translation_regional,
   } : { english: '', hindi: '', regional: '' };
 
-  const renderRelated = ({ item }: { item: typeof RELATED[0] }) => (
-    <TouchableOpacity style={s.relatedCard} onPress={() => router.push('/mantra/' as any + item.id)} activeOpacity={0.85}>
-      <Text style={s.relatedSanskrit}>{item.sanskrit}</Text>
-      <Text style={s.relatedName}>{item.name}</Text>
-      <Text style={s.relatedGod}>{item.god}</Text>
-    </TouchableOpacity>
-  );
-
   // ── Progress bar width ─────────────────────────────────────────────────────
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -383,18 +369,8 @@ export default function MantraDetailScreen() {
           </View>
         )}
 
-        {/* ── Related Mantras ───────────────────────────────────────────────── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Related Mantras</Text>
-          <FlatList
-            data={RELATED}
-            renderItem={renderRelated}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 14, paddingRight: 4 }}
-          />
-        </View>
+        {/* Spacer for bottom FAB */}
+        <View style={{ height: 40 }} />
       </Animated.ScrollView>
 
       {/* ── Floating Favorites Button ─────────────────────────────────────── */}
@@ -480,12 +456,6 @@ const s = StyleSheet.create({
   benefitCard: { width: (width - 56) / 2, backgroundColor: C.surface, borderRadius: 14, padding: 14, borderLeftWidth: 3, borderLeftColor: C.secondary, elevation: 1 },
   benefitIcon: { marginBottom: 8 },
   benefitText: { fontSize: 13, color: C.text, lineHeight: 20 },
-
-  // Related
-  relatedCard: { width: 180, backgroundColor: C.surface, borderRadius: 16, padding: 16, borderTopWidth: 3, borderTopColor: C.primary, elevation: 2 },
-  relatedSanskrit: { fontSize: 18, color: C.text, marginBottom: 6 },
-  relatedName: { fontSize: 13, fontWeight: '700', color: C.text },
-  relatedGod: { fontSize: 12, color: C.textSub, marginTop: 2 },
 
   // FAB
   fabRow: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
