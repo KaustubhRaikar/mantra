@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Dimensions, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +17,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   // Option 3: "Very Slow Flow": we animate a 300% wide gradient slowly back and forth over 15 seconds.
   useEffect(() => {
+    // Re-hide navigation bar on mount in case it popped up
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+    }
+    
     Animated.loop(
       Animated.sequence([
         Animated.timing(flowAnim, {
@@ -38,8 +44,10 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     outputRange: [0, -(width * 2)],
   });
 
+  const bottomPadding = Platform.OS === 'ios' ? insets.bottom : 0;
+
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom, height: 64 + insets.bottom }]}>
+    <View style={[styles.container, { paddingBottom: bottomPadding, height: 64 + bottomPadding }]}>
       <View style={styles.barBackground}>
         <Animated.View style={[StyleSheet.absoluteFill, { width: width * 3, transform: [{ translateX }] }]}>
           <LinearGradient

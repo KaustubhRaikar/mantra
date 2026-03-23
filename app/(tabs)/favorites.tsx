@@ -36,7 +36,7 @@ export default function FavoritesScreen() {
           data={favorites}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         />
       )}
