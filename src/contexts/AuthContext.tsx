@@ -56,22 +56,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (storedUser && token) {
         const parsedUser = JSON.parse(storedUser);
         
+        // Optimistically set the user to skip the login page immediately
+        setUser(parsedUser);
+        setLoading(false);
+        
         // Background verify session
-        const verifyRes = await api.auth.verifySession(parsedUser.id, token, deviceId);
-        if (verifyRes.is_valid === false) {
-           // We've been logged out from another device!
-           setSessionError(verifyRes.message || "Session expired.");
-           await signOut();
-        } else {
-           setUser(parsedUser);
+        try {
+          const verifyRes = await api.auth.verifySession(parsedUser.id, token, deviceId);
+          if (verifyRes && verifyRes.is_valid === false) {
+             // We've been logged out from another device or session is invalid!
+             setSessionError(verifyRes.message || "Session expired.");
+             await signOut();
+          }
+        } catch (apiError) {
+          console.log('Session verification fail or network error:', apiError);
         }
+        return;
       }
     } catch (error) {
-      console.log('Session verification fail or network error:', error);
-      // Wait, if network fails, we probably shouldn't log them out immediately.
-      // We'll leave the user state if we can't connect, or log them out if 401.
-      const storedUser = await SecureStore.getItemAsync('user');
-      if (storedUser) setUser(JSON.parse(storedUser));
+      console.log('Storage read error:', error);
     } finally {
       setLoading(false);
     }

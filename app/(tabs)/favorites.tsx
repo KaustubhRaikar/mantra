@@ -14,7 +14,7 @@ export default function FavoritesScreen() {
   const renderItem = ({ item }: { item: Mantra }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push('/mantra/' as any + item.id)}
+      onPress={() => router.push(`/mantra/${item.id}` as any)}
       activeOpacity={0.8}
     >
       <Ionicons name="heart" size={24} color={Colors.primary} style={styles.cardIcon} />

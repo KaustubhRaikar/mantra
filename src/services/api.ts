@@ -88,6 +88,47 @@ export const api = {
     }
   },
 
+  getFestivalAartis: async () => {
+    try {
+      const response = await apiClient.get(`/festival_aartis/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching festival aartis:', error);
+      return [];
+    }
+  },
+
+  getAartis: async () => {
+    try {
+      const response = await apiClient.get(`/aartis/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching aartis from table:', error);
+      return [];
+    }
+  },
+
+  getFestivalAartiDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/festival_aartis/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching festival aarti ${id}:`, error);
+      return null;
+    }
+  },
+
+  getAartiDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/aartis/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching aarti ${id}:`, error);
+      return null;
+    }
+  },
+
+
   // Auth
   auth: {
     login: async (email: string, fullName: string, deviceId: string, deviceName: string) => {

@@ -119,6 +119,8 @@ export default function HomeScreen() {
   const [dailyMantra, setDailyMantra] = useState<any>(null);
   const [featuredMantras, setFeaturedMantras] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [festivalAartiMantras, setFestivalAartiMantras] = useState<any[]>([]);
+  const [aartiMantras, setAartiMantras] = useState<any[]>([]);
   
   // Loading State
   const [refreshing, setRefreshing] = useState(false);
@@ -136,6 +138,15 @@ export default function HomeScreen() {
       setDailyMantra(daily);
       setFeaturedMantras(featured);
       setCategories(cats);
+
+      // Festival Aartis and Aartis now come from their own dedicated database tables
+      const [festAarti, aartiData] = await Promise.all([
+        api.getFestivalAartis(),
+        api.getAartis()
+      ]);
+      
+      setFestivalAartiMantras(festAarti);
+      setAartiMantras(aartiData);
     } catch (e) {
       console.warn("Failed fetching from Backend API", e);
     } finally {
@@ -158,18 +169,18 @@ export default function HomeScreen() {
   const listCategories = categories.length > 0 ? categories : CATEGORIES;
 
   // ── Featured Card ──────────────────────────────────────────────────────────
-  const renderFeaturedCard = ({ item }: { item: any }) => (
+  const renderFeaturedCard = (routePrefix: string) => ({ item }: { item: any }) => (
     <TouchableOpacity
       style={s.featuredCard}
       activeOpacity={0.85}
-      onPress={() => router.push('/mantra/' as any + item.id as any)}
+      onPress={() => router.push(`${routePrefix}${item.id}` as any)}
     >
       <View style={[s.featuredBadge, { backgroundColor: C.secondary }]}>
-        <Text style={s.badgeText}>{item.category || item.category_name}</Text>
+        <Text style={s.badgeText}>{item.category || item.category_name || item.festival || item.festival_category || 'Aarti'}</Text>
       </View>
-      <Text style={s.featuredSanskrit}>{item.sanskrit || item.sanskrit_title}</Text>
-      <Text style={s.featuredName}>{item.title || item.name}</Text>
-      <Text style={s.featuredGod}>{item.god}</Text>
+      <Text style={s.featuredSanskrit}>{item.sanskrit || item.sanskrit_title || item.sanskrit_text}</Text>
+      <Text style={s.featuredName}>{item.title || item.name || item.aarti_name}</Text>
+      <Text style={s.featuredGod}>{item.god || item.deity_name}</Text>
       <View style={s.featuredFooter}>
         <Ionicons name="play-circle" size={28} color={C.accent} />
         <Ionicons name="heart-outline" size={22} color="rgba(255,255,255,0.7)" style={{ marginLeft: 12 }} />
@@ -293,7 +304,7 @@ export default function HomeScreen() {
         ) : (
           <FlatList
             data={listFeatured}
-            renderItem={renderFeaturedCard}
+            renderItem={renderFeaturedCard('/mantra/')}
             keyExtractor={(item) => item.id.toString()}
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -321,6 +332,56 @@ export default function HomeScreen() {
             columnWrapperStyle={s.gridRow}
             contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 4 }}
           />
+        )}
+
+        {/* ── Festival Aarti ────────────────────────────────────────────── */}
+        {(festivalAartiMantras.length > 0 || loading) && (
+          <>
+            <SectionHeader title="Festival Aarti" onSeeAll={() => router.push('/(tabs)/categories')} />
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={festivalAartiMantras}
+                renderItem={renderFeaturedCard('/festival_aarti/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Aarti ─────────────────────────────────────────────────────── */}
+        {(aartiMantras.length > 0 || loading) && (
+          <>
+            <SectionHeader title="Aarti" onSeeAll={() => router.push('/(tabs)/categories')} />
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={aartiMantras}
+                renderItem={renderFeaturedCard('/aarti/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
         )}
 
         {/* ── Upanishads Section ────────────────────────────────────────────── */}
