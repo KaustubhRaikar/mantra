@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 
 // ─── Color Palette ──────────────────────────────────────────────────────────
@@ -211,6 +212,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
+      <CosmicBackground />
       <ScrollView
         style={s.scroll}
         showsVerticalScrollIndicator={false}

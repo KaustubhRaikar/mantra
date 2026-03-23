@@ -4,6 +4,7 @@ import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { api } from '../../src/services/api';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 import { useRouter } from 'expo-router';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 
@@ -28,6 +29,7 @@ export default function CategoriesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <CosmicBackground />
       <View style={styles.headerRow}>
         <Text style={styles.title}>All Categories</Text>
         <TouchableOpacity onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>

@@ -20,6 +20,7 @@ import * as Sharing from 'expo-sharing';
 import { useFonts, TiroDevanagariHindi_400Regular } from '@expo-google-fonts/tiro-devanagari-hindi';
 import { useFavorites } from '../../src/contexts/FavoritesContext';
 import { api } from '../../src/services/api';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
@@ -211,6 +212,7 @@ export default function MantraDetailScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: C.bg }]}>
+      <CosmicBackground />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Animated Collapsing Header ──────────────────────────────────────── */}

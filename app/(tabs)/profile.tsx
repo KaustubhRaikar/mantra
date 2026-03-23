@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 
 export default function ProfileScreen() {
   const menuItems = [
@@ -13,6 +14,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <CosmicBackground />
       <View style={styles.profileHeader}>
         <View style={styles.avatar}>
           <Ionicons name="person" size={40} color={Colors.primary} />

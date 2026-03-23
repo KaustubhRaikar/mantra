@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { api } from '../../src/services/api';
 import { Mantra } from '../../src/types/navigation';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 
 export default function CategoryScreen() {
   const { id, name } = useLocalSearchParams();
@@ -46,6 +47,7 @@ export default function CategoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <CosmicBackground />
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={28} color={Colors.text} />

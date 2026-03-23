@@ -5,6 +5,7 @@ import { Mantra } from '../../src/types/navigation';
 import { useFavorites } from '../../src/contexts/FavoritesContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
 
 export default function FavoritesScreen() {
   const { favorites } = useFavorites();
@@ -26,6 +27,7 @@ export default function FavoritesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <CosmicBackground />
       {favorites.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No favorites yet.</Text>
