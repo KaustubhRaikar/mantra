@@ -242,10 +242,10 @@ export default function HomeScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image 
               source={require('../../assets/images/logo.png')} 
-              style={{ width: 44, height: 44, marginRight: 12, borderRadius: 22 }} 
+              style={{ width: 44, height: 44, marginRight: 12 }} 
               resizeMode="contain" 
             />
-            <View>
+            <View style={{ justifyContent: 'center' }}>
               <Text style={s.headerGreeting}>नमस्ते 🙏</Text>
               <Text style={s.headerSub}>Find your inner peace</Text>
             </View>
