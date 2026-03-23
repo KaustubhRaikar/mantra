@@ -57,7 +57,14 @@ export default function MantraDetailScreen() {
     (async () => {
       if (id) {
         setLoading(true);
-        const data = await api.getMantra(id as string);
+        // If the ID carries the 'u_' namespace from the Upanishads table, call the standalone API endpoint
+        let data;
+        if (id.toString().startsWith('u_')) {
+          data = await api.getUpanishad(id as string);
+        } else {
+          data = await api.getMantra(id as string);
+        }
+        
         setMantraData(data);
         setLoading(false);
       }
@@ -343,20 +350,24 @@ export default function MantraDetailScreen() {
         </View>
 
         {/* ── Meaning Section ───────────────────────────────────────────────── */}
-        {MANTRA_DATA.meaning && MANTRA_DATA.meaning.length > 0 && (
+        {MANTRA_DATA.meaning ? (
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Word-by-Word Meaning</Text>
-            {MANTRA_DATA.meaning.map((line: string, i: number) => (
-              <View key={i} style={s.meaningRow}>
-                <View style={s.bulletDot} />
-                <Text style={s.meaningText}>{line}</Text>
-              </View>
-            ))}
+            <Text style={s.sectionTitle}>{Array.isArray(MANTRA_DATA.meaning) ? 'Word-by-Word Meaning' : 'Meaning'}</Text>
+            {Array.isArray(MANTRA_DATA.meaning) ? (
+              MANTRA_DATA.meaning.map((line: string, i: number) => (
+                <View key={i} style={s.meaningRow}>
+                  <View style={s.bulletDot} />
+                  <Text style={s.meaningText}>{line}</Text>
+                </View>
+              ))
+            ) : (
+               <Text style={s.meaningText}>{MANTRA_DATA.meaning}</Text>
+            )}
           </View>
-        )}
+        ) : null}
 
         {/* ── Benefits ─────────────────────────────────────────────────────── */}
-        {MANTRA_DATA.benefits && MANTRA_DATA.benefits.length > 0 && (
+        {Array.isArray(MANTRA_DATA.benefits) && MANTRA_DATA.benefits.length > 0 && (
           <View style={s.section}>
             <Text style={s.sectionTitle}>Benefits</Text>
             <View style={s.benefitsGrid}>

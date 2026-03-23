@@ -34,6 +34,27 @@ export const api = {
     }
   },
 
+  getUpanishads: async () => {
+    try {
+      // Appending a random timestamp query to mathematically bust any lingering aggressive local cache
+      const response = await apiClient.get(`/upanishads/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error: any) {
+      console.error('Error fetching upanishads full URL trace:', error.config?.baseURL, error.config?.url);
+      return [];
+    }
+  },
+
+  getUpanishad: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/upanishads/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching upanishad ${id}:`, error);
+      return null;
+    }
+  },
+
   getMantras: async (categoryId?: number) => {
     try {
       const url = categoryId 

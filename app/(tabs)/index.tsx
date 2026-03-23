@@ -315,6 +315,26 @@ export default function HomeScreen() {
           />
         )}
 
+        {/* ── Upanishads Section ────────────────────────────────────────────── */}
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>Upanishads</Text>
+          <TouchableOpacity onPress={() => router.push('/upanishad' as any)}>
+            <Text style={s.seeAll}>Explore</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity 
+          style={s.upanishadBanner} 
+          activeOpacity={0.8}
+          onPress={() => router.push('/upanishad' as any)}
+        >
+          <View style={s.upanishadBannerContent}>
+            <Ionicons name="book" size={24} color={C.primary} style={{ marginBottom: 8 }} />
+            <Text style={s.upanishadBannerTitle}>Ancient Wisdom</Text>
+            <Text style={s.upanishadBannerSub}>Explore mantras from the core Upanishads</Text>
+          </View>
+          <Ionicons name="arrow-forward-circle" size={32} color={C.primary} />
+        </TouchableOpacity>
+
         {/* ── Recently Played ───────────────────────────────────────────── */}
         <SectionHeader title="Recently Played" />
         {loading ? (
@@ -376,6 +396,28 @@ const s = StyleSheet.create({
   featuredName: { fontSize: 15, color: 'rgba(255,255,255,0.95)', fontWeight: '700', marginBottom: 2 },
   featuredGod: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 14 },
   featuredFooter: { flexDirection: 'row', alignItems: 'center' },
+
+  // Upanishad Banner
+  upanishadBanner: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    backgroundColor: C.surface,
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 3,
+    shadowColor: C.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: C.primary,
+  },
+  upanishadBannerContent: { flex: 1 },
+  upanishadBannerTitle: { fontSize: 18, fontWeight: 'bold', color: C.text, marginBottom: 4 },
+  upanishadBannerSub: { fontSize: 13, color: C.textSub },
 
   // Categories
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12, marginBottom: 28 },
