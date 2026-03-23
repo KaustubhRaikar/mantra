@@ -11,6 +11,7 @@ import {
   Share,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,9 +74,9 @@ export default function MantraDetailScreen() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0–1
-  const [elapsed, setElapsed] = useState(0);   // seconds
+  const [positionMillis, setPositionMillis] = useState<number>(0);
+  const [durationMillis, setDurationMillis] = useState<number>(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Favorites animation
   const { isFavorite: checkFavorite, toggleFavorite: contextToggleFav } = useFavorites();
@@ -93,41 +94,74 @@ export default function MantraDetailScreen() {
       shouldDuckAndroid: false,
     });
     return () => {
-      soundRef.current?.unloadAsync();
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
     };
   }, []);
 
-  const togglePlay = useCallback(async () => {
-    if (isPlaying) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      // Simulate playback progress (replace with real expo-av sound when audio URL is available)
-      const duration = MANTRA_DATA?.duration || 108;
-      timerRef.current = setInterval(() => {
-        setElapsed((prev) => {
-          if (prev >= duration) {
-            clearInterval(timerRef.current!);
-            setIsPlaying(false);
-            return 0;
-          }
-          const next = prev + 1;
-          const p = next / duration;
-          setProgress(p);
-          Animated.timing(progressAnim, { toValue: p, duration: 500, useNativeDriver: false }).start();
-          return next;
-        });
-      }, 1000);
+  const onPlaybackStatusUpdate = useCallback((status: any) => {
+    if (status.isLoaded) {
+      setPositionMillis(status.positionMillis);
+      setDurationMillis(status.durationMillis || 108000);
+      setIsPlaying(status.isPlaying);
+      
+      const currentProgress = status.durationMillis && status.durationMillis > 0 ? status.positionMillis / status.durationMillis : 0;
+      setProgress(currentProgress);
+      Animated.timing(progressAnim, { toValue: currentProgress, duration: 200, useNativeDriver: false }).start();
+      
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setProgress(0);
+        setPositionMillis(0);
+        Animated.timing(progressAnim, { toValue: 0, duration: 200, useNativeDriver: false }).start();
+        soundRef.current?.setPositionAsync(0);
+      }
+    } else if (status.error) {
+      console.error(`FATAL PLAYER ERROR: ${status.error}`);
     }
-  }, [isPlaying, MANTRA_DATA]);
+  }, [progressAnim]);
 
-  const seek = (fraction: number) => {
-    const duration = MANTRA_DATA?.duration || 108;
-    setElapsed(Math.round(fraction * duration));
-    setProgress(fraction);
-    Animated.timing(progressAnim, { toValue: fraction, duration: 100, useNativeDriver: false }).start();
+  const togglePlay = useCallback(async () => {
+    if (!MANTRA_DATA) return;
+    
+    // Using Google Translate's free TTS API endpoint to generate audio from the mantra text.
+    // 'tl=hi' uses the Hindi voice which accurately pronounces Sanskrit Devanagari texts.
+    const encodedText = encodeURIComponent(MANTRA_DATA.sanskrit);
+    const finalUri = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&q=${encodedText}`;
+
+    try {
+      if (soundRef.current) {
+        if (isPlaying) {
+          await soundRef.current.pauseAsync();
+        } else {
+          await soundRef.current.playAsync();
+        }
+      } else {
+        // Load sound for the first time
+        setIsPlaying(true);
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: finalUri },
+          { shouldPlay: true },
+          onPlaybackStatusUpdate
+        );
+        soundRef.current = sound;
+      }
+    } catch (error) {
+      console.warn('Error playing audio', error);
+      Alert.alert(
+        "Audio Not Found",
+        `The audio API could not play the sound. The server returned a 404 Not Found error for:\n\n${finalUri}\n\nPlease ensure you have uploaded this audio file to the correct backend directory.`
+      );
+      setIsPlaying(false);
+    }
+  }, [isPlaying, MANTRA_DATA, onPlaybackStatusUpdate]);
+
+  const seek = async (fraction: number) => {
+    if (soundRef.current && durationMillis) {
+      const position = fraction * durationMillis;
+      await soundRef.current.setPositionAsync(position);
+    }
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -271,8 +305,8 @@ export default function MantraDetailScreen() {
 
           {/* Time */}
           <View style={s.timerRow}>
-            <Text style={s.timerText}>{formatTime(elapsed)}</Text>
-            <Text style={s.timerText}>{formatTime(MANTRA_DATA.duration || 108)}</Text>
+            <Text style={s.timerText}>{formatTime(Math.floor(positionMillis / 1000))}</Text>
+            <Text style={s.timerText}>{formatTime(durationMillis > 0 ? Math.floor(durationMillis / 1000) : (MANTRA_DATA?.duration || 108))}</Text>
           </View>
 
           {/* Controls */}

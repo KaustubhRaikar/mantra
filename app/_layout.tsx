@@ -55,16 +55,14 @@ LogBox.ignoreLogs([
   'setPositionAsync is not supported',
   'setBackgroundColorAsync is not supported',
   'setVisibilityAsync is not supported',
-  'setBehaviorAsync is not supported'
+  'setBehaviorAsync is not supported',
+  'Expo AV has been deprecated'
 ]);
 
 export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'android') {
-      NavigationBar.setPositionAsync("absolute");
-      NavigationBar.setBackgroundColorAsync("#ffffff00");
-      NavigationBar.setVisibilityAsync("hidden");
-      NavigationBar.setBehaviorAsync("overlay-swipe");
+      NavigationBar.setVisibilityAsync("hidden").catch(() => {});
     }
   }, []);
 
