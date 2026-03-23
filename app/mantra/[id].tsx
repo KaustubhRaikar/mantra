@@ -10,6 +10,7 @@ import {
   FlatList,
   Share,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,8 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Audio } from 'expo-av';
 import * as Sharing from 'expo-sharing';
 import { useFonts, TiroDevanagariHindi_400Regular } from '@expo-google-fonts/tiro-devanagari-hindi';
+import { useFavorites } from '../../src/contexts/FavoritesContext';
+import { api } from '../../src/services/api';
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 const C = {
@@ -34,54 +37,30 @@ const { width, height } = Dimensions.get('window');
 const HEADER_MAX = 280;
 const HEADER_MIN = 80;
 
-// ─── Sample Data ──────────────────────────────────────────────────────────────
-const MANTRA_DATA = {
-  id: '1',
-  name: 'Gayatri Mantra',
-  god: 'Surya Dev',
-  category: 'Vedic',
-  sanskrit: 'ॐ भूर्भुवः स्वः।\nतत्सवितुर्वरेण्यं\nभर्गो देवस्य धीमहि।\nधियो यो नः प्रचोदयात्॥',
-  transliteration: 'Om Bhur Bhuva Svaha\nTat Savitur Varenyam\nBhargo Devasya Dheemahi\nDhiyo Yo Nah Prachodayat',
-  translation_english:
-    'We meditate on the glory of the Creator who has created the Universe, who is worthy of worship, who is the embodiment of knowledge and light, who is the remover of sin and ignorance. May He open our hearts and enlighten our intellect.',
-  translation_hindi:
-    'उस प्राण स्वरूप, दुःखनाशक, सुखस्वरूप, श्रेष्ठ, तेजस्वी, पापनाशक, देवस्वरूप परमात्मा को हम अपनी अंतरात्मा में धारण करें। वह परमात्मा हमारी बुद्धि को सन्मार्ग में प्रेरित करे।',
-  translation_regional: 'त्या सर्वश्रेष्ठ, प्रकाशमान, सृष्टिकर्त्या परमात्म्याचे आपण ध्यान करूया. तो परमात्मा आपल्या बुद्धीला सन्मार्गावर प्रेरित करो. (Marathi)',
-  meaning: [
-    'OM — The primordial sound of the universe',
-    'BHUR — Earth, the physical world',
-    'BHUVA — The astral plane / consciousness',
-    'SVAHA — The celestial realms beyond',
-    'TAT — That (pointing to the divine)',
-    'SAVITUR — Of Savitr, the solar deity',
-    'VARENYAM — Most adorable / worthy of reverence',
-    'BHARGO — Radiance, divine effulgence',
-    'DHEEMAHI — We meditate upon',
-    'DHIYO YO NAH PRACHODAYAT — May it inspire our intellect',
-  ],
-  benefits: [
-    { icon: 'brain', text: 'Enhances intellect and concentration' },
-    { icon: 'leaf', text: 'Promotes spiritual growth and clarity' },
-    { icon: 'heart', text: 'Purifies the mind and removes negativity' },
-    { icon: 'sunny', text: 'Invokes blessings of the Sun God' },
-    { icon: 'shield-checkmark', text: 'Offers protection from evil forces' },
-    { icon: 'infinite', text: 'Leads toward moksha (liberation)' },
-  ],
-  audio_url: '', // placeholder
-  duration: 108,
-};
-
 const RELATED = [
   { id: '2', name: 'Mahamrityunjaya', god: 'Shiva', sanskrit: 'ॐ त्र्यम्बकं यजामहे', category: 'Shiva' },
   { id: '3', name: 'Om Namah Shivaya', god: 'Shiva', sanskrit: 'ॐ नमः शिवाय', category: 'Shiva' },
   { id: '4', name: 'Hare Krishna', god: 'Krishna', sanskrit: 'हरे कृष्ण हरे कृष्ण', category: 'Vishnu' },
 ];
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 export default function MantraDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
+
+  const [MANTRA_DATA, setMantraData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      if (id) {
+        setLoading(true);
+        const data = await api.getMantra(id as string);
+        setMantraData(data);
+        setLoading(false);
+      }
+    })();
+  }, [id]);
 
   // Fonts
   const [fontsLoaded] = useFonts({ TiroDevanagariHindi_400Regular });
@@ -98,8 +77,9 @@ export default function MantraDetailScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Favorites animation
-  const [isFavorite, setIsFavorite] = useState(false);
-  const heartScale = useRef(new Animated.Value(1)).current;
+  const { isFavorite: checkFavorite, toggleFavorite: contextToggleFav } = useFavorites();
+  const isFavorite = MANTRA_DATA?.id ? checkFavorite(MANTRA_DATA.id) : false;
+  const heartScale = useRef(new Animated.Value(isFavorite ? 1.4 : 1)).current;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'english' | 'hindi' | 'regional'>('english');
@@ -124,25 +104,27 @@ export default function MantraDetailScreen() {
     } else {
       setIsPlaying(true);
       // Simulate playback progress (replace with real expo-av sound when audio URL is available)
+      const duration = MANTRA_DATA?.duration || 108;
       timerRef.current = setInterval(() => {
         setElapsed((prev) => {
-          if (prev >= MANTRA_DATA.duration) {
+          if (prev >= duration) {
             clearInterval(timerRef.current!);
             setIsPlaying(false);
             return 0;
           }
           const next = prev + 1;
-          const p = next / MANTRA_DATA.duration;
+          const p = next / duration;
           setProgress(p);
           Animated.timing(progressAnim, { toValue: p, duration: 500, useNativeDriver: false }).start();
           return next;
         });
       }, 1000);
     }
-  }, [isPlaying]);
+  }, [isPlaying, MANTRA_DATA]);
 
   const seek = (fraction: number) => {
-    setElapsed(Math.round(fraction * MANTRA_DATA.duration));
+    const duration = MANTRA_DATA?.duration || 108;
+    setElapsed(Math.round(fraction * duration));
     setProgress(fraction);
     Animated.timing(progressAnim, { toValue: fraction, duration: 100, useNativeDriver: false }).start();
   };
@@ -150,8 +132,9 @@ export default function MantraDetailScreen() {
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   // ── Favorites animation ────────────────────────────────────────────────────
-  const toggleFavorite = () => {
-    setIsFavorite((f) => !f);
+  const toggleFavorite = async () => {
+    if (!MANTRA_DATA) return;
+    await contextToggleFav(MANTRA_DATA as any); // Type cast due to sample data
     Animated.sequence([
       Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 50 }),
       Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, speed: 20 }),
@@ -160,9 +143,10 @@ export default function MantraDetailScreen() {
 
   // ── Share ──────────────────────────────────────────────────────────────────
   const handleShare = async () => {
+    if (!MANTRA_DATA) return;
     try {
       await Share.share({
-        message: `✨ ${MANTRA_DATA.name}\n\n${MANTRA_DATA.sanskrit}\n\n${MANTRA_DATA.transliteration}\n\nShared via Mantra App 🙏`,
+        message: `✨ ${MANTRA_DATA.name}\n\n${MANTRA_DATA.sanskrit}\n\n${MANTRA_DATA.transliteration || ''}\n\nShared via Mantra App 🙏`,
         title: MANTRA_DATA.name,
       });
     } catch (_) {}
@@ -186,11 +170,11 @@ export default function MantraDetailScreen() {
   });
 
   // ── Render helpers ─────────────────────────────────────────────────────────
-  const translations = {
+  const translations = MANTRA_DATA ? {
     english: MANTRA_DATA.translation_english,
     hindi: MANTRA_DATA.translation_hindi,
     regional: MANTRA_DATA.translation_regional,
-  };
+  } : { english: '', hindi: '', regional: '' };
 
   const renderRelated = ({ item }: { item: typeof RELATED[0] }) => (
     <TouchableOpacity style={s.relatedCard} onPress={() => router.push('/mantra/' as any + item.id)} activeOpacity={0.85}>
@@ -205,6 +189,25 @@ export default function MantraDetailScreen() {
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
+
+  if (loading) {
+    return (
+      <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={C.primary} />
+      </View>
+    );
+  }
+
+  if (!MANTRA_DATA) {
+    return (
+      <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ fontSize: 18, color: C.text }}>Mantra not found.</Text>
+        <TouchableOpacity style={{ marginTop: 20 }} onPress={() => router.back()}>
+          <Text style={{ color: C.primary, fontSize: 16 }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={[s.root, { backgroundColor: C.bg }]}>
@@ -230,7 +233,7 @@ export default function MantraDetailScreen() {
         {/* Expanded content */}
         <Animated.View style={[s.headerExpanded, { opacity: headerOpacity }]}>
           <View style={s.categoryBadge}>
-            <Text style={s.categoryBadgeText}>{MANTRA_DATA.category}</Text>
+            <Text style={s.categoryBadgeText}>{MANTRA_DATA.category || 'Mantra'}</Text>
           </View>
           <Text style={s.headerTitle}>{MANTRA_DATA.name}</Text>
           <Text style={s.headerGod}>{MANTRA_DATA.god}</Text>
@@ -250,7 +253,9 @@ export default function MantraDetailScreen() {
           <Text style={[s.sanskritText, fontsLoaded && { fontFamily: 'TiroDevanagariHindi_400Regular' }]}>
             {MANTRA_DATA.sanskrit}
           </Text>
-          <Text style={s.transliterationText}>{MANTRA_DATA.transliteration}</Text>
+          {MANTRA_DATA.transliteration ? (
+            <Text style={s.transliterationText}>{MANTRA_DATA.transliteration}</Text>
+          ) : null}
         </View>
 
         {/* ── Audio Player ─────────────────────────────────────────────────── */}
@@ -265,7 +270,7 @@ export default function MantraDetailScreen() {
           {/* Time */}
           <View style={s.timerRow}>
             <Text style={s.timerText}>{formatTime(elapsed)}</Text>
-            <Text style={s.timerText}>{formatTime(MANTRA_DATA.duration)}</Text>
+            <Text style={s.timerText}>{formatTime(MANTRA_DATA.duration || 108)}</Text>
           </View>
 
           {/* Controls */}
@@ -298,34 +303,38 @@ export default function MantraDetailScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={s.translationBody}>{translations[activeTab]}</Text>
+          <Text style={s.translationBody}>{translations[activeTab] || 'Translation not available.'}</Text>
         </View>
 
         {/* ── Meaning Section ───────────────────────────────────────────────── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Word-by-Word Meaning</Text>
-          {MANTRA_DATA.meaning.map((line, i) => (
-            <View key={i} style={s.meaningRow}>
-              <View style={s.bulletDot} />
-              <Text style={s.meaningText}>{line}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ── Benefits ─────────────────────────────────────────────────────── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Benefits</Text>
-          <View style={s.benefitsGrid}>
-            {MANTRA_DATA.benefits.map((b, i) => (
-              <View key={i} style={s.benefitCard}>
-                <View style={s.benefitIcon}>
-                  <Ionicons name={b.icon as any} size={22} color={C.secondary} />
-                </View>
-                <Text style={s.benefitText}>{b.text}</Text>
+        {MANTRA_DATA.meaning && MANTRA_DATA.meaning.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Word-by-Word Meaning</Text>
+            {MANTRA_DATA.meaning.map((line: string, i: number) => (
+              <View key={i} style={s.meaningRow}>
+                <View style={s.bulletDot} />
+                <Text style={s.meaningText}>{line}</Text>
               </View>
             ))}
           </View>
-        </View>
+        )}
+
+        {/* ── Benefits ─────────────────────────────────────────────────────── */}
+        {MANTRA_DATA.benefits && MANTRA_DATA.benefits.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Benefits</Text>
+            <View style={s.benefitsGrid}>
+              {MANTRA_DATA.benefits.map((b: any, i: number) => (
+                <View key={i} style={s.benefitCard}>
+                  <View style={s.benefitIcon}>
+                    <Ionicons name={b.icon as any} size={22} color={C.secondary} />
+                  </View>
+                  <Text style={s.benefitText}>{b.text}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* ── Related Mantras ───────────────────────────────────────────────── */}
         <View style={s.section}>

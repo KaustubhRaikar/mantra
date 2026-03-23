@@ -4,8 +4,11 @@ import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { api } from '../../src/services/api';
+import { useRouter } from 'expo-router';
+import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 
 export default function CategoriesScreen() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +44,21 @@ export default function CategoriesScreen() {
           data={categories}
           key={viewMode} // Force re-render on viewMode change
           numColumns={viewMode === 'grid' ? 2 : 1}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={viewMode === 'grid' ? styles.gridItem : styles.listItem}>
-              <Text style={styles.itemText}>{item.name}</Text>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            const { icon, color } = getCategoryDisplayProps(item.name);
+            return (
+              <TouchableOpacity 
+                style={viewMode === 'grid' ? [styles.gridItem, { borderTopColor: color, borderTopWidth: 3 }] : [styles.listItem, { borderLeftColor: color, borderLeftWidth: 4 }]}
+                onPress={() => router.push({ pathname: '/category/[id]', params: { id: item.id, name: item.name } } as any)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name={icon} size={viewMode === 'grid' ? 32 : 24} color={color} style={{ marginBottom: viewMode === 'grid' ? 8 : 0, marginRight: viewMode === 'list' ? 16 : 0 }} />
+                <Text style={styles.itemText}>{item.name}</Text>
+                {viewMode === 'list' && <View style={{ flex: 1 }} />}
+                {viewMode === 'list' && <Ionicons name="chevron-forward" size={20} color={color} />}
+              </TouchableOpacity>
+            )
+          }}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 100 }}
         />

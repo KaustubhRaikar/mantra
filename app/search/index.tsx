@@ -1,14 +1,55 @@
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../../src/services/api';
+import { Mantra } from '../../src/types/navigation';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
+  const [mantras, setMantras] = useState<Mantra[]>([]);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const recentSearches = ['Shiva', 'Gayatri', 'Success', 'Peace'];
+
+  useEffect(() => {
+    fetchMantras();
+  }, []);
+
+  const fetchMantras = async () => {
+    setLoading(true);
+    const data = await api.getMantras();
+    setMantras(data);
+    setLoading(false);
+  };
+
+  const results = query.trim() === '' ? [] : mantras.filter((m) => {
+    const term = query.toLowerCase();
+    return (
+      m.title?.toLowerCase().includes(term) ||
+      m.name?.toLowerCase().includes(term) ||
+      m.sanskrit_title?.includes(term) ||
+      m.sanskrit?.includes(term) ||
+      m.category_name?.toLowerCase().includes(term)
+    );
+  });
+
+  const handleRecentPress = (term: string) => {
+    setQuery(term);
+  };
+
+  const renderItem = ({ item }: { item: Mantra }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push(`/mantra/${item.id}` as any)}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.cardSanskrit}>{item.sanskrit_title || item.sanskrit}</Text>
+      <Text style={styles.cardName}>{item.title || item.name}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -18,35 +59,52 @@ export default function SearchScreen() {
         </TouchableOpacity>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={20} color={Colors.textSecondary} />
-        <TextInput
-          style={styles.input}
-          placeholder="Search mantras, gods, or benefits..."
-          value={query}
-          onChangeText={setQuery}
-          autoFocus
-        />
-        {query.length > 0 && (
-          <TouchableOpacity onPress={() => setQuery('')}>
-            <Ionicons name="close-circle" size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+          <TextInput
+            style={styles.input}
+            placeholder="Search mantras, gods, or benefits..."
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+          />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')}>
+              <Ionicons name="close-circle" size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Recent Searches</Text>
-      <View style={styles.chipsContainer}>
-        {recentSearches.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.chip}>
-            <Text style={styles.chipText}>{item}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Results would be rendered here */}
-      <View style={styles.emptyResults}>
-        <Ionicons name="search-outline" size={60} color={Colors.border} />
-        <Text style={styles.emptyText}>Find your inner peace</Text>
-      </View>
+      {query.length === 0 ? (
+        <>
+          <Text style={styles.sectionTitle}>Recent Searches</Text>
+          <View style={styles.chipsContainer}>
+            {recentSearches.map((item, index) => (
+              <TouchableOpacity key={index} style={styles.chip} onPress={() => handleRecentPress(item)}>
+                <Text style={styles.chipText}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.emptyResults}>
+            <Ionicons name="search-outline" size={60} color={Colors.border} />
+            <Text style={styles.emptyText}>Find your inner peace</Text>
+          </View>
+        </>
+      ) : loading ? (
+        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
+      ) : results.length > 0 ? (
+        <FlatList
+          data={results}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        />
+      ) : (
+        <View style={styles.emptyResults}>
+          <Ionicons name="moon-outline" size={60} color={Colors.border} />
+          <Text style={styles.emptyText}>No mantras found matching "{query}"</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -80,4 +138,7 @@ const styles = StyleSheet.create({
   chipText: { color: Colors.textSecondary },
   emptyResults: { flex: 1, justifyContent: 'center', alignItems: 'center', opacity: 0.5 },
   emptyText: { marginTop: 12, fontSize: 16, color: Colors.textSecondary },
+  card: { backgroundColor: Colors.surface, padding: 16, borderRadius: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, borderLeftWidth: 4, borderLeftColor: Colors.primary },
+  cardSanskrit: { fontSize: 18, color: Colors.text, marginBottom: 4 },
+  cardName: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
 });

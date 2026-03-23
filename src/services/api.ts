@@ -24,6 +24,16 @@ export const api = {
   },
 
   // Mantras
+  getMantra: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/mantras/read_single.php?id=${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching mantra ${id}:`, error);
+      return null;
+    }
+  },
+
   getMantras: async (categoryId?: number) => {
     try {
       const url = categoryId 
@@ -56,4 +66,32 @@ export const api = {
       return null;
     }
   },
+
+  // Auth
+  auth: {
+    login: async (email: string, fullName: string, deviceId: string, deviceName: string) => {
+      const response = await apiClient.post('/auth/login.php', {
+        email,
+        full_name: fullName,
+        device_id: deviceId,
+        device_name: deviceName,
+      });
+      return response.data;
+    },
+    verifySession: async (userId: string | number, token: string, deviceId: string) => {
+      try {
+        const response = await apiClient.post('/auth/verify_session.php', {
+          user_id: userId,
+          login_token: token,
+          device_id: deviceId,
+        });
+        return response.data;
+      } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+          return error.response.data; // Contains {"is_valid": false, "reason": "concurrent_login_detected"}
+        }
+        throw error;
+      }
+    }
+  }
 };

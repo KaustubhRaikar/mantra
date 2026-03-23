@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 
 // ─── Color Palette ──────────────────────────────────────────────────────────
 const C = {
@@ -176,16 +177,15 @@ export default function HomeScreen() {
 
   // ── Category Card ──────────────────────────────────────────────────────────
   const renderCategory = ({ item }: { item: any }) => {
-    const icon = item.icon || item.icon_name || 'leaf';
-    const color = item.color || C.primary;
+    const { icon, color } = getCategoryDisplayProps(item.name);
     return (
       <TouchableOpacity
         style={[s.categoryCard, { borderTopColor: color }]}
         activeOpacity={0.85}
-        onPress={() => router.push('/(tabs)/categories')}
+        onPress={() => router.push({ pathname: '/category/[id]', params: { id: item.id, name: item.name } } as any)}
       >
         <View style={[s.categoryIconWrap, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon as any} size={28} color={color} />
+          <Ionicons name={icon} size={28} color={color} />
         </View>
         <Text style={s.categoryName}>{item.name}</Text>
         {item.count && <Text style={s.categoryCount}>{item.count} mantras</Text>}
