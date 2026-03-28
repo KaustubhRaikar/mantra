@@ -128,6 +128,87 @@ export const api = {
     }
   },
 
+  getChalisas: async () => {
+    try {
+      const response = await apiClient.get(`/chalisas/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching chalisas:', error);
+      return [];
+    }
+  },
+
+  getPoojaVidhis: async () => {
+    try {
+      const response = await apiClient.get(`/pooja_vidhis/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching pooja vidhis:', error);
+      return [];
+    }
+  },
+
+  getStotras: async () => {
+    try {
+      const response = await apiClient.get(`/stotras/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching stotras:', error);
+      return [];
+    }
+  },
+
+  getVratKathas: async () => {
+    try {
+      const response = await apiClient.get(`/vrat_kathas/read.php?t=${Date.now()}`);
+      return response.data.records || [];
+    } catch (error) {
+      console.error('Error fetching vrat kathas:', error);
+      return [];
+    }
+  },
+
+  getChalisaDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/chalisas/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching chalisa ${id}:`, error);
+      return null;
+    }
+  },
+
+  getPoojaVidhiDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching pooja vidhi ${id}:`, error);
+      return null;
+    }
+  },
+
+  getStotraDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/stotras/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching stotra ${id}:`, error);
+      return null;
+    }
+  },
+
+  getVratKathaDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}&t=${Date.now()}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching vrat katha ${id}:`, error);
+      return null;
+    }
+  },
+
+
 
   // Auth
   auth: {

@@ -122,22 +122,31 @@ export default function HomeScreen() {
   const [festivalAartiMantras, setFestivalAartiMantras] = useState<any[]>([]);
   const [aartiMantras, setAartiMantras] = useState<any[]>([]);
   
+  const [chalisas, setChalisas] = useState<any[]>([]);
+  const [poojaVidhis, setPoojaVidhis] = useState<any[]>([]);
+  const [stotras, setStotras] = useState<any[]>([]);
+  const [vratKathas, setVratKathas] = useState<any[]>([]);
+  
   // Loading State
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
+  const { storage } = require('../../src/services/storage');
 
   const loadData = async () => {
     try {
       // Import the api down here or globally, assuming it's imported at top
       const { api } = require('../../src/services/api');
-      const [daily, featured, cats] = await Promise.all([
+      const [daily, featured, cats, played] = await Promise.all([
         api.getDailyMantra(),
         api.getFeaturedMantras(),
-        api.getCategories()
+        api.getCategories(),
+        storage.getRecentlyPlayed()
       ]);
       setDailyMantra(daily);
       setFeaturedMantras(featured);
       setCategories(cats);
+      setRecentlyPlayed(played);
 
       // Festival Aartis and Aartis now come from their own dedicated database tables
       const [festAarti, aartiData] = await Promise.all([
@@ -147,6 +156,19 @@ export default function HomeScreen() {
       
       setFestivalAartiMantras(festAarti);
       setAartiMantras(aartiData);
+
+      // Fetch new sections
+      const [chalData, poojaData, stotraData, vratData] = await Promise.all([
+        api.getChalisas(),
+        api.getPoojaVidhis(),
+        api.getStotras(),
+        api.getVratKathas()
+      ]);
+      
+      setChalisas(chalData);
+      setPoojaVidhis(poojaData);
+      setStotras(stotraData);
+      setVratKathas(vratData);
     } catch (e) {
       console.warn("Failed fetching from Backend API", e);
     } finally {
@@ -173,13 +195,16 @@ export default function HomeScreen() {
     <TouchableOpacity
       style={s.featuredCard}
       activeOpacity={0.85}
-      onPress={() => router.push(`${routePrefix}${item.id}` as any)}
+      onPress={() => {
+        storage.addRecentlyPlayed({ ...item, path: routePrefix.replace('/', '') });
+        router.push(`${routePrefix}${item.id}` as any);
+      }}
     >
       <View style={[s.featuredBadge, { backgroundColor: C.secondary }]}>
-        <Text style={s.badgeText}>{item.category || item.category_name || item.festival || item.festival_category || 'Aarti'}</Text>
+        <Text style={s.badgeText}>{item.category || item.category_name || item.festival || item.festival_category || 'Divine'}</Text>
       </View>
-      <Text style={s.featuredSanskrit}>{item.sanskrit || item.sanskrit_title || item.sanskrit_text}</Text>
-      <Text style={s.featuredName}>{item.title || item.name || item.aarti_name}</Text>
+      <Text style={s.featuredSanskrit}>{item.sanskrit || item.sanskrit_title || item.sanskrit_text || ''}</Text>
+      <Text style={s.featuredName}>{item.title || item.name || item.aarti_name || item.chalisa_name || item.vidhi_name || item.stotra_name || item.katha_name}</Text>
       <Text style={s.featuredGod}>{item.god || item.deity_name}</Text>
       <View style={s.featuredFooter}>
         <Ionicons name="play-circle" size={28} color={C.accent} />
@@ -207,16 +232,20 @@ export default function HomeScreen() {
   };
 
   // ── Recently Played Row ────────────────────────────────────────────────────
-  const renderRecent = ({ item }: { item: Mantra }) => (
-    <TouchableOpacity style={s.recentItem} activeOpacity={0.85}>
+  const renderRecent = ({ item }: { item: any }) => (
+    <TouchableOpacity 
+      style={s.recentItem} 
+      activeOpacity={0.85}
+      onPress={() => router.push(`/${item.path}/${item.id}` as any)}
+    >
       <View style={s.recentIconWrap}>
         <Ionicons name="musical-note" size={20} color={C.primary} />
       </View>
       <View style={s.recentInfo}>
         <Text style={s.recentName}>{item.name}</Text>
-        <Text style={s.recentGod}>{item.god}</Text>
+        <Text style={s.recentGod}>{item.category || item.god}</Text>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push(`/${item.path}/${item.id}` as any)}>
         <Ionicons name="play-circle-outline" size={30} color={C.secondary} />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -384,6 +413,126 @@ export default function HomeScreen() {
           </>
         )}
 
+        {/* ── Chalisa Section ───────────────────────────────────────────── */}
+        {(chalisas.length > 0 || loading) && (
+          <>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Chalisa</Text>
+              <TouchableOpacity onPress={() => router.push('/chalisa' as any)}>
+                <Text style={s.seeAll}>Explore</Text>
+              </TouchableOpacity>
+            </View>
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={chalisas}
+                renderItem={renderFeaturedCard('/chalisa/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Pooja Vidhi Section ───────────────────────────────────────── */}
+        {(poojaVidhis.length > 0 || loading) && (
+          <>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Pooja Vidhi</Text>
+              <TouchableOpacity onPress={() => router.push('/pooja_vidhi' as any)}>
+                <Text style={s.seeAll}>Explore</Text>
+              </TouchableOpacity>
+            </View>
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={poojaVidhis}
+                renderItem={renderFeaturedCard('/pooja_vidhi/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Stotra Section ────────────────────────────────────────────── */}
+        {(stotras.length > 0 || loading) && (
+          <>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Stotra</Text>
+              <TouchableOpacity onPress={() => router.push('/stotra' as any)}>
+                <Text style={s.seeAll}>Explore</Text>
+              </TouchableOpacity>
+            </View>
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={stotras}
+                renderItem={renderFeaturedCard('/stotra/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Vrat Katha Section ────────────────────────────────────────── */}
+        {(vratKathas.length > 0 || loading) && (
+          <>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionTitle}>Vrat Katha</Text>
+              <TouchableOpacity onPress={() => router.push('/vrat_katha' as any)}>
+                <Text style={s.seeAll}>Explore</Text>
+              </TouchableOpacity>
+            </View>
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={vratKathas}
+                renderItem={renderFeaturedCard('/vrat_katha/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
         {/* ── Upanishads Section ────────────────────────────────────────────── */}
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>Upanishads</Text>
@@ -405,21 +554,19 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         {/* ── Recently Played ───────────────────────────────────────────── */}
-        <SectionHeader title="Recently Played" />
-        {loading ? (
-          <View style={{ paddingHorizontal: 20, paddingBottom: 120 }}>
-            {[1, 2].map((i) => (
-              <Skeleton key={i} height={64} radius={14} style={{ marginBottom: 10 }} />
-            ))}
-          </View>
+        {recentlyPlayed && recentlyPlayed.length > 0 ? (
+          <>
+            <SectionHeader title="Recently Played" />
+            <FlatList
+              data={recentlyPlayed}
+              renderItem={renderRecent}
+              keyExtractor={(item) => String(item.id)}
+              scrollEnabled={false}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
+            />
+          </>
         ) : (
-          <FlatList
-            data={RECENTLY_PLAYED}
-            renderItem={renderRecent}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
-          />
+          <View style={{ paddingBottom: 120 }} />
         )}
       </ScrollView>
     </SafeAreaView>

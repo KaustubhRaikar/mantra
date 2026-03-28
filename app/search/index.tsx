@@ -5,18 +5,25 @@ import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import { api } from '../../src/services/api';
+import { storage } from '../../src/services/storage';
 import { Mantra } from '../../src/types/navigation';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [mantras, setMantras] = useState<Mantra[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const router = useRouter();
-  const recentSearches = ['Shiva', 'Gayatri', 'Success', 'Peace'];
 
   useEffect(() => {
     fetchMantras();
+    loadRecent();
   }, []);
+
+  const loadRecent = async () => {
+    const r = await storage.getRecentSearches();
+    setRecentSearches(r);
+  };
 
   const fetchMantras = async () => {
     setLoading(true);
@@ -38,6 +45,13 @@ export default function SearchScreen() {
 
   const handleRecentPress = (term: string) => {
     setQuery(term);
+  };
+
+  const handleSearchSubmit = async () => {
+    if (query.trim()) {
+      await storage.addRecentSearch(query.trim());
+      loadRecent();
+    }
   };
 
   const renderItem = ({ item }: { item: Mantra }) => (
@@ -64,6 +78,8 @@ export default function SearchScreen() {
             placeholder="Search mantras, gods, or benefits..."
             value={query}
             onChangeText={setQuery}
+            onSubmitEditing={handleSearchSubmit}
+            returnKeyType="search"
             autoFocus
           />
           {query.length > 0 && (
