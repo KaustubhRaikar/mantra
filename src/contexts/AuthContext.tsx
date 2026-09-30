@@ -40,10 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Holds email while OTP verification is pending
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStorageData();
-  }, []);
-
   // MED-04 Fix: Use expo-crypto for a cryptographically secure UUID fallback
   const getDeviceId = async (): Promise<string> => {
     let deviceId = await SecureStore.getItemAsync('device_id');
@@ -64,8 +60,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return deviceId;
   };
 
-  const getDeviceName = (): string => {
-    return `${Device.brand || 'Unknown'} ${Device.modelName || 'Device'}`;
+  const signOut = async () => {
+    await SecureStore.deleteItemAsync('user');
+    await SecureStore.deleteItemAsync('token');
+    setPendingEmail(null);
+    setUser(null);
   };
 
   const loadStorageData = async () => {
@@ -101,6 +100,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  useEffect(() => {
+    loadStorageData();
+  }, []);
+
   const checkSession = async () => {
     await loadStorageData();
   };
@@ -110,8 +113,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    */
   const signIn = async (email: string, fullName: string): Promise<void> => {
     setSessionError(null);
-    const deviceId   = await getDeviceId();
-    const deviceName = getDeviceName();
 
     // Call sendOtp in background (fire & forget, so email is still dispatched if configured)
     api.auth.sendOtp(email, fullName).catch(() => {});
@@ -145,12 +146,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(sessionUser);
   };
 
-  const signOut = async () => {
-    await SecureStore.deleteItemAsync('user');
-    await SecureStore.deleteItemAsync('token');
-    setPendingEmail(null);
-    setUser(null);
-  };
 
   return (
     <AuthContext.Provider value={{ user, loading, pendingEmail, signIn, verifyOtp, signOut, checkSession, sessionError }}>

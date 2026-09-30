@@ -8,9 +8,13 @@
     "scheme": "mantra",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aarambhtech.mantra",
+      "buildNumber": "1.0.0"
     },
     "android": {
+      "package": "com.aarambhtech.mantra",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/adaptive-icon.png"

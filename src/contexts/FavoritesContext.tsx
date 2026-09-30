@@ -24,10 +24,6 @@ const FavoritesContext = createContext<FavoritesContextData>({} as FavoritesCont
 export const FavoritesProvider = ({ children }: { children: React.ReactNode }) => {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
-  useEffect(() => {
-    loadFavorites();
-  }, []);
-
   const loadFavorites = async () => {
     try {
       const stored = await SecureStore.getItemAsync('favorites');
@@ -38,6 +34,10 @@ export const FavoritesProvider = ({ children }: { children: React.ReactNode }) =
       console.error('Failed to load favorites', error);
     }
   };
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
 
   const isFavorite = (id: string | number) => {
     if (id === undefined || id === null) return false;
