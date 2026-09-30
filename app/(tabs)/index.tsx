@@ -14,8 +14,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
+import { useFavorites } from '../../src/contexts/FavoritesContext';
 
 // ─── Color Palette ──────────────────────────────────────────────────────────
 const C = {
@@ -113,6 +115,7 @@ const SectionHeader = ({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [isPlaying, setIsPlaying] = useState(false);
   
   // Data State
@@ -132,6 +135,45 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
   const { storage } = require('../../src/services/storage');
+
+  // Japa Mala Counter State
+  const [jaapCount, setJaapCount] = useState(0);
+  const [jaapGoal, setJaapGoal] = useState(108);
+  const [completedMalas, setCompletedMalas] = useState(0);
+  const counterScaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handleJaapTap = useCallback(() => {
+    // Light Haptic feedback on tap
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+
+    // Instant smooth spring animation response
+    counterScaleAnim.setValue(0.92);
+    Animated.spring(counterScaleAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 300,
+      useNativeDriver: true,
+    }).start();
+
+    setJaapCount((prev) => {
+      const next = prev + 1;
+      const isMalaComplete = next >= jaapGoal;
+      if (isMalaComplete) {
+        setCompletedMalas((m) => m + 1);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }
+
+      // Record tap to persistent storage for date-wise log
+      storage.recordJaapTap(1, isMalaComplete ? 1 : 0).catch(() => {});
+
+      return isMalaComplete ? 0 : next;
+    });
+  }, [jaapGoal]);
+
+  const handleResetJaap = () => {
+    setJaapCount(0);
+    setCompletedMalas(0);
+  };
 
   const loadData = async () => {
     try {
@@ -208,25 +250,44 @@ export default function HomeScreen() {
       <Text style={s.featuredGod}>{item.god || item.deity_name}</Text>
       <View style={s.featuredFooter}>
         <Ionicons name="play-circle" size={28} color={C.accent} />
-        <Ionicons name="heart-outline" size={22} color="rgba(255,255,255,0.7)" style={{ marginLeft: 12 }} />
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFavorite({ ...item, path: routePrefix.replace(/\//g, '') || 'mantra' });
+          }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons
+            name={isFavorite(item.id) ? "heart" : "heart-outline"}
+            size={22}
+            color={isFavorite(item.id) ? C.primary : "rgba(255,255,255,0.8)"}
+            style={{ marginLeft: 12 }}
+          />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 
   // ── Category Card ──────────────────────────────────────────────────────────
   const renderCategory = ({ item }: { item: any }) => {
-    const { icon, color } = getCategoryDisplayProps(item.name);
+    if (!item) return null;
+    const name = item.name || 'Category';
+    const { icon, color } = getCategoryDisplayProps(name);
     return (
       <TouchableOpacity
         style={[s.categoryCard, { borderTopColor: color }]}
         activeOpacity={0.85}
-        onPress={() => router.push({ pathname: '/category/[id]', params: { id: item.id, name: item.name } } as any)}
+        onPress={() => {
+          if (item.id) {
+            router.push({ pathname: '/category/[id]', params: { id: item.id, name } } as any);
+          }
+        }}
       >
         <View style={[s.categoryIconWrap, { backgroundColor: color + '20' }]}>
           <Ionicons name={icon} size={28} color={color} />
         </View>
-        <Text style={s.categoryName}>{item.name}</Text>
-        {item.count && <Text style={s.categoryCount}>{item.count} mantras</Text>}
+        <Text style={s.categoryName}>{name}</Text>
+        {item.count ? <Text style={s.categoryCount}>{item.count} mantras</Text> : null}
       </TouchableOpacity>
     );
   };
@@ -315,12 +376,72 @@ export default function HomeScreen() {
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={20} color="#FFF" />
                 <Text style={s.playBtnText}>{isPlaying ? 'Pause' : 'Play Mantra'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.heartBtn}>
-                <Ionicons name="heart-outline" size={22} color={C.accent} />
+              <TouchableOpacity
+                style={[s.heartBtn, activeDaily && isFavorite(activeDaily.id) && { backgroundColor: C.primary, borderColor: C.primary }]}
+                onPress={() => activeDaily && toggleFavorite({ ...activeDaily, path: 'mantra' })}
+              >
+                <Ionicons
+                  name={activeDaily && isFavorite(activeDaily.id) ? "heart" : "heart-outline"}
+                  size={22}
+                  color={activeDaily && isFavorite(activeDaily.id) ? "#FFF" : C.accent}
+                />
               </TouchableOpacity>
             </View>
           </View>
         )}
+
+        {/* ── Mantra Jaap Counter Section ───────────────────────────── */}
+        <View style={s.counterCard}>
+          <View style={s.counterHeader}>
+            <View style={s.counterTitleBox}>
+              <Ionicons name="sparkles" size={18} color={C.accent} />
+              <Text style={s.counterTitle}>Mantra Jaap Counter</Text>
+            </View>
+            <TouchableOpacity style={s.counterResetBtn} onPress={handleResetJaap}>
+              <Ionicons name="refresh" size={14} color={C.accent} />
+              <Text style={s.counterResetText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Goal Selector */}
+          <View style={s.goalRow}>
+            <Text style={s.goalLabel}>Goal:</Text>
+            {[21, 54, 108, 1008].map((g) => (
+              <TouchableOpacity
+                key={g}
+                style={[s.goalChip, jaapGoal === g && s.goalChipActive]}
+                onPress={() => { setJaapGoal(g); setJaapCount(0); }}
+              >
+                <Text style={[s.goalChipText, jaapGoal === g && s.goalChipTextActive]}>{g}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Counter Display & Tap Circle */}
+          <View style={s.counterBody}>
+            <View style={s.counterInfo}>
+              <Text style={s.counterCountText}>{jaapCount}</Text>
+              <Text style={s.counterGoalText}>/ {jaapGoal} Chants</Text>
+              {completedMalas > 0 && (
+                <View style={s.malaBadge}>
+                  <Ionicons name="ribbon" size={12} color="#FFF" />
+                  <Text style={s.malaBadgeText}>{completedMalas} Malas Completed</Text>
+                </View>
+              )}
+            </View>
+
+            <Animated.View style={{ transform: [{ scale: counterScaleAnim }] }}>
+              <TouchableOpacity
+                style={s.tapButton}
+                onPress={handleJaapTap}
+                activeOpacity={0.8}
+              >
+                <Text style={s.tapButtonText}>+1 TAP</Text>
+                <Text style={s.tapButtonSub}>TAP JAAP</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+        </View>
 
         {/* ── Featured Mantras ──────────────────────────────────────────── */}
         <SectionHeader title="Featured Mantras" onSeeAll={() => router.push('/(tabs)/categories')} />
@@ -352,15 +473,31 @@ export default function HomeScreen() {
             ))}
           </View>
         ) : (
-          <FlatList
-            data={listCategories}
-            renderItem={renderCategory}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={2}
-            scrollEnabled={false}
-            columnWrapperStyle={s.gridRow}
-            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 4 }}
-          />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12, marginBottom: 20 }}>
+            {listCategories.map((item) => {
+              if (!item) return null;
+              const name = item.name || 'Category';
+              const { icon, color } = getCategoryDisplayProps(name);
+              return (
+                <TouchableOpacity
+                  key={item.id || name}
+                  style={[s.categoryCard, { borderTopColor: color }]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    if (item.id) {
+                      router.push({ pathname: '/category/[id]', params: { id: item.id, name } } as any);
+                    }
+                  }}
+                >
+                  <View style={[s.categoryIconWrap, { backgroundColor: color + '20' }]}>
+                    <Ionicons name={icon} size={28} color={color} />
+                  </View>
+                  <Text style={s.categoryName}>{name}</Text>
+                  {item.count ? <Text style={s.categoryCount}>{item.count} mantras</Text> : null}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         )}
 
         {/* ── Festival Aarti ────────────────────────────────────────────── */}
@@ -554,16 +691,38 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         {/* ── Recently Played ───────────────────────────────────────────── */}
-        {recentlyPlayed && recentlyPlayed.length > 0 ? (
+        {recentlyPlayed && Array.isArray(recentlyPlayed) && recentlyPlayed.length > 0 ? (
           <>
             <SectionHeader title="Recently Played" />
-            <FlatList
-              data={recentlyPlayed}
-              renderItem={renderRecent}
-              keyExtractor={(item) => String(item.id)}
-              scrollEnabled={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}
-            />
+            <View style={{ paddingHorizontal: 20, paddingBottom: 120 }}>
+              {recentlyPlayed.map((item, index) => {
+                if (!item) return null;
+                const path = item.path || 'mantra';
+                const name = item.name || item.title || 'Sacred Chant';
+                const god = item.category || item.god || item.category_name || 'Divine';
+                const itemId = item.id ? String(item.id) : String(index);
+
+                return (
+                  <TouchableOpacity
+                    key={itemId + '_' + index}
+                    style={s.recentItem}
+                    activeOpacity={0.85}
+                    onPress={() => router.push(`/${path}/${itemId}` as any)}
+                  >
+                    <View style={s.recentIconWrap}>
+                      <Ionicons name="musical-note" size={20} color={C.primary} />
+                    </View>
+                    <View style={s.recentInfo}>
+                      <Text style={s.recentName}>{name}</Text>
+                      <Text style={s.recentGod}>{god}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => router.push(`/${path}/${itemId}` as any)}>
+                      <Ionicons name="play-circle-outline" size={30} color={C.secondary} />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </>
         ) : (
           <View style={{ paddingBottom: 120 }} />
@@ -649,4 +808,135 @@ const s = StyleSheet.create({
   recentInfo: { flex: 1, marginLeft: 12 },
   recentName: { fontSize: 14, fontWeight: '700', color: C.text },
   recentGod: { fontSize: 12, color: C.textSub, marginTop: 2 },
+
+  // Jaap Counter Card Styles
+  counterCard: {
+    marginHorizontal: 20,
+    marginBottom: 28,
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: C.primary,
+    elevation: 6,
+    shadowColor: C.primary,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  counterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  counterTitleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  counterTitle: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  counterResetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  counterResetText: {
+    color: C.accent,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 18,
+  },
+  goalLabel: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  goalChip: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  goalChipActive: {
+    backgroundColor: C.accent,
+  },
+  goalChipText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  goalChipTextActive: {
+    color: C.text,
+  },
+  counterBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  counterInfo: {
+    flex: 1,
+  },
+  counterCountText: {
+    fontSize: 44,
+    fontWeight: '900',
+    color: '#FFF',
+    lineHeight: 48,
+  },
+  counterGoalText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.75)',
+    fontWeight: '600',
+  },
+  malaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: C.secondary,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  malaBadgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tapButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  tapButtonText: {
+    color: C.primary,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  tapButtonSub: {
+    color: C.textSub,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });

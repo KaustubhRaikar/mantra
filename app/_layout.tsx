@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Platform, View, ActivityIndicator } from 'react-native';
-import { ThemeProvider } from "@react-navigation/native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments, ThemeProvider } from "expo-router";
 import * as NavigationBar from 'expo-navigation-bar';
 import { Theme, Colors } from "../src/constants/theme";
 import { AuthProvider, useAuth } from "../src/contexts/AuthContext";

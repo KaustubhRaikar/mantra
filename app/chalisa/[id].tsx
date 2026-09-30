@@ -6,12 +6,14 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { api } from '../../src/services/api';
 import { storage } from '../../src/services/storage';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
+import { useFavorites } from '../../src/contexts/FavoritesContext';
 
 const C = { bg: '#FFF9F4', surface: '#FFFFFF', primary: '#FF6B35', text: '#1A1A2E', secondary: '#5D3FD3', textSub: '#6B6B80' };
 
 export default function ChalisaDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentVerse, setCurrentVerse] = useState(0);
@@ -52,7 +54,12 @@ export default function ChalisaDetailScreen() {
           <Ionicons name="chevron-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={s.headerTitle} numberOfLines={1}>{data.chalisa_name}</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          onPress={() => data && toggleFavorite({ ...data, id: data.id || id, name: data.chalisa_name, path: 'chalisa' })}
+          style={s.backBtn}
+        >
+          <Ionicons name={data && isFavorite(data.id || (id as string)) ? "heart" : "heart-outline"} size={22} color={data && isFavorite(data.id || (id as string)) ? C.primary : "#FFF"} />
+        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={{ padding: 20 }}>
         <View style={s.card}>

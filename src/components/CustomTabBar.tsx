@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated, Dimensions, Platform } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +8,7 @@ import * as NavigationBar from 'expo-navigation-bar';
 
 const { width } = Dimensions.get('window');
 
-export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   
   // Animation value from 0 to 1
@@ -60,7 +59,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
       </View>
 
       <View style={styles.tabContent}>
-        {state.routes.map((route, index) => {
+        {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
 

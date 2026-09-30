@@ -52,5 +52,44 @@ export const storage = {
       played = [itemToSave, ...played.filter((p: any) => p.name !== itemToSave.name)].slice(0, 10);
       await SecureStore.setItemAsync(RECENTLY_PLAYED_KEY, JSON.stringify(played));
     } catch {}
+  },
+
+  // Jaap Log History
+  getJaapLogs: async (): Promise<{ date: string; formattedDate: string; totalChants: number; completedMalas: number }[]> => {
+    try {
+      const data = await SecureStore.getItemAsync('jaapLog');
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  recordJaapTap: async (incrementCount: number = 1, incrementMala: number = 0) => {
+    try {
+      const logs = await storage.getJaapLogs();
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const formattedDate = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      const existingIndex = logs.findIndex((l) => l.date === dateStr);
+      if (existingIndex >= 0) {
+        logs[existingIndex].totalChants += incrementCount;
+        logs[existingIndex].completedMalas += incrementMala;
+      } else {
+        logs.unshift({
+          date: dateStr,
+          formattedDate,
+          totalChants: incrementCount,
+          completedMalas: incrementMala,
+        });
+      }
+      await SecureStore.setItemAsync('jaapLog', JSON.stringify(logs.slice(0, 90))); // Keep last 90 days
+    } catch (e) {
+      console.warn('Failed to record jaap log:', e);
+    }
+  },
+
+  clearJaapLogs: async () => {
+    await SecureStore.deleteItemAsync('jaapLog');
   }
 };

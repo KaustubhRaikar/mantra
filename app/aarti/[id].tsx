@@ -16,7 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Audio } from 'expo-av';
+import { safeSetAudioMode, safeCreateSound } from '../../src/utils/audioPlayer';
 import * as Sharing from 'expo-sharing';
 import { useFonts, TiroDevanagariHindi_400Regular } from '@expo-google-fonts/tiro-devanagari-hindi';
 import { useFavorites } from '../../src/contexts/FavoritesContext';
@@ -65,7 +65,7 @@ export default function AartiDetailScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Audio state
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const soundRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0–1
   const [positionMillis, setPositionMillis] = useState<number>(0);
@@ -82,14 +82,10 @@ export default function AartiDetailScreen() {
 
   // ── Audio setup ────────────────────────────────────────────────────────────
   useEffect(() => {
-    Audio.setAudioModeAsync({
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: false,
-    });
+    safeSetAudioMode();
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
+      if (soundRef.current?.unloadAsync) {
+        soundRef.current.unloadAsync().catch(() => {});
       }
     };
   }, []);
@@ -134,18 +130,17 @@ export default function AartiDetailScreen() {
       } else {
         // Load sound for the first time
         setIsPlaying(true);
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: MANTRA_DATA.audio_url || finalUri },
-          { shouldPlay: true },
+        const { sound } = await safeCreateSound(
+          MANTRA_DATA.audio_url || finalUri,
           onPlaybackStatusUpdate
         );
         soundRef.current = sound;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Error playing audio', error);
       Alert.alert(
-        "Audio Not Found",
-        `The audio API could not play the sound. The server returned a 404 Not Found error for:\n\n${finalUri}\n\nPlease ensure you have uploaded this audio file to the correct backend directory.`
+        "Audio Notice",
+        error?.message || "Audio player is unavailable."
       );
       setIsPlaying(false);
     }

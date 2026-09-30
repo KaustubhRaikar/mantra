@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Mantra } from '../types/navigation';
 
-// We fall back to localhost equivalent for Android Emulator if EXPO_PUBLIC_API_URL isn't set properly
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2/native_php/mantra/backend/api';
+// Default to cloud backend on Hostinger subdomain
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -62,7 +62,10 @@ export const api = {
         : '/mantras/read.php';
       const response = await apiClient.get(url);
       return response.data.records || [];
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return [];
+      }
       console.error('Error fetching mantras:', error);
       return [];
     }
@@ -210,17 +213,33 @@ export const api = {
 
 
 
-  // Auth
+  // Auth — Two-step OTP Login
   auth: {
-    login: async (email: string, fullName: string, deviceId: string, deviceName: string) => {
-      const response = await apiClient.post('/auth/login.php', {
+    /**
+     * Step 1: Request OTP — sends a 6-digit code to the user's email.
+     * No session is issued at this point.
+     */
+    sendOtp: async (email: string, fullName: string) => {
+      const response = await apiClient.post('/auth/send_otp.php', {
         email,
         full_name: fullName,
+      });
+      return response.data;
+    },
+
+    /**
+     * Step 2: Verify OTP — validates the code and issues a session token.
+     */
+    verifyOtp: async (email: string, otp: string, deviceId: string, deviceName: string) => {
+      const response = await apiClient.post('/auth/verify_otp.php', {
+        email,
+        otp,
         device_id: deviceId,
         device_name: deviceName,
       });
       return response.data;
     },
+
     verifySession: async (userId: string | number, token: string, deviceId: string) => {
       try {
         const response = await apiClient.post('/auth/verify_session.php', {
@@ -231,7 +250,7 @@ export const api = {
         return response.data;
       } catch (error: any) {
         if (error.response && error.response.status === 401) {
-          return error.response.data; // Contains {"is_valid": false, "reason": "concurrent_login_detected"}
+          return error.response.data;
         }
         throw error;
       }
