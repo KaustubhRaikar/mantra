@@ -114,11 +114,11 @@ export default function FestivalAartiDetailScreen() {
 
   const togglePlay = useCallback(async () => {
     if (!MANTRA_DATA) return;
-    
-    // Using Google Translate's free TTS API endpoint to generate audio from the mantra text.
-    // 'tl=hi' uses the Hindi voice which accurately pronounces Sanskrit Devanagari texts.
-    const encodedText = encodeURIComponent(MANTRA_DATA.sanskrit);
-    const finalUri = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=hi&q=${encodedText}`;
+
+    if (!MANTRA_DATA.audio_url) {
+      Alert.alert("Audio Notice", "Audio recording is coming soon for this festival aarti.");
+      return;
+    }
 
     try {
       if (soundRef.current) {
@@ -128,10 +128,10 @@ export default function FestivalAartiDetailScreen() {
           await soundRef.current.playAsync();
         }
       } else {
-        // Load sound for the first time
+        // Load sound from server audio_url
         setIsPlaying(true);
         const { sound } = await safeCreateSound(
-          MANTRA_DATA.audio_url || finalUri,
+          MANTRA_DATA.audio_url,
           onPlaybackStatusUpdate
         );
         soundRef.current = sound;
