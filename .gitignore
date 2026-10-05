@@ -43,3 +43,6 @@ app-example
 /android
 /node_modules
 .env
+tests/
+*.log
+
