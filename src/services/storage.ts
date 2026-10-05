@@ -161,6 +161,12 @@ export const storage = {
       }
 
       await cleanupOldJaapLogs();
+
+      // Trigger debounced cloud sync for Jaap logs
+      const { syncManager } = require('./syncManager');
+      syncManager.scheduleDebouncedSync(() => {
+        syncManager.syncJaapLogs();
+      });
     } catch (e) {
       console.warn('Failed to record jaap log:', e);
     }

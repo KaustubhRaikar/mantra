@@ -125,6 +125,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await SecureStore.setItemAsync('token', sessionToken);
     setPendingEmail(null);
     setUser(sessionUser);
+
+    // Trigger cloud sync on login
+    const { syncManager } = require('../services/syncManager');
+    syncManager.syncJaapLogs();
   };
 
   /**
@@ -144,6 +148,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await SecureStore.setItemAsync('token', sessionToken);
     setPendingEmail(null);
     setUser(sessionUser);
+
+    // Trigger cloud sync on login
+    const { syncManager } = require('../services/syncManager');
+    syncManager.syncJaapLogs();
   };
 
 

@@ -245,5 +245,37 @@ export const api = {
         throw error;
       }
     }
+  },
+
+  // Cloud Sync
+  syncJaap: async (creds: { userId: number | string; token: string; deviceId: string }, jaapLogs: any[]) => {
+    try {
+      const response = await apiClient.post('/jaap/sync.php', {
+        user_id: creds.userId,
+        login_token: creds.token,
+        device_id: creds.deviceId,
+        jaap_logs: jaapLogs,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Jaap sync API error:', error);
+      return null;
+    }
+  },
+
+  syncFavorites: async (creds: { userId: number | string; token: string; deviceId: string }, favorites: any[]) => {
+    try {
+      const response = await apiClient.post('/favorites/sync.php', {
+        user_id: creds.userId,
+        login_token: creds.token,
+        device_id: creds.deviceId,
+        favorites: favorites,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Favorites sync API error:', error);
+      return null;
+    }
   }
 };
+
