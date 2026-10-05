@@ -42,5 +42,4 @@ app-example
 /ios
 /android
 /node_modules
-/backend
 .env
