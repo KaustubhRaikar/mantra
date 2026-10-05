@@ -2,7 +2,7 @@
 /**
  * User DPDP Consent API Endpoint
  * Handles GET/POST /v1/auth/consent.php
- * Stores consent preferences with timestamp & version per user_id.
+ * DEV Rule #4: Derives user_id strictly from validated token in user_device_info.
  */
 
 include_once __DIR__ . '/../../config/headers.php';
@@ -13,15 +13,29 @@ $db = $database->getConnection();
 
 $data = json_decode(file_get_contents("php://input"), true) ?? [];
 
-$userId = $_SERVER['HTTP_X_USER_ID'] ?? $data['user_id'] ?? $_GET['user_id'] ?? null;
 $token = $_SERVER['HTTP_X_LOGIN_TOKEN'] ?? $data['login_token'] ?? $_GET['login_token'] ?? null;
 $deviceId = $_SERVER['HTTP_X_DEVICE_ID'] ?? $data['device_id'] ?? $_GET['device_id'] ?? null;
 
-if (!$userId) {
-    http_response_code(400);
-    echo json_encode(["message" => "user_id is required."]);
+if (!$token || !$deviceId) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "Authentication required (login_token, device_id)."]);
     exit();
 }
+
+// Derive user_id strictly from token lookup
+$authStmt = $db->prepare(
+    "SELECT user_id FROM user_device_info WHERE device_id = :device_id AND login_token = :token LIMIT 1"
+);
+$authStmt->execute([':device_id' => $deviceId, ':token' => $token]);
+$authRow = $authStmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$authRow || empty($authRow['user_id'])) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "Invalid or expired session token."]);
+    exit();
+}
+
+$userId = (int)$authRow['user_id'];
 
 // Ensure table user_consents exists
 $db->exec("CREATE TABLE IF NOT EXISTS user_consents (
@@ -66,7 +80,7 @@ if ($method === 'POST') {
     echo json_encode([
         "status" => "success",
         "message" => "Consent preferences saved successfully.",
-        "user_id" => (int)$userId,
+        "user_id" => $userId,
         "consent" => [
             "analytics" => (bool)$analytics,
             "notifications" => (bool)$notifications,
@@ -86,7 +100,7 @@ if ($row) {
     http_response_code(200);
     echo json_encode([
         "status" => "success",
-        "user_id" => (int)$userId,
+        "user_id" => $userId,
         "consent" => [
             "analytics" => (bool)$row['analytics_consent'],
             "notifications" => (bool)$row['notifications_consent'],
@@ -99,7 +113,7 @@ if ($row) {
     http_response_code(200);
     echo json_encode([
         "status" => "success",
-        "user_id" => (int)$userId,
+        "user_id" => $userId,
         "consent" => null
     ]);
 }

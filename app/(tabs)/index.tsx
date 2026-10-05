@@ -435,6 +435,9 @@ export default function HomeScreen() {
                 style={s.tapButton}
                 onPress={handleJaapTap}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Mantra Jaap counter. ${jaapCount} of ${jaapGoal} chants recorded. ${completedMalas} malas completed.`}
+                accessibilityHint="Tap to record 1 chant towards your mala goal"
               >
                 <Text style={s.tapButtonText}>+1 TAP</Text>
                 <Text style={s.tapButtonSub}>TAP JAAP</Text>
