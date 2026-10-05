@@ -211,6 +211,85 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ── Privacy & Data Rights Section (DPDP Compliance) ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Privacy & Data Rights (DPDP)</Text>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/consent')} activeOpacity={0.7}>
+            <View style={styles.menuIconBadge}>
+              <Ionicons name="shield-checkmark-outline" size={22} color={Colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.menuLabelBold}>Privacy Consent Preferences</Text>
+              <Text style={styles.menuSubLabel}>Manage notifications, analytics & AI consent</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/privacy')} activeOpacity={0.7}>
+            <Ionicons name="document-text-outline" size={22} color={Colors.secondary} />
+            <Text style={styles.menuLabel}>Privacy Policy & Terms</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
+          </TouchableOpacity>
+
+          {user && (
+            <>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={async () => {
+                  const { syncManager } = require('../../src/services/syncManager');
+                  const { api } = require('../../src/services/api');
+                  const creds = await syncManager.getAuthCredentials();
+                  if (creds) {
+                    const data = await api.exportUserData(creds);
+                    if (data && data.status === 'success') {
+                      Alert.alert('Data Export Ready', JSON.stringify(data.data, null, 2).slice(0, 500) + '\n\nFull JSON export downloaded.');
+                    } else {
+                      Alert.alert('Export Failed', 'Unable to fetch data export.');
+                    }
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="download-outline" size={22} color="#0095D9" />
+                <Text style={styles.menuLabel}>Export My Data (JSON)</Text>
+                <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.menuItem, { borderColor: '#FFD6D6' }]}
+                onPress={() => {
+                  Alert.alert(
+                    'Delete Account & All Data',
+                    'Are you sure you want to permanently delete your account, Jaap logs, and favorites? This action CANNOT be undone.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete Forever',
+                        style: 'destructive',
+                        onPress: async () => {
+                          const { syncManager } = require('../../src/services/syncManager');
+                          const { api } = require('../../src/services/api');
+                          const creds = await syncManager.getAuthCredentials();
+                          if (creds) {
+                            await api.deleteAccount(creds);
+                          }
+                          await signOut();
+                        },
+                      },
+                    ]
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trash-bin-outline" size={22} color="#FF3B30" />
+                <Text style={[styles.menuLabel, { color: '#FF3B30' }]}>Delete My Account & Data</Text>
+                <Ionicons name="chevron-forward" size={18} color="#FF3B30" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
         {/* ── System & Information Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Support & System</Text>

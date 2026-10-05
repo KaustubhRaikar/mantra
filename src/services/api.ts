@@ -276,6 +276,54 @@ export const api = {
       console.error('Favorites sync API error:', error);
       return null;
     }
+  },
+
+  // Privacy, Consent & Account Deletion (DPDP)
+  saveConsent: async (creds: { userId: number | string; token: string; deviceId: string }, consent: any) => {
+    try {
+      const response = await apiClient.post('/auth/consent.php', {
+        user_id: creds.userId,
+        login_token: creds.token,
+        device_id: creds.deviceId,
+        analytics: consent.analytics,
+        notifications: consent.notifications,
+        ai: consent.ai,
+        policy_version: consent.policy_version || '1.0',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Save consent API error:', error);
+      return null;
+    }
+  },
+
+  deleteAccount: async (creds: { userId: number | string; token: string; deviceId: string }) => {
+    try {
+      const response = await apiClient.post('/auth/delete_account.php', {
+        user_id: creds.userId,
+        login_token: creds.token,
+        device_id: creds.deviceId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Delete account API error:', error);
+      return null;
+    }
+  },
+
+  exportUserData: async (creds: { userId: number | string; token: string; deviceId: string }) => {
+    try {
+      const response = await apiClient.post('/auth/export_data.php', {
+        user_id: creds.userId,
+        login_token: creds.token,
+        device_id: creds.deviceId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Export user data API error:', error);
+      return null;
+    }
   }
 };
+
 

@@ -169,6 +169,17 @@ export default function LoginScreen() {
                   <Text style={styles.loginButtonText}>Begin Journey</Text>
                 )}
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ marginTop: 20, alignItems: 'center', minHeight: 44, justifyContent: 'center' }}
+                onPress={() => require('expo-router').router.push('/privacy')}
+                accessibilityRole="link"
+                accessibilityLabel="View Privacy Policy"
+              >
+                <Text style={{ fontSize: 13, color: Colors.textSecondary, textDecorationLine: 'underline' }}>
+                  By proceeding, you agree to our Privacy Policy
+                </Text>
+              </TouchableOpacity>
             </>
           ) : (
             /* ── Step 2: OTP Verification ── */
