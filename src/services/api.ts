@@ -36,8 +36,7 @@ export const api = {
 
   getUpanishads: async () => {
     try {
-      // Appending a random timestamp query to mathematically bust any lingering aggressive local cache
-      const response = await apiClient.get(`/upanishads/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/upanishads/read.php');
       return response.data.records || [];
     } catch (error: any) {
       console.error('Error fetching upanishads full URL trace:', error.config?.baseURL, error.config?.url);
@@ -47,7 +46,7 @@ export const api = {
 
   getUpanishad: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/upanishads/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/upanishads/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching upanishad ${id}:`, error);
@@ -93,7 +92,7 @@ export const api = {
 
   getFestivalAartis: async () => {
     try {
-      const response = await apiClient.get(`/festival_aartis/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/festival_aartis/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching festival aartis:', error);
@@ -103,7 +102,7 @@ export const api = {
 
   getAartis: async () => {
     try {
-      const response = await apiClient.get(`/aartis/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/aartis/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching aartis from table:', error);
@@ -113,7 +112,7 @@ export const api = {
 
   getFestivalAartiDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/festival_aartis/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/festival_aartis/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching festival aarti ${id}:`, error);
@@ -123,7 +122,7 @@ export const api = {
 
   getAartiDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/aartis/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/aartis/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching aarti ${id}:`, error);
@@ -133,7 +132,7 @@ export const api = {
 
   getChalisas: async () => {
     try {
-      const response = await apiClient.get(`/chalisas/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/chalisas/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching chalisas:', error);
@@ -143,7 +142,7 @@ export const api = {
 
   getPoojaVidhis: async () => {
     try {
-      const response = await apiClient.get(`/pooja_vidhis/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/pooja_vidhis/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching pooja vidhis:', error);
@@ -153,7 +152,7 @@ export const api = {
 
   getStotras: async () => {
     try {
-      const response = await apiClient.get(`/stotras/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/stotras/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching stotras:', error);
@@ -163,7 +162,7 @@ export const api = {
 
   getVratKathas: async () => {
     try {
-      const response = await apiClient.get(`/vrat_kathas/read.php?t=${Date.now()}`);
+      const response = await apiClient.get('/vrat_kathas/read.php');
       return response.data.records || [];
     } catch (error) {
       console.error('Error fetching vrat kathas:', error);
@@ -173,7 +172,7 @@ export const api = {
 
   getChalisaDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/chalisas/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/chalisas/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching chalisa ${id}:`, error);
@@ -183,7 +182,7 @@ export const api = {
 
   getPoojaVidhiDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching pooja vidhi ${id}:`, error);
@@ -193,7 +192,7 @@ export const api = {
 
   getStotraDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/stotras/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/stotras/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching stotra ${id}:`, error);
@@ -203,7 +202,7 @@ export const api = {
 
   getVratKathaDetails: async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}&t=${Date.now()}`);
+      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching vrat katha ${id}:`, error);
@@ -211,14 +210,8 @@ export const api = {
     }
   },
 
-
-
   // Auth — Two-step OTP Login
   auth: {
-    /**
-     * Step 1: Request OTP — sends a 6-digit code to the user's email.
-     * No session is issued at this point.
-     */
     sendOtp: async (email: string, fullName: string) => {
       const response = await apiClient.post('/auth/send_otp.php', {
         email,
@@ -227,9 +220,6 @@ export const api = {
       return response.data;
     },
 
-    /**
-     * Step 2: Verify OTP — validates the code and issues a session token.
-     */
     verifyOtp: async (email: string, otp: string, deviceId: string, deviceName: string) => {
       const response = await apiClient.post('/auth/verify_otp.php', {
         email,

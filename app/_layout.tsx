@@ -4,6 +4,17 @@ import { Stack, useRouter, useSegments, ThemeProvider } from "expo-router";
 import * as NavigationBar from 'expo-navigation-bar';
 import { Theme, Colors } from "../src/constants/theme";
 import { AuthProvider, useAuth } from "../src/contexts/AuthContext";
+import { FavoritesProvider } from "../src/contexts/FavoritesContext";
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { queryClient, sqlitePersister } from '../src/services/queryClient';
+import { LogBox } from 'react-native';
+
+LogBox.ignoreLogs([
+  'setPositionAsync is not supported',
+  'setBackgroundColorAsync is not supported',
+  'setVisibilityAsync is not supported',
+  'setBehaviorAsync is not supported',
+]);
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
@@ -13,15 +24,12 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
 
-    // TypeScript workaround for expo-router typed navigation strictness
     const currentSegment = segments[0] as any;
     const inAuthGroup = currentSegment === 'login' || currentSegment === '(auth)';
 
     if (!user && !inAuthGroup) {
-      // Redirect to the sign-in page.
       router.replace('/login' as any);
     } else if (user && inAuthGroup) {
-      // Redirect to the home page if already logged in.
       router.replace('/(tabs)' as any);
     }
   }, [user, loading, segments]);
@@ -46,18 +54,6 @@ function RootLayoutNav() {
   );
 }
 
-import { FavoritesProvider } from "../src/contexts/FavoritesContext";
-
-import { LogBox } from 'react-native';
-
-LogBox.ignoreLogs([
-  'setPositionAsync is not supported',
-  'setBackgroundColorAsync is not supported',
-  'setVisibilityAsync is not supported',
-  'setBehaviorAsync is not supported',
-  'Expo AV has been deprecated'
-]);
-
 export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -66,10 +62,15 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AuthProvider>
-      <FavoritesProvider>
-        <RootLayoutNav />
-      </FavoritesProvider>
-    </AuthProvider>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: sqlitePersister }}
+    >
+      <AuthProvider>
+        <FavoritesProvider>
+          <RootLayoutNav />
+        </FavoritesProvider>
+      </AuthProvider>
+    </PersistQueryClientProvider>
   );
 }
