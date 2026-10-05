@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Mantra } from '../types/navigation';
 
-// Default to cloud backend on Hostinger subdomain
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
+// Default to cloud backend on Hostinger subdomain with v1 API
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_URL,
