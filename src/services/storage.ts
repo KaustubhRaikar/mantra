@@ -1,95 +1,176 @@
-import * as SecureStore from 'expo-secure-store';
-import { Mantra } from '../types/navigation';
+import { getDB } from './db';
+import { runStorageMigration } from './storageMigration';
 
-const RECENT_SEARCHES_KEY = 'recentSearches';
-const RECENTLY_PLAYED_KEY = 'recentlyPlayed';
+export interface JaapLogItem {
+  date: string;
+  formattedDate: string;
+  totalChants: number;
+  completedMalas: number;
+}
+
+let isInitialized = false;
+
+const ensureInit = async () => {
+  if (!isInitialized) {
+    try {
+      await runStorageMigration();
+      await cleanupOldJaapLogs();
+      isInitialized = true;
+    } catch (e) {
+      console.warn('Storage initialization/migration warning:', e);
+    }
+  }
+};
+
+const cleanupOldJaapLogs = async () => {
+  try {
+    const db = await getDB();
+    // Maintain strict 90-day rolling window
+    await db.runAsync(
+      `DELETE FROM jaap_logs WHERE date < date('now', '-90 days')`
+    );
+  } catch (e) {
+    // Ignore cleanup error
+  }
+};
 
 export const storage = {
-  getRecentSearches: async (): Promise<string[]> => {
-    try {
-      const data = await SecureStore.getItemAsync(RECENT_SEARCHES_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  },
-  
-  addRecentSearch: async (query: string) => {
-    if (!query.trim()) return;
-    try {
-      let searches = await storage.getRecentSearches();
-      searches = [query, ...searches.filter(s => s.toLowerCase() !== query.toLowerCase())].slice(0, 10);
-      await SecureStore.setItemAsync(RECENT_SEARCHES_KEY, JSON.stringify(searches));
-    } catch {}
-  },
-  
-  clearRecentSearches: async () => {
-    await SecureStore.deleteItemAsync(RECENT_SEARCHES_KEY);
+  initialize: async () => {
+    await ensureInit();
   },
 
-  getRecentlyPlayed: async (): Promise<any[]> => {
+  // --- Recent Searches ---
+  getRecentSearches: async (): Promise<string[]> => {
+    await ensureInit();
     try {
-      const data = await SecureStore.getItemAsync(RECENTLY_PLAYED_KEY);
-      return data ? JSON.parse(data) : [];
+      const db = await getDB();
+      const rows = await db.getAllAsync<{ query: string }>(
+        `SELECT query FROM recent_searches ORDER BY searched_at DESC LIMIT 10`
+      );
+      return rows.map((r) => r.query);
     } catch {
       return [];
     }
   },
-  
+
+  addRecentSearch: async (query: string) => {
+    if (!query || !query.trim()) return;
+    await ensureInit();
+    try {
+      const db = await getDB();
+      const clean = query.trim();
+      await db.runAsync(
+        `INSERT OR REPLACE INTO recent_searches (query, searched_at) VALUES (?, ?)`,
+        [clean, Date.now()]
+      );
+    } catch {}
+  },
+
+  clearRecentSearches: async () => {
+    await ensureInit();
+    try {
+      const db = await getDB();
+      await db.runAsync(`DELETE FROM recent_searches`);
+    } catch {}
+  },
+
+  // --- Recently Played ---
+  getRecentlyPlayed: async (): Promise<any[]> => {
+    await ensureInit();
+    try {
+      const db = await getDB();
+      const rows = await db.getAllAsync<{
+        id: string;
+        name: string;
+        sanskrit: string;
+        category: string;
+        path: string;
+      }>(`SELECT id, name, sanskrit, category, path FROM recently_played ORDER BY played_at DESC LIMIT 10`);
+      return rows;
+    } catch {
+      return [];
+    }
+  },
+
   addRecentlyPlayed: async (item: any) => {
     if (!item) return;
+    await ensureInit();
     try {
-      let played = await storage.getRecentlyPlayed();
+      const db = await getDB();
       const itemToSave = {
-        id: item.id || Math.random().toString(),
+        id: String(item.id || Math.random().toString()),
         name: item.title || item.name || item.chalisa_name || item.vidhi_name || item.stotra_name || item.katha_name || item.aarti_name || 'Mantra',
         sanskrit: item.sanskrit || item.sanskrit_title || item.text || '',
         category: item.category || item.category_name || item.festival_category || item.deity_name || 'Divine',
-        path: item.path || 'mantra' // fallback
+        path: item.path || 'mantra'
       };
-      
-      // Prevent duplicates by ID and Name
-      played = [itemToSave, ...played.filter((p: any) => p.name !== itemToSave.name)].slice(0, 10);
-      await SecureStore.setItemAsync(RECENTLY_PLAYED_KEY, JSON.stringify(played));
+
+      await db.runAsync(
+        `INSERT OR REPLACE INTO recently_played (id, name, sanskrit, category, path, played_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          itemToSave.id,
+          itemToSave.name,
+          itemToSave.sanskrit,
+          itemToSave.category,
+          itemToSave.path,
+          Date.now(),
+        ]
+      );
     } catch {}
   },
 
-  // Jaap Log History
-  getJaapLogs: async (): Promise<{ date: string; formattedDate: string; totalChants: number; completedMalas: number }[]> => {
+  // --- Jaap Logs (90-day rolling window) ---
+  getJaapLogs: async (): Promise<JaapLogItem[]> => {
+    await ensureInit();
     try {
-      const data = await SecureStore.getItemAsync('jaapLog');
-      return data ? JSON.parse(data) : [];
+      const db = await getDB();
+      const rows = await db.getAllAsync<JaapLogItem>(
+        `SELECT date, formatted_date AS formattedDate, total_chants AS totalChants, completed_malas AS completedMalas FROM jaap_logs ORDER BY date DESC LIMIT 90`
+      );
+      return rows;
     } catch {
       return [];
     }
   },
 
   recordJaapTap: async (incrementCount: number = 1, incrementMala: number = 0) => {
+    await ensureInit();
     try {
-      const logs = await storage.getJaapLogs();
+      const db = await getDB();
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const formattedDate = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-      const existingIndex = logs.findIndex((l) => l.date === dateStr);
-      if (existingIndex >= 0) {
-        logs[existingIndex].totalChants += incrementCount;
-        logs[existingIndex].completedMalas += incrementMala;
+      const existing = await db.getFirstAsync<{ total_chants: number; completed_malas: number }>(
+        `SELECT total_chants, completed_malas FROM jaap_logs WHERE date = ?`,
+        [dateStr]
+      );
+
+      if (existing) {
+        const newChants = existing.total_chants + incrementCount;
+        const newMalas  = existing.completed_malas + incrementMala;
+        await db.runAsync(
+          `UPDATE jaap_logs SET total_chants = ?, completed_malas = ?, updated_at = ? WHERE date = ?`,
+          [newChants, newMalas, Date.now(), dateStr]
+        );
       } else {
-        logs.unshift({
-          date: dateStr,
-          formattedDate,
-          totalChants: incrementCount,
-          completedMalas: incrementMala,
-        });
+        await db.runAsync(
+          `INSERT INTO jaap_logs (date, formatted_date, total_chants, completed_malas, updated_at) VALUES (?, ?, ?, ?, ?)`,
+          [dateStr, formattedDate, incrementCount, incrementMala, Date.now()]
+        );
       }
-      await SecureStore.setItemAsync('jaapLog', JSON.stringify(logs.slice(0, 90))); // Keep last 90 days
+
+      await cleanupOldJaapLogs();
     } catch (e) {
       console.warn('Failed to record jaap log:', e);
     }
   },
 
   clearJaapLogs: async () => {
-    await SecureStore.deleteItemAsync('jaapLog');
+    await ensureInit();
+    try {
+      const db = await getDB();
+      await db.runAsync(`DELETE FROM jaap_logs`);
+    } catch {}
   }
 };
