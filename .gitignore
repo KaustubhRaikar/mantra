@@ -45,4 +45,6 @@ app-example
 .env
 tests/
 *.log
+*.md
+
 
