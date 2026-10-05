@@ -111,7 +111,7 @@ export default function SearchScreen() {
         <FlatList
           data={results}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingBottom: 20 }}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         />
