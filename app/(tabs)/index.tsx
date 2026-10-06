@@ -116,9 +116,9 @@ const SectionHeader = ({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 export default function HomeScreen() {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [isPlaying, setIsPlaying] = useState(false);
-  
+
   // Data State
+  const [isPlaying, setIsPlaying] = useState(false);
   const [dailyMantra, setDailyMantra] = useState<any>(null);
   const [featuredMantras, setFeaturedMantras] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -135,6 +135,51 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
   const { storage } = require('../../src/services/storage');
+
+  // Audio state
+  const soundRef = React.useRef<any>(null);
+
+  const toggleDailyPlay = useCallback(async () => {
+    const target = dailyMantra || DAILY_MANTRA;
+    if (!target) return;
+
+    try {
+      if (soundRef.current) {
+        if (isPlaying) {
+          await soundRef.current.pauseAsync();
+          setIsPlaying(false);
+        } else {
+          await soundRef.current.playAsync();
+          setIsPlaying(true);
+        }
+      } else {
+        const { safeCreateSound, safeSetAudioMode } = require('../../src/utils/audioPlayer');
+        await safeSetAudioMode();
+        setIsPlaying(true);
+        const { sound } = await safeCreateSound(target, (status: any) => {
+          if (status.isLoaded) {
+            setIsPlaying(status.isPlaying);
+            if (status.didJustFinish) {
+              setIsPlaying(false);
+              soundRef.current?.setPositionAsync(0);
+            }
+          }
+        });
+        soundRef.current = sound;
+      }
+    } catch (e) {
+      console.warn("Failed to play daily mantra audio:", e);
+      setIsPlaying(false);
+    }
+  }, [isPlaying, dailyMantra]);
+
+  React.useEffect(() => {
+    return () => {
+      if (soundRef.current?.unloadAsync) {
+        soundRef.current.unloadAsync().catch(() => {});
+      }
+    };
+  }, []);
 
   // Japa Mala Counter State
   const [jaapCount, setJaapCount] = useState(0);
@@ -370,7 +415,7 @@ export default function HomeScreen() {
             <View style={s.dailyActions}>
               <TouchableOpacity
                 style={s.playBtn}
-                onPress={() => setIsPlaying(!isPlaying)}
+                onPress={toggleDailyPlay}
                 activeOpacity={0.85}
               >
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={20} color="#FFF" />

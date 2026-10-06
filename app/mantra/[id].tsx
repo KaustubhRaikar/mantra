@@ -122,11 +122,6 @@ export default function MantraDetailScreen() {
   const togglePlay = useCallback(async () => {
     if (!MANTRA_DATA) return;
 
-    if (!MANTRA_DATA.audio_url) {
-      Alert.alert("Audio Notice", "Audio recording is coming soon for this mantra.");
-      return;
-    }
-
     try {
       if (soundRef.current) {
         if (isPlaying) {
@@ -135,10 +130,10 @@ export default function MantraDetailScreen() {
           await soundRef.current.playAsync();
         }
       } else {
-        // Load sound from server audio_url
+        // Load sound from server audio_url or synthesized mantra TTS audio
         setIsPlaying(true);
         const { sound } = await safeCreateSound(
-          MANTRA_DATA.audio_url,
+          MANTRA_DATA,
           onPlaybackStatusUpdate
         );
         soundRef.current = sound;
