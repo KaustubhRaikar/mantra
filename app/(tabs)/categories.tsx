@@ -22,12 +22,15 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 const { width } = Dimensions.get('window');
 
 const SUB_MENU_SECTIONS = [
+  { id: 'sub_stotras', name: 'Sacred Stotras & Sahasranama', type: 'section', subtitle: '40 Hymns, Suktas & 1008 Names', icon: 'star', color: Colors.secondary, route: '/stotra/' },
+  { id: 'sub_chalisas', name: 'Chalisa Sangrah', type: 'section', subtitle: '11 Complete Devotional Chalisas', icon: 'book', color: Colors.secondary, route: '/chalisa/' },
+  { id: 'sub_panchang', name: 'Vedic Panchang', type: 'section', subtitle: 'Daily Tithi, Nakshatra & Muhurat', icon: 'calendar', color: '#F39C12', route: '/panchang' },
+  { id: 'sub_sankalpa', name: 'Sankalpa Tracker', type: 'section', subtitle: 'Multi-Day Anushthan Goals', icon: 'ribbon', color: '#E74C3C', route: '/sankalpa/' },
+  { id: 'sub_yantra', name: 'Sacred Yantras', type: 'section', subtitle: 'Trātaka Meditation Mandalas', icon: 'aperture', color: '#9B59B6', route: '/yantra/' },
   { id: 'sub_counter', name: 'Jaap Mala Counter', type: 'section', subtitle: 'Count Mantra Chants (108 Times)', icon: 'finger-print', color: Colors.primary, route: '/(tabs)/' },
   { id: 'sub_aartis', name: 'Aartis & Hymns', type: 'section', subtitle: 'Divine Aarti Collection', icon: 'flame', color: Colors.primary, route: '/aarti/' },
   { id: 'sub_festivals', name: 'Festival Aartis', type: 'section', subtitle: 'Festive Season Special', icon: 'sparkles', color: '#A29BFE', route: '/festival_aarti/' },
-  { id: 'sub_chalisas', name: 'Chalisa Sangrah', type: 'section', subtitle: '40-Verse Hymns of Devotion', icon: 'book', color: Colors.secondary, route: '/chalisa/' },
   { id: 'sub_pooja', name: 'Pooja Vidhi', type: 'section', subtitle: 'Step-by-Step Worship Procedures', icon: 'leaf', color: '#2ECC71', route: '/pooja_vidhi/' },
-  { id: 'sub_stotras', name: 'Sacred Stotras', type: 'section', subtitle: 'Praises & Hymns of Deities', icon: 'star', color: Colors.secondary, route: '/stotra/' },
   { id: 'sub_vrat', name: 'Vrat Katha', type: 'section', subtitle: 'Fasting Stories & Rituals', icon: 'moon', color: Colors.primary, route: '/vrat_katha/' },
   { id: 'sub_upanishad', name: 'Upanishads', type: 'section', subtitle: 'Core Vedic Philosophy', icon: 'library', color: '#A29BFE', route: '/upanishad' },
 ];

@@ -24,6 +24,12 @@ export interface ParsedVidhiMeta {
   significance?: string;
 }
 
+export interface ParsedNamavaliItem {
+  number: number;
+  name: string;
+  meaning?: string;
+}
+
 export interface ParsedScripture {
   sanskritText: string;
   hindiText?: string;
@@ -32,6 +38,8 @@ export interface ParsedScripture {
   poojaSteps?: ParsedPoojaStep[];
   samagriItems?: ParsedSamagriItem[];
   vidhiMeta?: ParsedVidhiMeta;
+  namavaliItems?: ParsedNamavaliItem[];
+  isNamavali?: boolean;
 }
 
 function safeParseJson(val: any): any {
@@ -158,14 +166,38 @@ export function parseScriptureContent(data: any): ParsedScripture {
     };
   }
 
-  // 4. JSON-encoded verses array (chalisas, stotras)
+  // 4. JSON-encoded verses array or object with namavali (chalisas, stotras, sahasranamas)
   if (data.verses) {
-    const rawVerses = safeParseJson(data.verses) || (Array.isArray(data.verses) ? data.verses : null);
-    if (Array.isArray(rawVerses) && rawVerses.length > 0) {
-      const sanskritLines = rawVerses
+    const parsedPayload = safeParseJson(data.verses);
+    let rawVerses: any[] = [];
+    let namavaliItems: ParsedNamavaliItem[] = [];
+    let isNamavali = false;
+
+    if (Array.isArray(parsedPayload)) {
+      rawVerses = parsedPayload;
+    } else if (parsedPayload && typeof parsedPayload === 'object') {
+      rawVerses = Array.isArray(parsedPayload.verses) ? parsedPayload.verses : [];
+      if (Array.isArray(parsedPayload.namavali)) {
+        namavaliItems = parsedPayload.namavali.map((n: any, idx: number) => ({
+          number: typeof n.number === 'number' ? n.number : idx + 1,
+          name: typeof n === 'string' ? n : (n.name || ''),
+          meaning: n.meaning || undefined,
+        }));
+      }
+      isNamavali = Boolean(parsedPayload.is_namavali || namavaliItems.length > 0);
+    } else if (Array.isArray(data.verses)) {
+      rawVerses = data.verses;
+    }
+
+    if (rawVerses.length > 0 || namavaliItems.length > 0) {
+      let sanskritLines = rawVerses
         .map((v: any) => v.text || v.sanskrit || '')
         .filter(Boolean)
         .join('\n\n');
+
+      if (!sanskritLines && namavaliItems.length > 0) {
+        sanskritLines = namavaliItems.map((n) => `${n.number}. ${n.name}`).join('\n');
+      }
 
       const hindiLines = rawVerses
         .map((v: any) => v.translation_hindi || '')
@@ -187,6 +219,8 @@ export function parseScriptureContent(data: any): ParsedScripture {
         hindiText: hindiLines || undefined,
         englishMeaning: englishLines || data.description || undefined,
         transliteration: translitLines || undefined,
+        namavaliItems: namavaliItems.length > 0 ? namavaliItems : undefined,
+        isNamavali,
       };
     } else if (typeof data.verses === 'string') {
       return {

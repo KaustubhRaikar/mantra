@@ -38,6 +38,8 @@ export default function ChalisaDetailScreen() {
       audioUrl={data?.audio_url}
       categoryPath="chalisa"
       loading={loading}
+      namavaliItems={parsed.namavaliItems}
+      isNamavali={parsed.isNamavali}
     />
   );
 }

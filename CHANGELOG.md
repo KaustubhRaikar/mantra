@@ -4,6 +4,61 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.5.0] - 2026-10-25
+
+### 🕉️ Canonical Treasury Expansion & Interactive Archana (नामार्चन) Mode
+
+#### 🏛️ 1. Database Ingestion on Hostinger Cloud MySQL (`u885706413_mantra`)
+- **Pancha-Devata Sahasranama Stotrams (5 Stotras, 1008 Names Each):**
+  - *Shri Vishnu Sahasranama Stotram* (Mahabharata Anushasana Parva / Veda Vyasa) with complete Dhyana, Shlokas, Phalasruti, and 1,000 structured Namavali offerings.
+  - *Shri Shiva Sahasranama Stotram* (Mahabharata / Shiva Purana) with 1008 divine names of Mahadeva.
+  - *Shri Lalita Sahasranama Stotram* (Brahmanda Purana / Hayagriva-Agastya Samvada) with Sri Vidya sacred names.
+  - *Shri Ganesha Sahasranama Stotram* (Ganesha Purana) for obstacle destruction and wisdom.
+  - *Shri Gopal Sahasranama Stotram* (Sammohana Tantra) for Santana Gopala and divine love.
+- **108 Ashtottara Shatanamavalis (5 Full 108-Name Chants):**
+  - *Shri Vishnu 108 Ashtottara Shatanamavali* with individual mantra offerings and Hindi meanings.
+  - *Shri Shiva 108 Ashtottara Shatanamavali* for Bilva-archana and Pradosha worship.
+  - *Shri Ganapati 108 Ashtottara Shatanamavali* for Durva offering and auspicious beginnings.
+  - *Shri Durga 108 Ashtottara Shatanamavali* (Shatanam Stotram) for Navratri Kumkuma-archana.
+  - *Shri Krishna 108 Ashtottara Shatanamavali* for Tulasi-patra devotion.
+- **Maha Vedic Suktas (7 Sovereign Hymns):**
+  - *Purusha Suktam* (Rigveda 10.90) — 16 complete Riks celebrating the Supreme Cosmic Person.
+  - *Sri Suktam* (Rigveda Khila) — 16 complete Riks invoking Goddess Mahalakshmi and dispelling Alakshmi.
+  - *Sri Rudram (Namakam & Chamakam)* — Sacred Krishna Yajurveda mantras for peace and prosperity.
+  - *Narayana Suktam* (Taittiriya Aranyaka) — Cosmic meditation on the Divine Light within the heart lotus.
+  - *Medha Suktam* (Rigveda / Yajurveda) — Vedic invocations for sharp intellect, memory, and wisdom.
+  - *Durga Suktam* (Mahanarayana Upanishad) — Deliverance across the ocean of worldly trials.
+  - *Ayushya Suktam* (Taittiriya Aranyaka) — Vedic prayer for longevity, vital prana, and radiant health.
+- **Protective Armor Kavachas (6 Infallible Shields):**
+  - *Narayana Kavacham* (Srimad Bhagavatam 6.8 / Vishvarupa) — Omnipresent Vaishnava armor.
+  - *Narasimha Kavacham* (Brahmanda Purana / Prahlada Maharaja) — Invincible protection against dark energies.
+  - *Devi Kavacham / Chandi Kavacham* (Durga Saptashati) — Complete anatomical and directional armor by the 9 Durgas.
+  - *Shiva Kavacham* (Skanda Purana / Rishi Bharadvaja) — Mahamrityunjaya-grade protection.
+  - *Hanuman Vadavanala Stotram & Bajrang Baan* (Vibhishana Kritam) — Fire of protection destroying calamities.
+  - *Surya Kavacham* (Yajnavalkya Rishi) — Dispeller of illnesses, eye ailments, and conferring vitality.
+- **Revered Ashtakams (7 Sacred Octets):**
+  - *Madhurashtakam* (Jagadguru Shri Vallabhacharya) — "Adharam madhuram vadanam madhuram".
+  - *Lingashtakam* (Traditional) — "Brahma Murari Surarchita Lingam".
+  - *Bilvashtakam* (Traditional) — "Tridalam trigunakaram trinetram cha triyayudham".
+  - *Achyutashtakam* (Adi Shankaracharya) — "Achyutam keshavam rama narayanam".
+  - *Kalabhairavashtakam* (Adi Shankaracharya) — "Devaraja sevyamana pavananghripankajam".
+  - *Sankashtanashana Ganesha Stotram* (Narada Purana) — 12 obstacle-destroying names of Vinayaka.
+  - *Shri Annapurna Ashtakam* (Adi Shankaracharya) — "Nityanandakaree varabhayakaree".
+- **Complete Missing Chalisas (5 Sacred Chalisas):**
+  - *Shri Krishna Chalisa*, *Shri Shani Chalisa*, *Shri Saraswati Chalisa*, *Shri Surya Chalisa*, and *Shri Bhairav Chalisa*.
+- **Nitya Karma Daily Mantras (7 Core Mantras in `mantras` Table):**
+  - *Pratah Karadarshanam*, *Prithvi Kshama Prarthana*, *Snana Mantra*, *Deepa Jyoti Mantra*, *Bhojana Mantra*, *Sarve Bhavantu Sukhinah*, and *Shayan Mantra*.
+- **Database Metrics:** Elevated `stotra` table from 10 to **40** canonical hymns, `chalisa` from 6 to **11**, and `mantras` to **2,040** rows.
+
+#### 🌸 2. Interactive Archana (नामार्चन) Mode in ScriptureReader
+- **Dual-Mode Switcher (`src/components/ScriptureReader.tsx`):** Added `[ 📖 श्लोक पाठ | 🌸 नामार्चन ]` tabs for Sahasranama and 108-Namavali scriptures.
+- **Pushpanjali Offering Progress:** Real-time visual progress counter (`X / 108 नाम पुष्प समर्पित`) with gold-gradient progress bar.
+- **Tactile Pushpanjali Buttons:** Each sacred name card includes individual audio chant trigger and a flower offering toggle (`💮 अर्पण` / `🌸 समर्पित`) with golden radiant glow.
+- **Quick Action Bar:** Features `🌸 सर्व समर्पणम् (Offer All)` and `↺ पुनः आरम्भ (Reset)` buttons for devotees during ritual worship.
+- **Curated Stotra Catalog Filtering (`app/stotra/index.tsx`):** Category filter chips (`समस्त`, `सहस्रनाम`, `१०८ नामावली`, `वैदिक सूक्त`, `रक्षा कवच`, `अष्टकम्`) and real-time instant search.
+
+---
+
 ## 🚀 [2.4.0] - 2026-10-24
 
 ### 🌌 Horizon Expansion: Panchang, Sankalpa Tracker & Yantra Trātaka Engine

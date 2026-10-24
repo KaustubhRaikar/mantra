@@ -38,6 +38,8 @@ export default function StotraDetailScreen() {
       audioUrl={data?.audio_url}
       categoryPath="stotra"
       loading={loading}
+      namavaliItems={parsed.namavaliItems}
+      isNamavali={parsed.isNamavali}
     />
   );
 }

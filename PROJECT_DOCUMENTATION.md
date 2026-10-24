@@ -17,7 +17,8 @@
 * **Interactive Devotion Tools:** Tactile **Mantra Jaap / Japa Mala Counter Orb** (`JapaOrb.tsx`) with haptic feedback (`expo-haptics`), target mala goals (21, 54, 108, 1008), radial pulsing animations, and date-wise persistent logging.
 * **Offline Devotional Storage Partitioning:** Partitioned storage architecture using local SQLite (`mantra_devotion.db`) for Jaap counts, favorite bookmarks, and search history, with `expo-secure-store` reserved strictly for hardware-backed auth tokens and device UUIDs.
 * **Smart Offline Audio Engine:** Built on `expo-audio` with offline native `expo-speech` (`hi-IN`) devotional voice synthesis fallback for Sanskrit Devanagari pronunciation when custom studio recordings are absent (zero third-party web scraping).
-* **2-Step Passwordless OTP Authentication:** Login using email-based 6-digit OTP verification bound with cryptographically generated device fingerprints and HMAC-SHA256 server verification with constant-time `hash_equals()`.
+* **Canonical Treasury & Interactive Archana (नामार्चन) Mode:** 40 live canonical Stotras & Suktas (including Pancha-Devata Sahasranamas, 108 Ashtottara Namavalis, Maha Vedic Suktas, Protective Kavachas, and Revered Ashtakams), 11 complete Chalisas, and 2,040 mantras on Hostinger Cloud MySQL (`u885706413_mantra`). Supported by dual-mode `[ 📖 श्लोक पाठ | 🌸 नामार्चन ]` ScriptureReader with tap-to-offer Pushpanjali counters and natural Indic TTS vocalization.
+* **On-Device Astronomical Panchang & Sacred Yantras:** Real-time ephemeris calculator for Tithi, Nakshatra, Yoga, Brahma Muhurta, Rahu Kaal, and Choghadiya, accompanied by vector sacred geometry (Sri Yantra, Shiva Yantra, Gayatri Yantra) for Trātaka meditation sessions.
 * **DPDP Act 2023 & Google Play Compliance:** Granular consent toggles on first launch, in-app export & deletion flows, and public web deletion portal (`https://mantra.aarambhtech.in/delete-account.html`).
 
 ---
