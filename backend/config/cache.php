@@ -4,7 +4,7 @@
  * Provides:
  * 1. Pre-execution file cache lookup with HTTP 304 ETag validation.
  * 2. Output buffer capture to cache valid JSON responses automatically.
- * 3. Atomic cache writes with LOCK_EX.
+ * 3. Enforces private, must-revalidate cache control so origin sliding window rate limiting is always enforced.
  */
 
 function initApiCache(int $ttlSeconds = 3600): void {
@@ -29,11 +29,11 @@ function initApiCache(int $ttlSeconds = 3600): void {
     $cacheKey = md5(($_SERVER['SCRIPT_NAME'] ?? '') . '?' . http_build_query($_GET));
     $cacheFile = $cacheDir . '/' . $cacheKey . '.json';
 
-    // 1. Check if fresh cache exists
+    // 1. Check if fresh server cache exists
     if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $ttlSeconds) {
         $etag = '"' . md5_file($cacheFile) . '"';
         header("ETag: " . $etag);
-        header("Cache-Control: public, max-age=" . $ttlSeconds . ", stale-while-revalidate=86400");
+        header("Cache-Control: private, no-cache, must-revalidate");
         header("X-Cache: HIT");
 
         // Conditional GET check
@@ -57,7 +57,7 @@ function initApiCache(int $ttlSeconds = 3600): void {
                 @rename($tmpFile, $cacheFile);
             }
             header("X-Cache: MISS");
-            header("Cache-Control: public, max-age=" . $ttlSeconds . ", stale-while-revalidate=86400");
+            header("Cache-Control: private, no-cache, must-revalidate");
         }
         return $buffer;
     });
