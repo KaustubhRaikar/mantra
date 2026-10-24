@@ -61,8 +61,8 @@ export function JapaOrb({
       {/* Header with Title and Reset */}
       <View style={styles.headerRow}>
         <View style={styles.titleBadge}>
-          <Text style={styles.omMini}>ॐ</Text>
-          <Text style={styles.titleText}>Sacred Japa Mala</Text>
+          <Text style={[styles.omMini, { color: colors.primary }]}>ॐ</Text>
+          <Text style={[styles.titleText, { color: colors.text }]}>Sacred Japa Mala</Text>
         </View>
 
         <TouchableOpacity
@@ -72,24 +72,36 @@ export function JapaOrb({
           accessibilityRole="button"
           accessibilityLabel="Reset mala count"
         >
-          <Ionicons name="refresh" size={16} color={Colors.secondary} />
-          <Text style={styles.resetText}>Reset</Text>
+          <Ionicons name="refresh" size={16} color={isDark ? colors.secondary : colors.primary} />
+          <Text style={[styles.resetText, { color: isDark ? colors.secondary : colors.primary }]}>Reset</Text>
         </TouchableOpacity>
       </View>
 
       {/* Goal Selector Pills */}
       <View style={styles.goalPillsRow}>
-        <Text style={styles.goalLabel}>Goal:</Text>
+        <Text style={[styles.goalLabel, { color: colors.textSecondary }]}>Goal:</Text>
         {[21, 54, 108, 1008].map((g) => {
           const isActive = goal === g;
           return (
             <TouchableOpacity
               key={g}
-              style={[styles.goalPill, isActive && styles.goalPillActive]}
+              style={[
+                styles.goalPill,
+                {
+                  backgroundColor: isActive
+                    ? (isDark ? 'rgba(255, 153, 51, 0.25)' : 'rgba(230, 126, 34, 0.18)')
+                    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                  borderColor: isActive ? colors.primary : colors.border,
+                }
+              ]}
               onPress={() => onSelectGoal(g)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.goalPillText, isActive && styles.goalPillTextActive]}>
+              <Text style={[
+                styles.goalPillText,
+                { color: isActive ? colors.primary : colors.textSecondary },
+                isActive && { fontWeight: '700' }
+              ]}>
                 {g}
               </Text>
             </TouchableOpacity>
@@ -120,7 +132,7 @@ export function JapaOrb({
               ]}>
                 <Text style={styles.orbOmSymbol}>ॐ</Text>
                 <Text style={[styles.orbCountText, { color: colors.text }]}>{count}</Text>
-                <Text style={styles.orbGoalText}>/ {goal}</Text>
+                <Text style={[styles.orbGoalText, { color: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(23, 20, 38, 0.65)' }]}>/ {goal}</Text>
                 <View style={styles.tapPrompt}>
                   <Text style={styles.tapPromptText}>TAP JAAP</Text>
                 </View>
@@ -133,10 +145,10 @@ export function JapaOrb({
       {/* Mala Milestones & Completed Streak */}
       <View style={styles.footerRow}>
         <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+          <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }]}>
+            <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: colors.primary }]} />
           </View>
-          <Text style={styles.progressLabel}>{progressPct}% of Mala</Text>
+          <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>{progressPct}% of Mala</Text>
         </View>
 
         {completedMalas > 0 ? (

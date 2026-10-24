@@ -10,9 +10,11 @@ import { ScriptureCard } from '../../src/components/ScriptureCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { api } from '../../src/services/api';
 import { storage } from '../../src/services/storage';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { Mantra } from '../../src/types/navigation';
 
 export default function SearchScreen() {
+  const { isDark, colors } = useTheme();
   const [query, setQuery] = useState('');
   const [mantras, setMantras] = useState<Mantra[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,12 +76,18 @@ export default function SearchScreen() {
       <View style={styles.topHeader}>
         <TouchableOpacity
           onPress={() => router.back()}
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            {
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+              borderColor: colors.border,
+            }
+          ]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.searchBarWrapper}>
@@ -95,16 +103,22 @@ export default function SearchScreen() {
       {/* Recent Searches */}
       {query.trim() === '' && recentSearches.length > 0 ? (
         <View style={styles.recentContainer}>
-          <Text style={styles.recentHeading}>Recent Searches</Text>
+          <Text style={[styles.recentHeading, { color: colors.textSecondary }]}>Recent Searches</Text>
           <View style={styles.recentWrap}>
             {recentSearches.map((term, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.recentChip}
+                style={[
+                  styles.recentChip,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                    borderColor: colors.border,
+                  }
+                ]}
                 onPress={() => handleRecentPress(term)}
               >
-                <Ionicons name="time-outline" size={14} color={Colors.primary} />
-                <Text style={styles.recentText}>{term}</Text>
+                <Ionicons name="time-outline" size={14} color={colors.primary} />
+                <Text style={[styles.recentText, { color: colors.text }]}>{term}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -114,8 +128,8 @@ export default function SearchScreen() {
       {/* Results Content */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Searching sacred catalog...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Searching sacred catalog...</Text>
         </View>
       ) : query.trim() !== '' && results.length === 0 ? (
         <EmptyState

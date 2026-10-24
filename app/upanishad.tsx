@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing } from '../src/constants/theme';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { CosmicBackground } from '../src/components/CosmicBackground';
 import { GlassHeader } from '../src/components/GlassHeader';
 import { ScriptureCard } from '../src/components/ScriptureCard';
@@ -9,6 +10,7 @@ import { api } from '../src/services/api';
 import { Mantra } from '../src/types/navigation';
 
 export default function UpanishadScreen() {
+  const { colors } = useTheme();
   const [mantras, setMantras] = useState<Mantra[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -30,7 +32,7 @@ export default function UpanishadScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <CosmicBackground />
       <GlassHeader
         title="Sacred Upanishads"
@@ -39,7 +41,7 @@ export default function UpanishadScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <FlatList

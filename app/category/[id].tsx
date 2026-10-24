@@ -7,10 +7,12 @@ import { GlassHeader } from '../../src/components/GlassHeader';
 import { ScriptureCard } from '../../src/components/ScriptureCard';
 import { EmptyState } from '../../src/components/EmptyState';
 import { api } from '../../src/services/api';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { Mantra } from '../../src/types/navigation';
 
 export default function CategoryScreen() {
   const { id, name } = useLocalSearchParams();
+  const { colors } = useTheme();
   const [mantras, setMantras] = useState<Mantra[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -43,7 +45,7 @@ export default function CategoryScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : mantras.length > 0 ? (
         <FlatList

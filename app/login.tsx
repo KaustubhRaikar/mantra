@@ -263,17 +263,23 @@ export default function LoginScreen() {
                 {step === 'email' ? (
                   <>
                     <View style={styles.stepHeaderRow}>
-                      <Ionicons name="sparkles" size={15} color={Colors.primary} />
-                      <Text style={styles.stepLabel}>Devotee Sign In</Text>
+                      <Ionicons name="sparkles" size={15} color={colors.primary} />
+                      <Text style={[styles.stepLabel, { color: isDark ? colors.secondary : colors.primary }]}>Devotee Sign In</Text>
                     </View>
 
-                    <Text style={styles.label}>Full Name</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <Text style={[styles.label, { color: colors.text }]}>Full Name</Text>
+                    <View style={[
+                      styles.inputWrapper,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                        borderColor: colors.border,
+                      }
+                    ]}>
+                      <Ionicons name="person-outline" size={18} color={colors.primary} style={styles.inputIcon} />
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text }]}
                         placeholder="Enter your sacred name"
-                        placeholderTextColor={Colors.textMuted}
+                        placeholderTextColor={colors.textMuted}
                         value={fullName}
                         onChangeText={(t) => {
                           setFullName(t);
@@ -285,13 +291,19 @@ export default function LoginScreen() {
                       />
                     </View>
 
-                    <Text style={styles.label}>Email Address</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <Text style={[styles.label, { color: colors.text }]}>Email Address</Text>
+                    <View style={[
+                      styles.inputWrapper,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                        borderColor: colors.border,
+                      }
+                    ]}>
+                      <Ionicons name="mail-outline" size={18} color={colors.primary} style={styles.inputIcon} />
                       <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: colors.text }]}
                         placeholder="devotee@sanctuary.in"
-                        placeholderTextColor={Colors.textMuted}
+                        placeholderTextColor={colors.textMuted}
                         value={email}
                         onChangeText={(t) => {
                           setEmail(t);
@@ -315,9 +327,9 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.dividerRow}>
-                      <View style={styles.dividerLine} />
-                      <Text style={styles.dividerText}>OR</Text>
-                      <View style={styles.dividerLine} />
+                      <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                      <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
+                      <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                     </View>
 
                     <SpiritualButton
@@ -335,8 +347,8 @@ export default function LoginScreen() {
                         disabled={loading}
                         accessibilityRole="button"
                       >
-                        <Ionicons name="flash-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
-                        <Text style={styles.quickEntryText}>Direct Devotee Access (Instant)</Text>
+                        <Ionicons name="flash-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+                        <Text style={[styles.quickEntryText, { color: colors.primary }]}>Direct Devotee Access (Instant)</Text>
                       </TouchableOpacity>
                     )}
 
@@ -346,7 +358,7 @@ export default function LoginScreen() {
                       accessibilityRole="link"
                       accessibilityLabel="Read Privacy Policy"
                     >
-                      <Text style={styles.policyText}>
+                      <Text style={[styles.policyText, { color: colors.textSecondary }]}>
                         Protected under DPDP Act 2023 • Sacred Data Covenant
                       </Text>
                     </TouchableOpacity>
@@ -359,27 +371,34 @@ export default function LoginScreen() {
                       accessibilityRole="button"
                       accessibilityLabel="Change email address"
                     >
-                      <Ionicons name="chevron-back" size={16} color={Colors.primary} />
-                      <Text style={styles.backText}>Change Email</Text>
+                      <Ionicons name="chevron-back" size={16} color={colors.primary} />
+                      <Text style={[styles.backText, { color: colors.primary }]}>Change Email</Text>
                     </TouchableOpacity>
 
                     <View style={styles.stepHeaderRow}>
-                      <Ionicons name="shield-checkmark" size={15} color={Colors.secondary} />
-                      <Text style={[styles.stepLabel, { color: Colors.secondary }]}>Step 2: Enter Verification Code</Text>
+                      <Ionicons name="shield-checkmark" size={15} color={isDark ? colors.secondary : colors.primary} />
+                      <Text style={[styles.stepLabel, { color: isDark ? colors.secondary : colors.primary }]}>Step 2: Enter Verification Code</Text>
                     </View>
 
-                    <Text style={styles.otpHint}>
+                    <Text style={[styles.otpHint, { color: colors.textSecondary }]}>
                       We sent a 6-digit verification code to{'\n'}
-                      <Text style={styles.emailHighlight}>{email}</Text>
+                      <Text style={[styles.emailHighlight, { color: colors.primary }]}>{email}</Text>
                     </Text>
 
-                    <Text style={styles.label}>6-Digit Verification Code</Text>
-                    <View style={[styles.inputWrapper, styles.otpWrapper]}>
-                      <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <Text style={[styles.label, { color: colors.text }]}>6-Digit Verification Code</Text>
+                    <View style={[
+                      styles.inputWrapper,
+                      styles.otpWrapper,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                        borderColor: colors.border,
+                      }
+                    ]}>
+                      <Ionicons name="key-outline" size={18} color={colors.primary} style={styles.inputIcon} />
                       <TextInput
-                        style={[styles.input, styles.otpInput]}
+                        style={[styles.input, styles.otpInput, { color: colors.text }]}
                         placeholder="• • • • • •"
-                        placeholderTextColor={Colors.textMuted}
+                        placeholderTextColor={colors.textMuted}
                         value={otp}
                         onChangeText={(t) => {
                           setOtp(t.replace(/\D/g, '').slice(0, 6));
@@ -403,9 +422,9 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.testNoteBox}>
-                      <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} style={{ marginRight: 4 }} />
-                      <Text style={styles.testNoteText}>
-                        Offline / Sandbox code: <Text style={styles.testNoteCode}>108108</Text>
+                      <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} style={{ marginRight: 4 }} />
+                      <Text style={[styles.testNoteText, { color: colors.textMuted }]}>
+                        Offline / Sandbox code: <Text style={[styles.testNoteCode, { color: colors.primary }]}>108108</Text>
                       </Text>
                     </View>
 

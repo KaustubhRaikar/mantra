@@ -9,8 +9,11 @@ import { GlassCard } from '../src/components/GlassCard';
 import { SpiritualButton } from '../src/components/SpiritualButton';
 import { consentManager } from '../src/services/consentManager';
 
+import { useTheme } from '../src/contexts/ThemeContext';
+
 export default function ConsentScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [analytics, setAnalytics] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [ai, setAi] = useState(true);
@@ -50,30 +53,30 @@ export default function ConsentScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.iconContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="shield-checkmark" size={38} color={Colors.primary} />
+            <Ionicons name="shield-checkmark" size={38} color={colors.primary} />
           </View>
         </View>
 
-        <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+        <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
           Your Spiritual Privacy
         </Text>
-        <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
           In accordance with the Digital Personal Data Protection Act 2023, you retain sovereign control over your data.
         </Text>
 
         {/* Devotional Notifications */}
         <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleTitle}>Devotional Notifications</Text>
-            <Text style={styles.toggleDesc}>
+            <Text style={[styles.toggleTitle, { color: colors.text }]}>Devotional Notifications</Text>
+            <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>
               Daily Brahma Muhurta prayer reminders & Sandhya Sadhana alerts.
             </Text>
           </View>
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.primary + '80' }}
-            thumbColor={notifications ? Colors.primary : '#888'}
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.primary + '80' }}
+            thumbColor={notifications ? colors.primary : '#888'}
             accessibilityLabel="Toggle devotional notifications"
           />
         </GlassCard>
@@ -81,16 +84,16 @@ export default function ConsentScreen() {
         {/* AI Guidance */}
         <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleTitle}>Sanskrit Pronunciation AI</Text>
-            <Text style={styles.toggleDesc}>
+            <Text style={[styles.toggleTitle, { color: colors.text }]}>Sanskrit Pronunciation AI</Text>
+            <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>
               Enable AI pronunciation guidance for authentic Vedic recitation.
             </Text>
           </View>
           <Switch
             value={ai}
             onValueChange={setAi}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.secondary + '80' }}
-            thumbColor={ai ? Colors.secondary : '#888'}
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.secondary + '80' }}
+            thumbColor={ai ? colors.secondary : '#888'}
             accessibilityLabel="Toggle Sanskrit pronunciation AI"
           />
         </GlassCard>
@@ -98,16 +101,16 @@ export default function ConsentScreen() {
         {/* App Reliability */}
         <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleTitle}>Telemetry & Reliability</Text>
-            <Text style={styles.toggleDesc}>
+            <Text style={[styles.toggleTitle, { color: colors.text }]}>Telemetry & Reliability</Text>
+            <Text style={[styles.toggleDesc, { color: colors.textSecondary }]}>
               Anonymous error telemetry to ensure zero audio latency and app stability.
             </Text>
           </View>
           <Switch
             value={analytics}
             onValueChange={setAnalytics}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.primary + '80' }}
-            thumbColor={analytics ? Colors.primary : '#888'}
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.primary + '80' }}
+            thumbColor={analytics ? colors.primary : '#888'}
             accessibilityLabel="Toggle performance telemetry"
           />
         </GlassCard>

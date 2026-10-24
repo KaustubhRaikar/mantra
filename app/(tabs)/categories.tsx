@@ -17,6 +17,7 @@ import { GlassCard } from '../../src/components/GlassCard';
 import { SearchBar } from '../../src/components/SearchBar';
 import { useRouter } from 'expo-router';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ type FilterChip = 'all' | 'deities' | 'sections';
 
 export default function CategoriesScreen() {
   const router = useRouter();
+  const { isDark, colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterChip, setFilterChip] = useState<FilterChip>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -56,18 +58,41 @@ export default function CategoriesScreen() {
   }, []);
 
   const formattedDeities = useMemo(() => {
-    return categories.map((cat) => {
+    const seenNames = new Set<string>();
+    const uniqueDeities: any[] = [];
+    const collisionNames = new Set([
+      'aartis',
+      'aarti',
+      'chalisas',
+      'chalisa',
+      'pooja vidhi',
+      'stotras',
+      'stotra',
+      'vrat katha',
+      'upanishads',
+      'upanishad',
+    ]);
+
+    for (const cat of categories) {
+      if (!cat?.name) continue;
+      const normalized = cat.name.trim().toLowerCase();
+      if (seenNames.has(normalized)) continue;
+      if (collisionNames.has(normalized)) continue;
+      seenNames.add(normalized);
+
       const { icon, color } = getCategoryDisplayProps(cat.name);
-      return {
+      uniqueDeities.push({
         id: 'deity_' + cat.id,
         rawId: cat.id,
-        name: cat.name,
+        name: cat.name.trim(),
         type: 'deity',
         subtitle: `${cat.count || 12}+ Sacred Mantras`,
         icon,
         color,
-      };
-    });
+      });
+    }
+
+    return uniqueDeities;
   }, [categories]);
 
   const displayedItems = useMemo(() => {
@@ -113,12 +138,18 @@ export default function CategoriesScreen() {
       >
         {/* ── Hero Header ── */}
         <GlassCard style={styles.heroCard} glow>
-          <View style={styles.heroBadge}>
-            <Ionicons name="sparkles" size={14} color={Colors.secondary} />
-            <Text style={styles.heroBadgeText}>Sacred Catalog</Text>
+          <View style={[
+            styles.heroBadge,
+            {
+              backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)',
+              borderColor: isDark ? 'rgba(255, 153, 51, 0.3)' : 'rgba(230, 126, 34, 0.35)',
+            }
+          ]}>
+            <Ionicons name="sparkles" size={14} color={isDark ? colors.secondary : colors.primary} />
+            <Text style={[styles.heroBadgeText, { color: isDark ? colors.secondary : colors.primary }]}>Sacred Catalog</Text>
           </View>
-          <Text style={styles.heroTitle}>Menu & Categories</Text>
-          <Text style={styles.heroSub}>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Menu & Categories</Text>
+          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>
             Discover Mantras, Aartis, Chalisas, Stotras & Upanishads
           </Text>
 
@@ -139,18 +170,27 @@ export default function CategoriesScreen() {
             contentContainerStyle={styles.chipScroll}
           >
             <TouchableOpacity
-              style={[styles.chip, filterChip === 'all' && styles.chipActive]}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: filterChip === 'all'
+                    ? colors.primary
+                    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                  borderColor: filterChip === 'all' ? colors.primary : colors.border,
+                }
+              ]}
               onPress={() => setFilterChip('all')}
               accessibilityRole="button"
             >
               <Ionicons
                 name="grid-outline"
                 size={14}
-                color={filterChip === 'all' ? '#0C0A1A' : Colors.textSecondary}
+                color={filterChip === 'all' ? '#0C0A1A' : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.chipText,
+                  { color: filterChip === 'all' ? '#0C0A1A' : colors.textSecondary },
                   filterChip === 'all' && styles.chipTextActive,
                 ]}
               >
@@ -161,7 +201,12 @@ export default function CategoriesScreen() {
             <TouchableOpacity
               style={[
                 styles.chip,
-                filterChip === 'sections' && styles.chipActive,
+                {
+                  backgroundColor: filterChip === 'sections'
+                    ? colors.primary
+                    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                  borderColor: filterChip === 'sections' ? colors.primary : colors.border,
+                }
               ]}
               onPress={() => setFilterChip('sections')}
               accessibilityRole="button"
@@ -169,11 +214,12 @@ export default function CategoriesScreen() {
               <Ionicons
                 name="layers-outline"
                 size={14}
-                color={filterChip === 'sections' ? '#0C0A1A' : Colors.textSecondary}
+                color={filterChip === 'sections' ? '#0C0A1A' : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.chipText,
+                  { color: filterChip === 'sections' ? '#0C0A1A' : colors.textSecondary },
                   filterChip === 'sections' && styles.chipTextActive,
                 ]}
               >
@@ -182,18 +228,27 @@ export default function CategoriesScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.chip, filterChip === 'deities' && styles.chipActive]}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: filterChip === 'deities'
+                    ? colors.primary
+                    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                  borderColor: filterChip === 'deities' ? colors.primary : colors.border,
+                }
+              ]}
               onPress={() => setFilterChip('deities')}
               accessibilityRole="button"
             >
               <Ionicons
                 name="flame-outline"
                 size={14}
-                color={filterChip === 'deities' ? '#0C0A1A' : Colors.textSecondary}
+                color={filterChip === 'deities' ? '#0C0A1A' : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.chipText,
+                  { color: filterChip === 'deities' ? '#0C0A1A' : colors.textSecondary },
                   filterChip === 'deities' && styles.chipTextActive,
                 ]}
               >
@@ -204,7 +259,13 @@ export default function CategoriesScreen() {
 
           {/* Toggle Grid / List */}
           <TouchableOpacity
-            style={styles.viewToggleBtn}
+            style={[
+              styles.viewToggleBtn,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                borderColor: colors.border,
+              }
+            ]}
             onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
             accessibilityRole="button"
             accessibilityLabel="Toggle list and grid view"
@@ -212,7 +273,7 @@ export default function CategoriesScreen() {
             <Ionicons
               name={viewMode === 'grid' ? 'list' : 'grid'}
               size={20}
-              color={Colors.primary}
+              color={colors.primary}
             />
           </TouchableOpacity>
         </View>
@@ -220,14 +281,14 @@ export default function CategoriesScreen() {
         {/* ── Content Grid / List ── */}
         {loading ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.loadingText}>Loading Sacred Categories...</Text>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading Sacred Categories...</Text>
           </View>
         ) : displayedItems.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons name="search" size={48} color={Colors.textSecondary} />
-            <Text style={styles.emptyTitle}>No matching categories</Text>
-            <Text style={styles.emptySub}>
+            <Ionicons name="search" size={48} color={colors.textSecondary} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No matching categories</Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
               Try searching with another keyword like "Shiva", "Aarti", or "Chalisa"
             </Text>
           </View>
@@ -251,10 +312,10 @@ export default function CategoriesScreen() {
                 >
                   <Ionicons name={item.icon} size={26} color={item.color} />
                 </View>
-                <Text style={styles.gridTitle} numberOfLines={1}>
+                <Text style={[styles.gridTitle, { color: colors.text }]} numberOfLines={1}>
                   {item.name}
                 </Text>
-                <Text style={styles.gridSub} numberOfLines={2}>
+                <Text style={[styles.gridSub, { color: colors.textSecondary }]} numberOfLines={2}>
                   {item.subtitle}
                 </Text>
 
@@ -289,13 +350,13 @@ export default function CategoriesScreen() {
                   <Ionicons name={item.icon} size={24} color={item.color} />
                 </View>
                 <View style={styles.listInfo}>
-                  <Text style={styles.listTitle}>{item.name}</Text>
-                  <Text style={styles.listSub}>{item.subtitle}</Text>
+                  <Text style={[styles.listTitle, { color: colors.text }]}>{item.name}</Text>
+                  <Text style={[styles.listSub, { color: colors.textSecondary }]}>{item.subtitle}</Text>
                 </View>
                 <Ionicons
                   name="chevron-forward"
                   size={18}
-                  color={Colors.textMuted}
+                  color={colors.textMuted}
                 />
               </GlassCard>
             ))}

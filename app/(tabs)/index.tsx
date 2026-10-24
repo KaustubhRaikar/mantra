@@ -194,7 +194,7 @@ export default function HomeScreen() {
 
   const renderSectionHeader = (title: string, onSeeAll?: () => void) => (
     <View style={styles.sectionHeaderRow}>
-      <Text style={styles.sectionHeaderTitle}>{title}</Text>
+      <Text style={[styles.sectionHeaderTitle, { color: colors.text }]}>{title}</Text>
       {onSeeAll ? (
         <TouchableOpacity
           onPress={onSeeAll}
@@ -202,7 +202,7 @@ export default function HomeScreen() {
           accessibilityRole="button"
           accessibilityLabel={`See all ${title}`}
         >
-          <Text style={styles.seeAllText}>See all</Text>
+          <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -225,8 +225,14 @@ export default function HomeScreen() {
         }}
       >
         <View style={styles.badgeRow}>
-          <View style={styles.categoryChip}>
-            <Text style={styles.categoryChipText}>{cat}</Text>
+          <View style={[
+            styles.categoryChip,
+            {
+              backgroundColor: isDark ? 'rgba(255, 153, 51, 0.12)' : 'rgba(230, 126, 34, 0.10)',
+              borderColor: isDark ? 'rgba(255, 153, 51, 0.25)' : 'rgba(230, 126, 34, 0.30)',
+            }
+          ]}>
+            <Text style={[styles.categoryChipText, { color: isDark ? colors.secondary : colors.primary }]}>{cat}</Text>
           </View>
 
           <TouchableOpacity
@@ -241,14 +247,14 @@ export default function HomeScreen() {
             <Ionicons
               name={fav ? 'heart' : 'heart-outline'}
               size={22}
-              color={fav ? Colors.primary : Colors.textMuted}
+              color={fav ? colors.primary : colors.textMuted}
             />
           </TouchableOpacity>
         </View>
 
         {sanskrit ? (
           <Text
-            style={styles.featuredSanskrit}
+            style={[styles.featuredSanskrit, { color: colors.primary }]}
             numberOfLines={1}
             maxFontSizeMultiplier={1.3}
           >
@@ -257,22 +263,22 @@ export default function HomeScreen() {
         ) : null}
 
         <Text
-          style={styles.featuredTitle}
+          style={[styles.featuredTitle, { color: colors.text }]}
           numberOfLines={1}
           maxFontSizeMultiplier={1.3}
         >
           {title}
         </Text>
 
-        <Text style={styles.featuredGod} numberOfLines={1}>
+        <Text style={[styles.featuredGod, { color: colors.textSecondary }]} numberOfLines={1}>
           {god}
         </Text>
 
         <View style={styles.cardPlayRow}>
-          <View style={styles.playBadge}>
+          <View style={[styles.playBadge, { backgroundColor: colors.primary }]}>
             <Ionicons name="play" size={14} color="#0C0A1A" />
           </View>
-          <Text style={styles.listenText}>Listen & Recite</Text>
+          <Text style={[styles.listenText, { color: colors.primary }]}>Listen & Recite</Text>
         </View>
       </GlassCard>
     );
@@ -304,8 +310,8 @@ export default function HomeScreen() {
               resizeMode="contain"
             />
             <View>
-              <Text style={styles.greetingText}>नमस्ते 🙏</Text>
-              <Text style={styles.greetingSub}>Sacred Peace & Wisdom</Text>
+              <Text style={[styles.greetingText, { color: colors.text }]}>नमस्ते 🙏</Text>
+              <Text style={[styles.greetingSub, { color: colors.textSecondary }]}>Sacred Peace & Wisdom</Text>
             </View>
           </View>
 
@@ -363,9 +369,15 @@ export default function HomeScreen() {
         ) : (
           <GlassCard style={styles.dailyCard} glow>
             <View style={styles.dailyHeader}>
-              <View style={styles.dailyPill}>
-                <Ionicons name="sunny" size={14} color={Colors.secondary} />
-                <Text style={styles.dailyPillText}>Daily Mantra</Text>
+              <View style={[
+                styles.dailyPill,
+                {
+                  backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)',
+                  borderColor: isDark ? 'rgba(255, 153, 51, 0.3)' : 'rgba(230, 126, 34, 0.35)',
+                }
+              ]}>
+                <Ionicons name="sunny" size={14} color={isDark ? colors.secondary : colors.primary} />
+                <Text style={[styles.dailyPillText, { color: isDark ? colors.secondary : colors.primary }]}>Daily Mantra</Text>
               </View>
               <TouchableOpacity
                 onPress={() => activeDaily && toggleFavorite({ ...activeDaily, path: 'mantra' })}
@@ -376,13 +388,13 @@ export default function HomeScreen() {
                 <Ionicons
                   name={activeDaily && isFavorite(activeDaily.id) ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={activeDaily && isFavorite(activeDaily.id) ? Colors.primary : Colors.textMuted}
+                  color={activeDaily && isFavorite(activeDaily.id) ? colors.primary : colors.textMuted}
                 />
               </TouchableOpacity>
             </View>
 
             <Text
-              style={styles.dailySanskrit}
+              style={[styles.dailySanskrit, { color: colors.primary }]}
               numberOfLines={2}
               maxFontSizeMultiplier={1.3}
             >
@@ -390,19 +402,19 @@ export default function HomeScreen() {
             </Text>
 
             <Text
-              style={styles.dailyTitle}
+              style={[styles.dailyTitle, { color: colors.text }]}
               numberOfLines={1}
               maxFontSizeMultiplier={1.3}
             >
               {activeDaily.title || activeDaily.name}
             </Text>
 
-            <Text style={styles.dailyGod} numberOfLines={1}>
+            <Text style={[styles.dailyGod, { color: colors.textSecondary }]} numberOfLines={1}>
               {activeDaily.god || activeDaily.category_name}
             </Text>
 
             <TouchableOpacity
-              style={styles.dailyPlayBtn}
+              style={[styles.dailyPlayBtn, { backgroundColor: colors.primary }]}
               onPress={toggleDailyPlay}
               activeOpacity={0.85}
               accessibilityRole="button"
@@ -453,35 +465,52 @@ export default function HomeScreen() {
           style={styles.upanishadBanner}
           onPress={() => router.push('/upanishad' as any)}
         >
-          <View style={styles.upanishadIconCircle}>
-            <Ionicons name="book" size={24} color={Colors.primary} />
+          <View style={[
+            styles.upanishadIconCircle,
+            {
+              backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)',
+              borderColor: isDark ? 'rgba(255, 153, 51, 0.3)' : 'rgba(230, 126, 34, 0.35)',
+            }
+          ]}>
+            <Ionicons name="book" size={24} color={colors.primary} />
           </View>
           <View style={{ flex: 1, paddingHorizontal: 12 }}>
-            <Text style={styles.upanishadTitle}>Sacred Upanishads</Text>
-            <Text style={styles.upanishadSub}>Explore eternal philosophical wisdom</Text>
+            <Text style={[styles.upanishadTitle, { color: colors.text }]}>Sacred Upanishads</Text>
+            <Text style={[styles.upanishadSub, { color: colors.textSecondary }]}>Explore eternal philosophical wisdom</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.secondary} />
+          <Ionicons name="chevron-forward" size={20} color={isDark ? colors.secondary : colors.primary} />
         </GlassCard>
 
         {/* ── Categories Grid ──────────────────────────────────── */}
         {renderSectionHeader('Categories', () => router.push('/(tabs)/categories'))}
         <View style={styles.grid}>
-          {categories.map((cat, idx) => {
-            const { icon, color } = getCategoryDisplayProps(cat.name);
-            return (
-              <GlassCard
-                key={idx}
-                style={styles.categoryCard}
-                onPress={() => router.push({ pathname: '/category/[id]', params: { id: cat.id, name: cat.name } } as any)}
-              >
-                <View style={[styles.categoryIconWrap, { backgroundColor: color + '20' }]}>
-                  <Ionicons name={icon} size={26} color={color} />
-                </View>
-                <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
-                {cat.count ? <Text style={styles.categoryCount}>{cat.count} verses</Text> : null}
-              </GlassCard>
-            );
-          })}
+          {(() => {
+            const seen = new Set<string>();
+            const uniqueCats = categories.filter((cat) => {
+              if (!cat?.name) return false;
+              const n = cat.name.trim().toLowerCase();
+              if (seen.has(n) || n === 'aartis') return false;
+              seen.add(n);
+              return true;
+            }).slice(0, 6);
+
+            return uniqueCats.map((cat, idx) => {
+              const { icon, color } = getCategoryDisplayProps(cat.name);
+              return (
+                <GlassCard
+                  key={idx}
+                  style={styles.categoryCard}
+                  onPress={() => router.push({ pathname: '/category/[id]', params: { id: cat.id, name: cat.name } } as any)}
+                >
+                  <View style={[styles.categoryIconWrap, { backgroundColor: color + '20' }]}>
+                    <Ionicons name={icon} size={26} color={color} />
+                  </View>
+                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>{cat.name}</Text>
+                  {cat.count ? <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>{cat.count} verses</Text> : null}
+                </GlassCard>
+              );
+            });
+          })()}
         </View>
 
         {/* ── Festival Aartis ──────────────────────────────────── */}

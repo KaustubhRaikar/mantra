@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography } from '../../src/constants/theme';
 import { useFavorites, FavoriteItem } from '../../src/contexts/FavoritesContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
 import { ScriptureCard } from '../../src/components/ScriptureCard';
@@ -10,6 +11,7 @@ import { EmptyState } from '../../src/components/EmptyState';
 
 export default function FavoritesScreen() {
   const { favorites, toggleFavorite } = useFavorites();
+  const { colors } = useTheme();
   const router = useRouter();
 
   const handlePressItem = (item: FavoriteItem) => {
@@ -48,10 +50,10 @@ export default function FavoritesScreen() {
       <CosmicBackground />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle} maxFontSizeMultiplier={1.3}>
+        <Text style={[styles.headerTitle, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
           Your Favorites
         </Text>
-        <Text style={styles.headerSubTitle} maxFontSizeMultiplier={1.3}>
+        <Text style={[styles.headerSubTitle, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
           Saved sacred chants, aartis & prayers
         </Text>
       </View>

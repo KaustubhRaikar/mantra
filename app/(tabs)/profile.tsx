@@ -106,13 +106,13 @@ export default function ProfileScreen() {
       >
         {/* ── Devotee Header ── */}
         <GlassCard style={styles.profileHeader} glow>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={36} color={Colors.primary} />
+          <View style={[styles.avatar, { backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)', borderColor: isDark ? 'rgba(255, 153, 51, 0.3)' : 'rgba(230, 126, 34, 0.35)' }]}>
+            <Ionicons name="person" size={36} color={colors.primary} />
           </View>
-          <Text style={styles.name} maxFontSizeMultiplier={1.3}>
+          <Text style={[styles.name, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
             {user ? user.full_name || 'Sacred Devotee' : 'Guest Devotee'}
           </Text>
-          <Text style={styles.email} maxFontSizeMultiplier={1.3}>
+          <Text style={[styles.email, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
             {user ? user.email : 'Explore scriptures & sync your spiritual sadhana'}
           </Text>
 
@@ -130,16 +130,16 @@ export default function ProfileScreen() {
 
         {/* ── Devotion & Jaap Logs Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Sadhana & Devotion Tracking</Text>
+          <Text style={[styles.sectionHeader, { color: colors.secondary }]}>Sadhana & Devotion Tracking</Text>
           <GlassCard onPress={handleOpenJaapLogs} style={styles.menuCard}>
             <View style={styles.menuIconBadge}>
-              <Ionicons name="calendar-outline" size={22} color={Colors.primary} />
+              <Ionicons name="calendar-outline" size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.menuLabelBold}>Jaap Log & Daily History</Text>
-              <Text style={styles.menuSubLabel}>View total chants and completed malas date-wise</Text>
+              <Text style={[styles.menuLabelBold, { color: colors.text }]}>Jaap Log & Daily History</Text>
+              <Text style={[styles.menuSubLabel, { color: colors.textSecondary }]}>View total chants and completed malas date-wise</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </GlassCard>
         </View>
 
@@ -203,18 +203,18 @@ export default function ProfileScreen() {
             {/* Autoplay Audio */}
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="volume-medium-outline" size={22} color={Colors.secondary} />
-                <Text style={styles.settingLabel}>Auto-play Sacred Audio</Text>
+                <Ionicons name="volume-medium-outline" size={22} color={colors.secondary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Auto-play Sacred Audio</Text>
               </View>
               <Switch
                 value={autoPlayAudio}
                 onValueChange={setAutoPlayAudio}
-                trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.secondary + '80' }}
-                thumbColor={autoPlayAudio ? Colors.secondary : '#888'}
+                trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.primary + '80' }}
+                thumbColor={autoPlayAudio ? colors.primary : '#888'}
               />
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             {/* Language Selection */}
             <TouchableOpacity
@@ -226,11 +226,11 @@ export default function ProfileScreen() {
               }}
             >
               <View style={styles.settingInfo}>
-                <Ionicons name="language-outline" size={22} color={Colors.accent} />
-                <Text style={styles.settingLabel}>Preferred Language</Text>
+                <Ionicons name="language-outline" size={22} color={colors.accent} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Preferred Language</Text>
               </View>
               <View style={styles.valueBadge}>
-                <Text style={styles.valueBadgeText}>{preferredLang}</Text>
+                <Text style={[styles.valueBadgeText, { color: isDark ? colors.secondary : colors.primary }]}>{preferredLang}</Text>
               </View>
             </TouchableOpacity>
           </GlassCard>
@@ -238,43 +238,43 @@ export default function ProfileScreen() {
 
         {/* ── Privacy, DPDP & Legal ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Privacy & Legal Governance</Text>
+          <Text style={[styles.sectionHeader, { color: colors.secondary }]}>Privacy & Legal Governance</Text>
           <GlassCard style={styles.settingsCard}>
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => router.push('/consent')}
             >
               <View style={styles.settingInfo}>
-                <Ionicons name="shield-checkmark-outline" size={22} color={Colors.success} />
-                <Text style={styles.settingLabel}>Data Privacy & Consent (DPDP)</Text>
+                <Ionicons name="shield-checkmark-outline" size={22} color={colors.success} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Data Privacy & Consent (DPDP)</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => router.push('/privacy')}
             >
               <View style={styles.settingInfo}>
-                <Ionicons name="document-text-outline" size={22} color={Colors.secondary} />
-                <Text style={styles.settingLabel}>Privacy Policy & Data Safety</Text>
+                <Ionicons name="document-text-outline" size={22} color={colors.secondary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Privacy Policy & Data Safety</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => setAboutModalVisible(true)}
             >
               <View style={styles.settingInfo}>
-                <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
-                <Text style={styles.settingLabel}>About Mantra App & Sacred Covenant</Text>
+                <Ionicons name="information-circle-outline" size={22} color={colors.primary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>About Mantra App & Sacred Covenant</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </GlassCard>
         </View>

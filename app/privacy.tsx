@@ -6,7 +6,11 @@ import { GlassHeader } from '../src/components/GlassHeader';
 import { GlassCard } from '../src/components/GlassCard';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTheme } from '../src/contexts/ThemeContext';
+
 export default function PrivacyPolicyScreen() {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.safe}>
       <CosmicBackground />
@@ -19,20 +23,20 @@ export default function PrivacyPolicyScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.badgeRow}>
           <View style={styles.badge}>
-            <Ionicons name="shield-checkmark" size={14} color={Colors.secondary} />
-            <Text style={styles.badgeText}>DPDP Compliant (India)</Text>
+            <Ionicons name="shield-checkmark" size={14} color={colors.secondary} />
+            <Text style={[styles.badgeText, { color: colors.secondary }]}>DPDP Compliant (India)</Text>
           </View>
-          <Text style={styles.lastUpdated}>v1.0 • Oct 2026</Text>
+          <Text style={[styles.lastUpdated, { color: colors.textMuted }]}>v1.0 • Oct 2026</Text>
         </View>
 
         <GlassCard style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.iconCircle}>
-              <Ionicons name="heart" size={18} color={Colors.primary} />
+              <Ionicons name="heart" size={18} color={colors.primary} />
             </View>
-            <Text style={styles.sectionTitle}>1. Sacred Data Principles</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>1. Sacred Data Principles</Text>
           </View>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
             The Mantra app is built with deep reverence for user privacy. In accordance with the Digital Personal Data Protection (DPDP) Act, your personal sadhana records, Jaap counters, intentions (Sankalp), and devotional preferences are treated as private, sacred data.
           </Text>
         </GlassCard>
@@ -40,28 +44,28 @@ export default function PrivacyPolicyScreen() {
         <GlassCard style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.iconCircle}>
-              <Ionicons name="finger-print" size={18} color={Colors.accent} />
+              <Ionicons name="finger-print" size={18} color={colors.accent} />
             </View>
-            <Text style={styles.sectionTitle}>2. Information We Collect</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>2. Information We Collect</Text>
           </View>
           <View style={styles.bulletItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
-            <Text style={styles.bulletText}>
-              <Text style={styles.bulletBold}>Account Credentials: </Text>
+            <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} style={styles.bulletIcon} />
+            <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
+              <Text style={[styles.bulletBold, { color: colors.text }]}>Account Credentials: </Text>
               Email, full name, encrypted device fingerprint, and session tokens.
             </Text>
           </View>
           <View style={styles.bulletItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
-            <Text style={styles.bulletText}>
-              <Text style={styles.bulletBold}>Devotional Records: </Text>
+            <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} style={styles.bulletIcon} />
+            <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
+              <Text style={[styles.bulletBold, { color: colors.text }]}>Devotional Records: </Text>
               Daily Jaap chant counts, mala goals, and bookmarked scriptures.
             </Text>
           </View>
           <View style={styles.bulletItem}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
-            <Text style={styles.bulletText}>
-              <Text style={styles.bulletBold}>Granular Consent: </Text>
+            <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} style={styles.bulletIcon} />
+            <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
+              <Text style={[styles.bulletBold, { color: colors.text }]}>Granular Consent: </Text>
               User-controlled toggles for analytics, notifications, and AI guidance.
             </Text>
           </View>
@@ -70,24 +74,24 @@ export default function PrivacyPolicyScreen() {
         <GlassCard style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.iconCircle}>
-              <Ionicons name="key" size={18} color={Colors.primary} />
+              <Ionicons name="key" size={18} color={colors.primary} />
             </View>
-            <Text style={styles.sectionTitle}>3. Your Data Rights & In-App Controls</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>3. Your Data Rights & In-App Controls</Text>
           </View>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
             You retain 100% sovereignty over your personal data. At any time in Profile settings, you may exercise:
           </Text>
           <View style={styles.bulletItem}>
-            <Ionicons name="download-outline" size={16} color={Colors.secondary} style={styles.bulletIcon} />
-            <Text style={styles.bulletText}>
-              <Text style={styles.bulletBold}>Export My Data: </Text>
+            <Ionicons name="download-outline" size={16} color={colors.secondary} style={styles.bulletIcon} />
+            <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
+              <Text style={[styles.bulletBold, { color: colors.text }]}>Export My Data: </Text>
               Instant JSON archive download of all your sadhana and profile records.
             </Text>
           </View>
           <View style={styles.bulletItem}>
-            <Ionicons name="trash-outline" size={16} color={Colors.error} style={styles.bulletIcon} />
-            <Text style={styles.bulletText}>
-              <Text style={styles.bulletBold}>Delete Account & Data: </Text>
+            <Ionicons name="trash-outline" size={16} color={colors.error} style={styles.bulletIcon} />
+            <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
+              <Text style={[styles.bulletBold, { color: colors.text }]}>Delete Account & Data: </Text>
               Permanent erasure of your account, consent logs, and database records.
             </Text>
           </View>
@@ -96,14 +100,14 @@ export default function PrivacyPolicyScreen() {
         <GlassCard style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.iconCircle}>
-              <Ionicons name="mail" size={18} color={Colors.primary} />
+              <Ionicons name="mail" size={18} color={colors.primary} />
             </View>
-            <Text style={styles.sectionTitle}>4. Data Protection Officer</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>4. Data Protection Officer</Text>
           </View>
-          <Text style={styles.paragraph}>
+          <Text style={[styles.paragraph, { color: colors.textSecondary }]}>
             For DPDP queries, rights requests, or regulatory assistance, reach out directly to our designated Data Protection Officer:
           </Text>
-          <Text style={styles.contactEmail}>privacy@aarambhtech.in</Text>
+          <Text style={[styles.contactEmail, { color: colors.primary }]}>privacy@aarambhtech.in</Text>
         </GlassCard>
       </ScrollView>
     </View>

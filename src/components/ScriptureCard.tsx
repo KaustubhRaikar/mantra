@@ -26,7 +26,7 @@ export function ScriptureCard({
   onToggleFavorite,
   showPlayIcon = true,
 }: ScriptureCardProps) {
-  const { colors } = useTheme();
+  const { isDark, colors } = useTheme();
   const displayCategory = category || god || 'Vedic';
 
   return (
@@ -34,7 +34,7 @@ export function ScriptureCard({
       <View style={styles.leftContent}>
         {sanskritTitle ? (
           <Text
-            style={styles.sanskritText}
+            style={[styles.sanskritText, { color: colors.primary }]}
             numberOfLines={1}
             maxFontSizeMultiplier={1.3}
           >
@@ -51,8 +51,14 @@ export function ScriptureCard({
         </Text>
 
         <View style={styles.metaRow}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText} numberOfLines={1}>
+          <View style={[
+            styles.categoryBadge,
+            {
+              backgroundColor: isDark ? 'rgba(255, 153, 51, 0.12)' : 'rgba(230, 126, 34, 0.10)',
+              borderColor: isDark ? 'rgba(255, 153, 51, 0.25)' : 'rgba(230, 126, 34, 0.30)',
+            }
+          ]}>
+            <Text style={[styles.categoryText, { color: isDark ? colors.secondary : colors.primary }]} numberOfLines={1}>
               {displayCategory}
             </Text>
           </View>
@@ -74,17 +80,23 @@ export function ScriptureCard({
             <Ionicons
               name={isFavorite ? 'heart' : 'heart-outline'}
               size={22}
-              color={isFavorite ? Colors.primary : Colors.textMuted}
+              color={isFavorite ? colors.primary : colors.textMuted}
             />
           </TouchableOpacity>
         ) : null}
 
         {showPlayIcon ? (
-          <View style={styles.playIconContainer}>
-            <Ionicons name="play" size={16} color={Colors.primary} />
+          <View style={[
+            styles.playIconContainer,
+            {
+              backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)',
+              borderColor: isDark ? 'rgba(255, 153, 51, 0.3)' : 'rgba(230, 126, 34, 0.35)',
+            }
+          ]}>
+            <Ionicons name="play" size={16} color={colors.primary} />
           </View>
         ) : (
-          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         )}
       </View>
     </GlassCard>

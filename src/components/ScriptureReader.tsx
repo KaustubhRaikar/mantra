@@ -178,7 +178,7 @@ export function ScriptureReader({
               accessibilityRole="button"
               accessibilityLabel="Share scripture"
             >
-              <Ionicons name="share-outline" size={22} color={Colors.text} />
+              <Ionicons name="share-outline" size={22} color={colors.text} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -199,7 +199,7 @@ export function ScriptureReader({
               <Ionicons
                 name={isFav ? 'heart' : 'heart-outline'}
                 size={22}
-                color={isFav ? Colors.primary : Colors.text}
+                color={isFav ? colors.primary : colors.text}
               />
             </TouchableOpacity>
           </View>
@@ -208,8 +208,8 @@ export function ScriptureReader({
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.loadingText}>Fetching sacred verses...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching sacred verses...</Text>
         </View>
       ) : (
         <ScrollView
@@ -229,14 +229,23 @@ export function ScriptureReader({
                 return (
                   <TouchableOpacity
                     key={tab.key}
-                    style={[styles.tabChip, isActive && styles.tabChipActive]}
+                    style={[
+                      styles.tabChip,
+                      {
+                        backgroundColor: isActive
+                          ? (isDark ? 'rgba(255, 153, 51, 0.2)' : 'rgba(230, 126, 34, 0.15)')
+                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                        borderColor: isActive ? colors.primary : colors.border,
+                      }
+                    ]}
                     onPress={() => setActiveTab(tab.key)}
                     activeOpacity={0.7}
                   >
                     <Text
                       style={[
                         styles.tabChipText,
-                        isActive && styles.tabChipTextActive,
+                        { color: isActive ? colors.primary : colors.textSecondary },
+                        isActive && { fontWeight: '700' },
                       ]}
                     >
                       {tab.label}
@@ -247,7 +256,13 @@ export function ScriptureReader({
             </View>
 
             {/* Accessibility Font Zoom Controls */}
-            <View style={styles.zoomControls}>
+            <View style={[
+              styles.zoomControls,
+              {
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                borderColor: colors.border,
+              }
+            ]}>
               <TouchableOpacity
                 onPress={zoomOut}
                 style={styles.zoomButton}
@@ -255,7 +270,7 @@ export function ScriptureReader({
                 accessibilityRole="button"
                 accessibilityLabel="Decrease font size"
               >
-                <Text style={styles.zoomText}>A-</Text>
+                <Text style={[styles.zoomText, { color: isDark ? colors.secondary : colors.primary }]}>A-</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={zoomIn}
@@ -264,7 +279,7 @@ export function ScriptureReader({
                 accessibilityRole="button"
                 accessibilityLabel="Increase font size"
               >
-                <Text style={styles.zoomText}>A+</Text>
+                <Text style={[styles.zoomText, { color: isDark ? colors.secondary : colors.primary }]}>A+</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -274,7 +289,7 @@ export function ScriptureReader({
             <Text
               style={[
                 styles.verseText,
-                { color: colors.text },
+                { color: isDevanagari ? (isDark ? '#FFFFFF' : '#171426') : (isDark ? '#E5E4EE' : '#2D283E') },
                 isDevanagari && styles.devaVerseText,
                 { fontSize, lineHeight: isDevanagari ? fontSize * 1.6 : fontSize * 1.5 },
               ]}
