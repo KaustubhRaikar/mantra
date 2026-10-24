@@ -10,7 +10,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Typography } from '../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/contexts/AuthContext';
@@ -23,6 +23,7 @@ type LoginStep = 'email' | 'otp';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { sendOtp, verifyOtp, guestSignIn, signIn, sessionError } = useAuth();
 
   const [step, setStep] = useState<LoginStep>('email');
@@ -64,13 +65,13 @@ export default function LoginScreen() {
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
-        toValue: newStep === 'otp' ? -30 : 30,
+        toValue: newStep === 'otp' ? -24 : 24,
         duration: 150,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setStep(newStep);
-      slideAnim.setValue(newStep === 'otp' ? 30 : -30);
+      slideAnim.setValue(newStep === 'otp' ? 24 : -24);
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -175,7 +176,7 @@ export default function LoginScreen() {
       return;
     }
     if (!trimmedEmail) {
-      setErrorMessage('Please enter an email address.');
+      setErrorMessage('Please provide an email address.');
       return;
     }
 
@@ -191,7 +192,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <View style={styles.screen}>
       <CosmicBackground />
 
       <KeyboardAvoidingView
@@ -199,205 +200,217 @@ export default function LoginScreen() {
         style={styles.keyboardContainer}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: Math.max(insets.top + 16, 36),
+              paddingBottom: Math.max(insets.bottom + 20, 36),
+            },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
-          {/* Sacred Vedic Branding */}
-          <View style={styles.logoContainer}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.omBig}>ॐ</Text>
+          <View style={styles.contentWrapper}>
+            {/* Sacred Branding */}
+            <View style={styles.logoContainer}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.omBig}>ॐ</Text>
+              </View>
+              <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+                MANTRA
+              </Text>
+              <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+                Sacred Vedic Sanctuary & Sadhana Companion
+              </Text>
             </View>
-            <Text style={styles.title} maxFontSizeMultiplier={1.3}>
-              MANTRA
-            </Text>
-            <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
-              Sacred Vedic Sanctuary & Sadhana Companion
-            </Text>
-          </View>
 
-          {/* Auth Glass Card */}
-          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
-            <GlassCard style={styles.authCard} glow>
-              {errorMessage && (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle" size={16} color={Colors.error} style={{ marginRight: 6 }} />
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              )}
-
-              {step === 'email' ? (
-                <>
-                  <View style={styles.stepHeaderRow}>
-                    <Ionicons name="sparkles" size={15} color={Colors.primary} />
-                    <Text style={styles.stepLabel}>Devotee Sign In</Text>
+            {/* Auth Glass Card */}
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }], width: '100%' }}>
+              <GlassCard style={styles.authCard} glow>
+                {errorMessage && (
+                  <View style={styles.errorBanner}>
+                    <Ionicons name="alert-circle" size={16} color={Colors.error} style={{ marginRight: 6 }} />
+                    <Text style={styles.errorText}>{errorMessage}</Text>
                   </View>
+                )}
 
-                  <Text style={styles.label}>Full Name</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter your sacred name"
-                      placeholderTextColor={Colors.textMuted}
-                      value={fullName}
-                      onChangeText={(t) => {
-                        setFullName(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      maxFontSizeMultiplier={1.3}
-                    />
-                  </View>
+                {step === 'email' ? (
+                  <>
+                    <View style={styles.stepHeaderRow}>
+                      <Ionicons name="sparkles" size={15} color={Colors.primary} />
+                      <Text style={styles.stepLabel}>Devotee Sign In</Text>
+                    </View>
 
-                  <Text style={styles.label}>Email Address</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="devotee@sanctuary.in"
-                      placeholderTextColor={Colors.textMuted}
-                      value={email}
-                      onChangeText={(t) => {
-                        setEmail(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      maxFontSizeMultiplier={1.3}
-                    />
-                  </View>
+                    <Text style={styles.label}>Full Name</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter your sacred name"
+                        placeholderTextColor={Colors.textMuted}
+                        value={fullName}
+                        onChangeText={(t) => {
+                          setFullName(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        autoCapitalize="words"
+                        autoCorrect={false}
+                        maxFontSizeMultiplier={1.3}
+                      />
+                    </View>
 
-                  <View style={styles.buttonGroup}>
+                    <Text style={styles.label}>Email Address</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="devotee@sanctuary.in"
+                        placeholderTextColor={Colors.textMuted}
+                        value={email}
+                        onChangeText={(t) => {
+                          setEmail(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        maxFontSizeMultiplier={1.3}
+                      />
+                    </View>
+
+                    <View style={styles.buttonGroup}>
+                      <SpiritualButton
+                        title="Begin Spiritual Journey"
+                        onPress={handleSendOtp}
+                        loading={loading}
+                        variant="primary"
+                        style={styles.buttonHeight}
+                      />
+                    </View>
+
+                    <View style={styles.dividerRow}>
+                      <View style={styles.dividerLine} />
+                      <Text style={styles.dividerText}>OR</Text>
+                      <View style={styles.dividerLine} />
+                    </View>
+
                     <SpiritualButton
-                      title="Begin Spiritual Journey"
-                      onPress={handleSendOtp}
+                      title="Explore as Guest"
+                      onPress={handleGuestEntry}
                       loading={loading}
-                      variant="primary"
+                      variant="glass"
+                      style={styles.buttonHeight}
                     />
-                  </View>
 
-                  <View style={styles.dividerRow}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>OR</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
+                    {email.trim().length > 0 && fullName.trim().length > 0 && (
+                      <TouchableOpacity
+                        style={styles.quickEntryButton}
+                        onPress={handleDirectEntry}
+                        disabled={loading}
+                        accessibilityRole="button"
+                      >
+                        <Ionicons name="flash-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
+                        <Text style={styles.quickEntryText}>Direct Devotee Access (Instant)</Text>
+                      </TouchableOpacity>
+                    )}
 
-                  <SpiritualButton
-                    title="Explore as Guest"
-                    onPress={handleGuestEntry}
-                    loading={loading}
-                    variant="glass"
-                  />
-
-                  {email.trim().length > 0 && fullName.trim().length > 0 && (
                     <TouchableOpacity
-                      style={styles.quickEntryButton}
-                      onPress={handleDirectEntry}
-                      disabled={loading}
+                      style={styles.policyLink}
+                      onPress={() => router.push('/privacy')}
+                      accessibilityRole="link"
+                      accessibilityLabel="Read Privacy Policy"
+                    >
+                      <Text style={styles.policyText}>
+                        Protected under DPDP Act 2023 • Sacred Data Covenant
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.backButton}
+                      onPress={() => transitionToStep('email')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Change email address"
+                    >
+                      <Ionicons name="chevron-back" size={16} color={Colors.primary} />
+                      <Text style={styles.backText}>Change Email</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.stepHeaderRow}>
+                      <Ionicons name="shield-checkmark" size={15} color={Colors.secondary} />
+                      <Text style={[styles.stepLabel, { color: Colors.secondary }]}>Step 2: Enter Verification Code</Text>
+                    </View>
+
+                    <Text style={styles.otpHint}>
+                      We sent a 6-digit verification code to{'\n'}
+                      <Text style={styles.emailHighlight}>{email}</Text>
+                    </Text>
+
+                    <Text style={styles.label}>6-Digit Verification Code</Text>
+                    <View style={[styles.inputWrapper, styles.otpWrapper]}>
+                      <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, styles.otpInput]}
+                        placeholder="• • • • • •"
+                        placeholderTextColor={Colors.textMuted}
+                        value={otp}
+                        onChangeText={(t) => {
+                          setOtp(t.replace(/\D/g, '').slice(0, 6));
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        autoFocus
+                        maxFontSizeMultiplier={1.3}
+                      />
+                    </View>
+
+                    <View style={styles.buttonGroup}>
+                      <SpiritualButton
+                        title="Verify & Enter Sanctuary"
+                        onPress={handleVerifyOtp}
+                        loading={loading}
+                        variant="primary"
+                        style={styles.buttonHeight}
+                      />
+                    </View>
+
+                    <View style={styles.testNoteBox}>
+                      <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} style={{ marginRight: 4 }} />
+                      <Text style={styles.testNoteText}>
+                        Offline / Sandbox code: <Text style={styles.testNoteCode}>108108</Text>
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.resendButton}
+                      onPress={handleResend}
+                      disabled={resendCooldown > 0 || loading}
                       accessibilityRole="button"
                     >
-                      <Ionicons name="flash-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
-                      <Text style={styles.quickEntryText}>Direct Devotee Access (Instant)</Text>
+                      <Text style={styles.resendText}>
+                        {resendCooldown > 0 ? (
+                          `Resend code in ${resendCooldown}s`
+                        ) : (
+                          <>Didn't receive code? <Text style={styles.resendAction}>Resend</Text></>
+                        )}
+                      </Text>
                     </TouchableOpacity>
-                  )}
-
-                  <TouchableOpacity
-                    style={styles.policyLink}
-                    onPress={() => router.push('/privacy')}
-                    accessibilityRole="link"
-                    accessibilityLabel="Read Privacy Policy"
-                  >
-                    <Text style={styles.policyText}>
-                      Protected under DPDP Act 2023 • Sacred Data Covenant
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => transitionToStep('email')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Change email address"
-                  >
-                    <Ionicons name="chevron-back" size={16} color={Colors.primary} />
-                    <Text style={styles.backText}>Change Email</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.stepHeaderRow}>
-                    <Ionicons name="shield-checkmark" size={15} color={Colors.secondary} />
-                    <Text style={[styles.stepLabel, { color: Colors.secondary }]}>Step 2: Enter Verification Code</Text>
-                  </View>
-
-                  <Text style={styles.otpHint}>
-                    We sent a 6-digit verification code to{'\n'}
-                    <Text style={styles.emailHighlight}>{email}</Text>
-                  </Text>
-
-                  <Text style={styles.label}>6-Digit Verification Code</Text>
-                  <View style={[styles.inputWrapper, styles.otpWrapper]}>
-                    <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, styles.otpInput]}
-                      placeholder="• • • • • •"
-                      placeholderTextColor={Colors.textMuted}
-                      value={otp}
-                      onChangeText={(t) => {
-                        setOtp(t.replace(/\D/g, '').slice(0, 6));
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      keyboardType="number-pad"
-                      maxLength={6}
-                      autoFocus
-                      maxFontSizeMultiplier={1.3}
-                    />
-                  </View>
-
-                  <View style={styles.buttonGroup}>
-                    <SpiritualButton
-                      title="Verify & Enter Sanctuary"
-                      onPress={handleVerifyOtp}
-                      loading={loading}
-                      variant="primary"
-                    />
-                  </View>
-
-                  <View style={styles.testNoteBox}>
-                    <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} style={{ marginRight: 4 }} />
-                    <Text style={styles.testNoteText}>
-                      Offline / Sandbox code: <Text style={styles.testNoteCode}>108108</Text>
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.resendButton}
-                    onPress={handleResend}
-                    disabled={resendCooldown > 0 || loading}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.resendText}>
-                      {resendCooldown > 0 ? (
-                        `Resend code in ${resendCooldown}s`
-                      ) : (
-                        <>Didn't receive code? <Text style={styles.resendAction}>Resend</Text></>
-                      )}
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </GlassCard>
-          </Animated.View>
+                  </>
+                )}
+              </GlassCard>
+            </Animated.View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
+  screen: {
     flex: 1,
     backgroundColor: Colors.background,
   },
@@ -407,12 +420,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.large,
-    paddingVertical: Spacing.large,
+    paddingHorizontal: 28,
+  },
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.standard,
+    marginBottom: 24,
   },
   iconCircle: {
     width: 76,
@@ -423,7 +440,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 153, 51, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.compact,
+    marginBottom: 10,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -452,8 +469,12 @@ const styles = StyleSheet.create({
     maxWidth: 290,
   },
   authCard: {
-    padding: Spacing.large,
+    padding: 24,
     borderRadius: Radius.xl,
+    width: '100%',
+    backgroundColor: 'rgba(22, 19, 43, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.22)',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -462,12 +483,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 59, 48, 0.3)',
     borderRadius: Radius.sm,
-    padding: Spacing.compact,
-    marginBottom: Spacing.standard,
+    padding: 10,
+    marginBottom: 16,
   },
   errorText: {
     flex: 1,
-    fontSize: Typography.sizes.caption,
+    fontSize: 12,
     color: Colors.error,
     fontWeight: '600',
   },
@@ -475,7 +496,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: Spacing.standard,
+    marginBottom: 16,
   },
   stepLabel: {
     fontFamily: Typography.families.heading,
@@ -499,9 +520,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    paddingHorizontal: Spacing.standard,
-    height: 50,
-    marginBottom: Spacing.standard,
+    paddingHorizontal: 16,
+    height: 52,
+    marginBottom: 16,
   },
   otpWrapper: {
     borderColor: Colors.borderGlow,
@@ -525,13 +546,18 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   buttonGroup: {
-    marginTop: Spacing.compact,
-    marginBottom: Spacing.standard,
+    marginTop: 8,
+    marginBottom: 14,
+    width: '100%',
+  },
+  buttonHeight: {
+    height: 52,
+    width: '100%',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: Spacing.compact,
+    marginVertical: 12,
   },
   dividerLine: {
     flex: 1,
@@ -539,16 +565,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
   },
   dividerText: {
-    fontSize: Typography.sizes.micro,
+    fontSize: 11,
     color: Colors.textMuted,
-    paddingHorizontal: Spacing.compact,
+    paddingHorizontal: 10,
     fontWeight: '700',
   },
   quickEntryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing.compact,
+    marginTop: 10,
     paddingVertical: 8,
   },
   quickEntryText: {
@@ -557,7 +583,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   policyLink: {
-    marginTop: Spacing.standard,
+    marginTop: 16,
     alignItems: 'center',
     minHeight: 44,
     justifyContent: 'center',
@@ -570,7 +596,7 @@ const styles = StyleSheet.create({
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.standard,
+    marginBottom: 16,
     alignSelf: 'flex-start',
     paddingVertical: 4,
   },
@@ -583,7 +609,7 @@ const styles = StyleSheet.create({
   otpHint: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginBottom: Spacing.standard,
+    marginBottom: 16,
     lineHeight: 20,
   },
   emailHighlight: {
@@ -594,8 +620,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: Spacing.compact,
+    marginTop: 6,
+    marginBottom: 12,
   },
   testNoteText: {
     fontSize: 11,
@@ -608,7 +634,7 @@ const styles = StyleSheet.create({
   resendButton: {
     marginTop: 4,
     alignItems: 'center',
-    padding: Spacing.compact,
+    padding: 8,
     minHeight: 44,
     justifyContent: 'center',
   },

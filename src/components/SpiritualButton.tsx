@@ -116,12 +116,12 @@ export function SpiritualButton({
 
 const styles = StyleSheet.create({
   baseButton: {
+    height: 52,
     minHeight: 48,
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.standard,
-    paddingVertical: Spacing.compact,
     overflow: 'hidden',
   },
   fullWidth: {
@@ -129,8 +129,7 @@ const styles = StyleSheet.create({
   },
   gradientContainer: {
     width: '100%',
-    height: '100%',
-    minHeight: 48,
+    height: 52,
     borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
