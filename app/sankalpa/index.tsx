@@ -7,8 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Radius, Spacing, Typography } from '../../src/constants/theme';
