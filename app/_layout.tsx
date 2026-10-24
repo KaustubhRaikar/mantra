@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments, ThemeProvider } from "expo-router";
+import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
+import { useFonts, TiroDevanagariHindi_400Regular } from '@expo-google-fonts/tiro-devanagari-hindi';
 import { Theme, Colors } from "../src/constants/theme";
 import { AuthProvider, useAuth } from "../src/contexts/AuthContext";
 import { FavoritesProvider } from "../src/contexts/FavoritesContext";
@@ -44,10 +46,17 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={Theme}>
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="login" options={{ animationTypeForReplace: user ? 'push' : 'pop' }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="mantra/[id]" options={{ title: "Mantra Details" }} />
+        <Stack.Screen name="aarti/[id]" options={{ title: "Aarti Details" }} />
+        <Stack.Screen name="chalisa/[id]" options={{ title: "Chalisa Details" }} />
+        <Stack.Screen name="stotra/[id]" options={{ title: "Stotra Details" }} />
+        <Stack.Screen name="pooja_vidhi/[id]" options={{ title: "Pooja Vidhi Details" }} />
+        <Stack.Screen name="vrat_katha/[id]" options={{ title: "Vrat Katha Details" }} />
+        <Stack.Screen name="festival_aarti/[id]" options={{ title: "Festival Aarti Details" }} />
         <Stack.Screen name="search/index" options={{ title: "Search" }} />
       </Stack>
     </ThemeProvider>
@@ -55,11 +64,23 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    TiroDevanagariHindi_400Regular,
+  });
+
   useEffect(() => {
     if (Platform.OS === 'android') {
       NavigationBar.setVisibilityAsync("hidden").catch(() => {});
     }
   }, []);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <PersistQueryClientProvider

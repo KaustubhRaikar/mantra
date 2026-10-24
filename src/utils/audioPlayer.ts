@@ -121,6 +121,9 @@ export const playWithExpoSpeech = (
     setPositionAsync: async (positionMillis: number) => {
       elapsed = positionMillis / 1000;
     },
+    setIsLoopingAsync: async (_isLooping: boolean) => {
+      // Loop flag placeholder for Speech
+    },
   };
 };
 
@@ -147,6 +150,11 @@ export const safeCreateSound = async (input: any, onStatusUpdate?: (status: any)
         },
         setPositionAsync: async (positionMillis: number) => {
           if (typeof player.seekTo === 'function') await player.seekTo(positionMillis / 1000);
+        },
+        setIsLoopingAsync: async (isLooping: boolean) => {
+          try {
+            if (player) player.loop = isLooping;
+          } catch (_) {}
         },
       };
 

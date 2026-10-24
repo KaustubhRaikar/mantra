@@ -1,103 +1,205 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../src/constants/theme';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Colors, Spacing, Typography, Radius } from '../src/constants/theme';
 import { CosmicBackground } from '../src/components/CosmicBackground';
+import { GlassHeader } from '../src/components/GlassHeader';
+import { GlassCard } from '../src/components/GlassCard';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function PrivacyPolicyScreen() {
-  const router = useRouter();
-
   return (
     <View style={styles.safe}>
       <CosmicBackground />
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy Policy & Data Rights</Text>
-      </View>
+      <GlassHeader
+        title="Privacy Policy"
+        subtitle="DPDP Act & Sacred Data Rights"
+        showBack
+      />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.lastUpdated}>Version 1.0 — Effective October 2026</Text>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.badgeRow}>
+          <View style={styles.badge}>
+            <Ionicons name="shield-checkmark" size={14} color={Colors.secondary} />
+            <Text style={styles.badgeText}>DPDP Compliant (India)</Text>
+          </View>
+          <Text style={styles.lastUpdated}>v1.0 • Oct 2026</Text>
+        </View>
 
-        <Text style={styles.sectionHeader}>1. Principles of Sacred Data Privacy</Text>
-        <Text style={styles.paragraph}>
-          The Mantra app is built with deep reverence for user privacy. In accordance with the Digital Personal Data Protection (DPDP) Act, your personal sadhana records, Jaap counters, intentions (Sankalp), and devotional preferences are treated as private personal data.
-        </Text>
+        <GlassCard style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="heart" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>1. Sacred Data Principles</Text>
+          </View>
+          <Text style={styles.paragraph}>
+            The Mantra app is built with deep reverence for user privacy. In accordance with the Digital Personal Data Protection (DPDP) Act, your personal sadhana records, Jaap counters, intentions (Sankalp), and devotional preferences are treated as private, sacred data.
+          </Text>
+        </GlassCard>
 
-        <Text style={styles.sectionHeader}>2. Information We Collect</Text>
-        <Text style={styles.paragraph}>
-          • Account & Device Credentials: Email address, full name, encrypted device fingerprint, and login session tokens.
-          {'\n'}• Devotional Records: Daily Jaap chant counts, mala goals, and favorite bookmarked items.
-          {'\n'}• Optional Preferences: Granular consent choices for analytics, local notifications, and AI spiritual guidance features.
-        </Text>
+        <GlassCard style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="finger-print" size={18} color={Colors.accent} />
+            </View>
+            <Text style={styles.sectionTitle}>2. Information We Collect</Text>
+          </View>
+          <View style={styles.bulletItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
+            <Text style={styles.bulletText}>
+              <Text style={styles.bulletBold}>Account Credentials: </Text>
+              Email, full name, encrypted device fingerprint, and session tokens.
+            </Text>
+          </View>
+          <View style={styles.bulletItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
+            <Text style={styles.bulletText}>
+              <Text style={styles.bulletBold}>Devotional Records: </Text>
+              Daily Jaap chant counts, mala goals, and bookmarked scriptures.
+            </Text>
+          </View>
+          <View style={styles.bulletItem}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={Colors.primary} style={styles.bulletIcon} />
+            <Text style={styles.bulletText}>
+              <Text style={styles.bulletBold}>Granular Consent: </Text>
+              User-controlled toggles for analytics, notifications, and AI guidance.
+            </Text>
+          </View>
+        </GlassCard>
 
-        <Text style={styles.sectionHeader}>3. Data Rights & In-App Controls</Text>
-        <Text style={styles.paragraph}>
-          You retain 100% ownership and control over your personal data. At any time within the Profile settings, you may:
-          {'\n'}• Export My Data: Download a complete JSON archive of all profile and sadhana records.
-          {'\n'}• Delete Account & Data: Permanently purge your account and all associated database records across our servers.
-        </Text>
+        <GlassCard style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="key" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>3. Your Data Rights & In-App Controls</Text>
+          </View>
+          <Text style={styles.paragraph}>
+            You retain 100% sovereignty over your personal data. At any time in Profile settings, you may exercise:
+          </Text>
+          <View style={styles.bulletItem}>
+            <Ionicons name="download-outline" size={16} color={Colors.secondary} style={styles.bulletIcon} />
+            <Text style={styles.bulletText}>
+              <Text style={styles.bulletBold}>Export My Data: </Text>
+              Instant JSON archive download of all your sadhana and profile records.
+            </Text>
+          </View>
+          <View style={styles.bulletItem}>
+            <Ionicons name="trash-outline" size={16} color={Colors.error} style={styles.bulletIcon} />
+            <Text style={styles.bulletText}>
+              <Text style={styles.bulletBold}>Delete Account & Data: </Text>
+              Permanent erasure of your account, consent logs, and database records.
+            </Text>
+          </View>
+        </GlassCard>
 
-        <Text style={styles.sectionHeader}>4. Contact Data Protection Officer</Text>
-        <Text style={styles.paragraph}>
-          For privacy inquiries or DPDP compliance assistance, contact our Data Protection Officer at privacy@aarambhtech.in.
-        </Text>
+        <GlassCard style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="mail" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>4. Data Protection Officer</Text>
+          </View>
+          <Text style={styles.paragraph}>
+            For DPDP queries, rights requests, or regulatory assistance, reach out directly to our designated Data Protection Officer:
+          </Text>
+          <Text style={styles.contactEmail}>privacy@aarambhtech.in</Text>
+        </GlassCard>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 12,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    color: Colors.text,
-    fontWeight: 'bold',
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
   },
   container: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: Spacing.standard,
+    paddingBottom: Spacing.major * 2,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.standard,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(245, 176, 65, 0.12)',
+    paddingHorizontal: Spacing.compact,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 176, 65, 0.25)',
+  },
+  badgeText: {
+    fontSize: Typography.sizes.caption,
+    color: Colors.secondary,
+    fontWeight: '600',
   },
   lastUpdated: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 20,
+    fontSize: Typography.sizes.caption,
+    color: Colors.textMuted,
   },
-  sectionHeader: {
-    fontSize: 16,
-    color: Colors.primary,
-    marginTop: 16,
-    marginBottom: 8,
-    fontWeight: 'bold',
+  sectionCard: {
+    marginBottom: Spacing.standard,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.compact,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.compact,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sectionTitle: {
+    fontSize: Typography.sizes.heading3,
+    fontWeight: '700',
+    color: Colors.text,
   },
   paragraph: {
-    fontSize: 14,
-    color: Colors.text,
+    fontSize: Typography.sizes.body,
+    color: Colors.textSecondary,
+    lineHeight: Typography.lineHeights.body,
+    marginBottom: Spacing.compact,
+  },
+  bulletItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.micro,
+  },
+  bulletIcon: {
+    marginRight: Spacing.micro,
+    marginTop: 3,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: Typography.sizes.body,
+    color: Colors.textSecondary,
     lineHeight: 22,
-    marginBottom: 16,
+  },
+  bulletBold: {
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  contactEmail: {
+    fontSize: Typography.sizes.body,
+    fontWeight: '700',
+    color: Colors.primary,
+    marginTop: 4,
   },
 });
+
+

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.aarambhtech.mantra",
+      "sha256_cert_fingerprints": [
+        "75:62:DE:7B:87:65:8C:C8:54:8C:04:74:09:0D:61:96:8C:C4:C7:E8:F6:A1:52:F6:86:BF:BD:75:E4:EA:00:C8"
+      ]
+    }
+  }
+]

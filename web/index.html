@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mantra (मंत्र) — Sacred Vedic Chanting, Japa Mala & Scripture Sanctuary</title>
+    <meta name="description" content="Mantra is an authentic, ad-free Vedic digital sanctuary featuring authentic Devanagari Sanskrit scriptures, a tactile Japa Mala counter, high-definition audio, and DPDP-compliant devotee privacy.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cosmic-dark: #080711;
+            --cosmic-navy: #0e0c1f;
+            --cosmic-surface: #16132b;
+            --cosmic-card: rgba(26, 23, 49, 0.7);
+            --accent-gold: #ff9933;
+            --radiant-gold: #f5b041;
+            --celestial-purple: #7a68ee;
+            --text-high: #ffffff;
+            --text-mid: #b8b5d1;
+            --text-low: #736f94;
+            --border-glow: rgba(255, 153, 51, 0.25);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --font-display: 'Cinzel', serif;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-sanskrit: 'Tiro Devanagari Hindi', serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--cosmic-dark);
+            color: var(--text-mid);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 15%, rgba(108, 92, 231, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 25%, rgba(255, 153, 51, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(122, 104, 238, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        a:hover {
+            color: var(--radiant-gold);
+        }
+
+        /* ── Header & Navigation ── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 76px;
+            background: rgba(12, 10, 26, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .brand-logo-symbol {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff9933, #6c5ce7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 22px;
+            font-family: var(--font-sanskrit);
+            box-shadow: 0 4px 16px rgba(255, 153, 51, 0.35);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--text-high);
+        }
+
+        .brand-tagline {
+            font-size: 0.72rem;
+            color: var(--accent-gold);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-link {
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: var(--text-mid);
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-high);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-admin {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+            color: var(--text-mid);
+            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.04);
+            transition: all 0.2s;
+        }
+
+        .btn-admin:hover {
+            color: #ffffff;
+            border-color: var(--accent-gold);
+            background: rgba(255, 153, 51, 0.08);
+        }
+
+        .btn-primary {
+            padding: 10px 22px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-radius: 10px;
+            color: #0c0a1a;
+            background: linear-gradient(135deg, var(--accent-gold), var(--radiant-gold));
+            box-shadow: 0 4px 18px rgba(255, 153, 51, 0.35);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(255, 153, 51, 0.5);
+            color: #000;
+        }
+
+        /* ── Hero Section ── */
+        .hero {
+            padding: 150px 24px 90px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+        }
+
+        .sacred-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 22px;
+            background: rgba(255, 153, 51, 0.1);
+            border: 1px solid var(--border-glow);
+            border-radius: 100px;
+            font-family: var(--font-sanskrit);
+            font-size: 1.05rem;
+            color: var(--accent-gold);
+            margin-bottom: 24px;
+            animation: pulseGlow 3s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 12px rgba(255, 153, 51, 0.15); }
+            to { box-shadow: 0 0 24px rgba(255, 153, 51, 0.4); }
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: 3.4rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--text-high);
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            max-width: 760px;
+            margin: 0 auto 36px auto;
+            color: var(--text-mid);
+            font-weight: 300;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 60px;
+        }
+
+        .btn-store {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--cosmic-surface);
+            border: 1px solid var(--border-glass);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: var(--text-high);
+            transition: all 0.25s;
+        }
+
+        .btn-store:hover {
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .btn-store svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-gold);
+        }
+
+        .btn-store-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            line-height: 1.2;
+        }
+
+        .btn-store-sub {
+            font-size: 0.7rem;
+            color: var(--text-low);
+            text-transform: uppercase;
+        }
+
+        .btn-store-main {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* ── Live Interactive Widgets Container ── */
+        .interactive-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            max-width: 1040px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        @media (max-width: 860px) {
+            .interactive-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-title {
+                font-size: 2.4rem;
+            }
+            .navbar {
+                padding: 0 20px;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+
+        .interactive-card {
+            background: var(--cosmic-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+            background: rgba(255, 153, 51, 0.12);
+            padding: 4px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        /* ── Interactive Japa Mala Orb ── */
+        .mala-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .mala-orb {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffd166, #ff9933 60%, #b36200 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 35px rgba(255, 153, 51, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6);
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .mala-orb:active {
+            transform: scale(0.92);
+        }
+
+        .mala-symbol {
+            font-family: var(--font-sanskrit);
+            font-size: 2.6rem;
+            color: #2b1400;
+            line-height: 1;
+        }
+
+        .mala-count {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #1a0a00;
+            margin-top: 4px;
+        }
+
+        .mala-goal-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #4d2600;
+        }
+
+        .mala-streak-bar {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .streak-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .streak-val {
+            font-weight: 700;
+            color: var(--text-high);
+            font-size: 1.1rem;
+        }
+
+        .streak-lbl {
+            font-size: 0.72rem;
+            color: var(--text-low);
+            text-transform: uppercase;
+        }
+
+        /* ── Daily Scripture Audio Player Card ── */
+        .scripture-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .deity-badge {
+            background: rgba(108, 92, 231, 0.2);
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.4);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .sanskrit-verse {
+            font-family: var(--font-sanskrit);
+            font-size: 1.45rem;
+            line-height: 1.6;
+            color: var(--text-high);
+            margin-bottom: 12px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+
+        .transliteration {
+            font-style: italic;
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+            margin-bottom: 14px;
+        }
+
+        .verse-meaning {
+            font-size: 0.92rem;
+            color: var(--text-mid);
+            background: rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-gold);
+            margin-bottom: 20px;
+        }
+
+        .player-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .play-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            color: #0c0a1a;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.08);
+            background: var(--radiant-gold);
+        }
+
+        .audio-wave {
+            flex: 1;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .wave-bar {
+            width: 4px;
+            background: var(--accent-gold);
+            border-radius: 2px;
+            height: 8px;
+            transition: height 0.2s;
+        }
+
+        /* ── Pillars / Features Section ── */
+        .section {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-high);
+            margin-bottom: 12px;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-low);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 28px;
+        }
+
+        .feature-card {
+            background: var(--cosmic-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(255, 153, 51, 0.1);
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-high);
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 0.95rem;
+            color: var(--text-mid);
+            line-height: 1.6;
+        }
+
+        /* ── Scripture Taxonomy Showcase ── */
+        .scripture-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .chip {
+            padding: 10px 22px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: 100px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-mid);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip.active, .chip:hover {
+            background: rgba(255, 153, 51, 0.15);
+            border-color: var(--accent-gold);
+            color: var(--text-high);
+        }
+
+        /* ── Privacy & DPDP Covenant ── */
+        .covenant-box {
+            background: linear-gradient(135deg, rgba(22, 19, 43, 0.9), rgba(14, 12, 31, 0.9));
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .covenant-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+        }
+
+        .covenant-text {
+            font-size: 1.1rem;
+            color: var(--text-mid);
+            max-width: 760px;
+            margin: 0 auto 30px auto;
+            line-height: 1.8;
+        }
+
+        .covenant-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: #05040a;
+            border-top: 1px solid var(--border-glass);
+            padding: 60px 40px 30px 40px;
+            margin-top: 80px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto 50px auto;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        .footer-col-title {
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-high);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links a {
+            color: var(--text-mid);
+            font-size: 0.92rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-gold);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            border-top: 1px solid var(--border-glass);
+            padding-top: 25px;
+            font-size: 0.85rem;
+            color: var(--text-low);
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Navigation Header ── -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo-symbol">ॐ</div>
+            <div class="brand-text">
+                <span class="brand-name">MANTRA</span>
+                <span class="brand-tagline">Vedic Sanctuary</span>
+            </div>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="#features" class="nav-link">Divine Features</a></li>
+            <li><a href="#scriptures" class="nav-link">Sacred Catalog</a></li>
+            <li><a href="#japa" class="nav-link">Japa Mala</a></li>
+            <li><a href="privacy.html" class="nav-link">Privacy Covenant</a></li>
+            <li><a href="support.html" class="nav-link">Support & FAQ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <a href="admin/login.php" class="btn-admin">Admin Portal</a>
+            <a href="#download" class="btn-primary">
+                <span>Download App</span>
+                <span>&darr;</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ── Hero Section ── -->
+    <header class="hero">
+        <div class="sacred-badge">
+            <span>✨</span> ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि <span>✨</span>
+        </div>
+
+        <h1 class="hero-title">
+            A Sacred Digital Sanctuary for <br>
+            <span>Vedic Devotion & Sadhana</span>
+        </h1>
+
+        <p class="hero-description">
+            Immerse yourself in authentic Sanskrit hymns, liturgical ritual Vidhis, and tactile Japa Mala counters. Engineered with zero commercial advertising, offline resilience, and uncompromising privacy.
+        </p>
+
+        <div class="hero-cta-group" id="download">
+            <a href="https://play.google.com/store/apps/details?id=com.aarambhtech.mantra" class="btn-store">
+                <svg viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.99 1.99 0 0 1-.61-.944V2.758c0-.36.223-.701.61-.944zm11.233 11.234l2.25 2.25-11.666 6.7c-.504.288-1.077.206-1.428-.142l10.844-8.808zm0-2.096L4.004 2.144c.351-.348.924-.43 1.428-.142l11.666 6.7-2.256 2.25zm1.488 1.488l2.96 1.702a1.868 1.868 0 0 1 0 3.238l-2.96 1.7-1.748-1.748 1.748-1.748z"/></svg>
+                <div class="btn-store-text">
+                    <span class="btn-store-sub">Get It On</span>
+                    <span class="btn-store-main">Google Play</span>
+                </div>
+            </a>
+
+            <a href="https://mantra.aarambhtech.in/mantra-release.apk" class="btn-store">
+                <svg viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5516 0 .9997.4486.9997 1.0003s-.4481 1.0003-.9997 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5516 0 .9997.4486.9997 1.0003s-.4481 1.0003-.9997 1.0003m11.4045-6.02l1.996-3.4572c.115-.1994.0464-.4548-.153-.5698-.199-.1154-.4544-.0465-.5693.153l-2.0224 3.5028C15.4854 8.2435 13.8052 7.84 12 7.84s-3.4854.4035-5.1328 1.1099L4.8448 5.447c-.1149-.1995-.3703-.2684-.5693-.153-.1994.115-.268 0-.3704.153l1.996 3.4572C2.6884 10.8718 1.08 14.1843 1 18h22c-.08-3.8157-1.6884-7.1282-5.1185-9.1786"/></svg>
+                <div class="btn-store-text">
+                    <span class="btn-store-sub">Direct Download</span>
+                    <span class="btn-store-main">Android APK</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- ── Interactive Showcase Grid ── -->
+        <div class="interactive-grid" id="japa">
+            <!-- Widget 1: Interactive Japa Mala Orb -->
+            <div class="interactive-card mala-container">
+                <span class="card-badge">Interactive Sadhana Preview</span>
+                <h3 style="color: #fff; font-size: 1.25rem; margin-bottom: 6px;">Tactile Japa Mala Counter</h3>
+                <p style="font-size: 0.88rem; color: var(--text-mid);">Click the sacred orb to count chants toward 108 malas</p>
+
+                <div class="mala-orb" id="malaOrb" onclick="incrementMalaCount()">
+                    <span class="mala-symbol">ॐ</span>
+                    <span class="mala-count" id="malaDisplay">0</span>
+                    <span class="mala-goal-tag">/ 108 Beads</span>
+                </div>
+
+                <div class="mala-streak-bar">
+                    <div class="streak-item">
+                        <span class="streak-val" id="completedMalasDisplay">0</span>
+                        <span class="streak-lbl">Malas Completed</span>
+                    </div>
+                    <div class="streak-item">
+                        <span class="streak-val">14 Days</span>
+                        <span class="streak-lbl">Active Streak</span>
+                    </div>
+                    <div class="streak-item">
+                        <span class="streak-val">Brahma Muhurta</span>
+                        <span class="streak-lbl">Optimal Window</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Widget 2: Daily Scripture Chanting Player -->
+            <div class="interactive-card">
+                <div class="scripture-card-header">
+                    <span class="card-badge">Daily Chanting Hymn</span>
+                    <span class="deity-badge">Lord Shiva</span>
+                </div>
+
+                <div class="sanskrit-verse">
+                    ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्।<br>
+                    उर्वारुकमिव बन्धनान् मृत्योर्मुक्षीय माऽमृतात्॥
+                </div>
+
+                <div class="transliteration">
+                    Om Tryambakam Yajamahe Sugandhim Pushtivardhanam |<br>
+                    Urvarukamiva Bandhanan Mrityormukshiya Ma'mritat ||
+                </div>
+
+                <div class="verse-meaning">
+                    <strong>Spiritual Significance:</strong> The Maha Mrityunjaya Mantra liberates the devotee from spiritual death, fear, and bondage, fostering divine vitality and mental peace.
+                </div>
+
+                <div class="player-bar">
+                    <button class="play-btn" id="audioToggleBtn" onclick="toggleAudioDemo()">▶</button>
+                    <div class="audio-wave">
+                        <div class="wave-bar" style="height: 14px;"></div>
+                        <div class="wave-bar" style="height: 22px;"></div>
+                        <div class="wave-bar" style="height: 10px;"></div>
+                        <div class="wave-bar" style="height: 18px;"></div>
+                        <div class="wave-bar" style="height: 24px;"></div>
+                        <div class="wave-bar" style="height: 12px;"></div>
+                        <div class="wave-bar" style="height: 20px;"></div>
+                        <div class="wave-bar" style="height: 15px;"></div>
+                    </div>
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-gold);">Authentic Vocal Chanting</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Pillars of Reverence Section ── -->
+    <section class="section" id="features">
+        <div class="section-header">
+            <h2 class="section-title">Engineered for Sacred Reverence</h2>
+            <p class="section-subtitle">Bridging ancient Vedic traditions with state-of-the-art mobile engineering.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-box">🪔</div>
+                <h3 class="feature-title">Authentic Typography</h3>
+                <p class="feature-desc">Integrated with <code>Tiro Devanagari Hindi</code> font to render complex Sanskrit ligatures, matras, and conjuncts without clipping.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">📿</div>
+                <h3 class="feature-title">Tactile Japa Mala</h3>
+                <p class="feature-desc">Blind chanting with subtle haptic vibration per bead, temple bell audio chimes at 108 counts, and 90-day SQLite progress tracking.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">🎵</div>
+                <h3 class="feature-title">Studio Chanting Audio</h3>
+                <p class="feature-desc">High-definition audio recitations powered by native <code>expo-audio</code> with background playback and iOS lock screen controls.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">✈️</div>
+                <h3 class="feature-title">Offline Sanctuary Mode</h3>
+                <p class="feature-desc">Complete offline reading and chanting in temple sanctums, mountain ashrams, or during flights without requiring connectivity.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">🛡️</div>
+                <h3 class="feature-title">DPDP 2023 Privacy</h3>
+                <p class="feature-desc">Zero advertisements, zero data brokers. Passwordless 2-step OTP login bound to hardware KeyStore fingerprints with self-service deletion.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon-box">🤖</div>
+                <h3 class="feature-title">Vedic AI Intelligence</h3>
+                <p class="feature-desc">Scripture-grounded RAG assistance explaining verse etymology and evaluating real-time Sanskrit chanting pronunciation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Scripture Catalog Showcase ── -->
+    <section class="section" id="scriptures">
+        <div class="section-header">
+            <h2 class="section-title">The Sacred Scripture Catalog</h2>
+            <p class="section-subtitle">Curated collections spanning Vedic recensions, Puranic hymns, and ritual procedures.</p>
+        </div>
+
+        <div class="scripture-chips">
+            <span class="chip active">All Traditions</span>
+            <span class="chip">Lord Shiva (18)</span>
+            <span class="chip">Lord Hanuman (12)</span>
+            <span class="chip">Maa Durga & Devi (15)</span>
+            <span class="chip">Lord Vishnu & Krishna (14)</span>
+            <span class="chip">Lord Ganesha (8)</span>
+            <span class="chip">108 Upanishads (12 Canonical)</span>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="card-badge">Hymns & Chants</span>
+                <h3 class="feature-title">Sacred Mantras & Stotras</h3>
+                <p class="feature-desc">Gayatri Mantra, Maha Mrityunjaya, Shiva Tandava Stotram, Vishnu Sahasranama, Aditya Hridaya Stotra with Devanagari, transliteration, and meanings.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-badge">Daily Aarti</span>
+                <h3 class="feature-title">Devotional Aartis & Chalisas</h3>
+                <p class="feature-desc">Complete Hanuman Chalisa, Durga Chalisa, Shiv Aarti, and festival-specific Aartis for Diwali, Navratri, Shivratri, and Janmashtami.</p>
+            </div>
+
+            <div class="feature-card">
+                <span class="card-badge">Ritual Guides</span>
+                <h3 class="feature-title">Step-by-Step Pooja Vidhis</h3>
+                <p class="feature-desc">Comprehensive liturgical ritual guides: Deepa Prajvalan, Sankalp, Dhyana, Shodashopachara rituals, and full Vrat Kathas with samagri lists.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Covenant of Privacy Box ── -->
+    <section class="section">
+        <div class="covenant-box">
+            <div class="covenant-title">The Covenant of Pure Devotion</div>
+            <p class="covenant-text">
+                Your devotional sadhana is a sacred bond. We will never sell, broker, or display commercial third-party advertisements in your prayer space. Full DPDP Act 2023 compliance with transparent data portability and immediate one-click deletion.
+            </p>
+            <div class="covenant-links">
+                <a href="privacy.html" class="btn-primary">Read Official Privacy Policy</a>
+                <a href="delete-account.html" class="btn-store">Data Deletion Portal</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <a href="index.html" class="brand" style="margin-bottom: 16px;">
+                    <div class="brand-logo-symbol">ॐ</div>
+                    <div class="brand-text">
+                        <span class="brand-name">MANTRA</span>
+                        <span class="brand-tagline">Vedic Sanctuary</span>
+                    </div>
+                </a>
+                <p style="font-size: 0.9rem; color: var(--text-mid); line-height: 1.6; max-width: 320px;">
+                    Dedicated to preserving and illuminating sacred Vedic scriptures, pure Sanskrit chanting, and disciplined spiritual sadhana.
+                </p>
+            </div>
+
+            <div>
+                <div class="footer-col-title">Navigation</div>
+                <ul class="footer-links">
+                    <li><a href="#features">Divine Features</a></li>
+                    <li><a href="#scriptures">Scripture Catalog</a></li>
+                    <li><a href="#japa">Japa Mala Counter</a></li>
+                    <li><a href="#download">Download Mobile App</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <div class="footer-col-title">Governance & Legal</div>
+                <ul class="footer-links">
+                    <li><a href="privacy.html">Privacy Policy (DPDP)</a></li>
+                    <li><a href="delete-account.html">Account Deletion Portal</a></li>
+                    <li><a href="terms.html">Terms of Service</a></li>
+                    <li><a href="support.html">Help & Grievance Desk</a></li>
+                    <li><a href=".well-known/assetlinks.json">Android Asset Links</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <div class="footer-col-title">Administration</div>
+                <ul class="footer-links">
+                    <li><a href="admin/login.php">Admin Portal Login</a></li>
+                    <li><a href="admin/index.php">Devotional Telemetry</a></li>
+                    <li><a href="admin/scriptures.php">Scripture CMS</a></li>
+                    <li><a href="admin/users.php">DPDP Erasure Queue</a></li>
+                </ul>
+                <div style="margin-top: 15px;">
+                    <span style="font-size: 0.8rem; color: var(--accent-gold);">DPO Contact:</span><br>
+                    <a href="mailto:privacy@aarambhtech.in" style="font-size: 0.85rem;">privacy@aarambhtech.in</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>&copy; 2026 AarambhTech. All Rights Reserved. Dedicated to Sanatana Dharma.</span>
+            <span>Version 2.0.0 &bull; Secure TLS 1.3 Encryption &bull; DPDP 2023 Compliant</span>
+        </div>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        let count = 0;
+        let malas = 0;
+        const malaDisplay = document.getElementById('malaDisplay');
+        const completedDisplay = document.getElementById('completedMalasDisplay');
+        const malaOrb = document.getElementById('malaOrb');
+        const audioBtn = document.getElementById('audioToggleBtn');
+        let isPlaying = false;
+
+        function incrementMalaCount() {
+            count++;
+            if (count >= 108) {
+                malas++;
+                count = 0;
+                completedDisplay.innerText = malas;
+                // Celebration visual
+                malaOrb.style.boxShadow = "0 0 60px rgba(255, 215, 0, 0.9), inset 0 0 25px rgba(255, 255, 255, 0.9)";
+                setTimeout(() => {
+                    malaOrb.style.boxShadow = "0 0 35px rgba(255, 153, 51, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.6)";
+                }, 800);
+            }
+            malaDisplay.innerText = count;
+
+            // Audio Web Audio API Synthetic Chime
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(count === 0 ? 880 : 523.25, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            } catch (e) {}
+        }
+
+        function toggleAudioDemo() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                audioBtn.innerText = '❚❚';
+                audioBtn.style.background = '#2ecc71';
+                // Animate waves
+                document.querySelectorAll('.wave-bar').forEach(bar => {
+                    bar.style.animation = 'pulseWave 0.6s infinite alternate';
+                });
+            } else {
+                audioBtn.innerText = '▶';
+                audioBtn.style.background = 'var(--accent-gold)';
+                document.querySelectorAll('.wave-bar').forEach(bar => {
+                    bar.style.animation = 'none';
+                });
+            }
+        }
+    </script>
+</body>
+</html>

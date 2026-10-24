@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../src/constants/theme';
+import { Colors, Spacing, Radius, Typography } from '../src/constants/theme';
 import { CosmicBackground } from '../src/components/CosmicBackground';
+import { GlassHeader } from '../src/components/GlassHeader';
+import { GlassCard } from '../src/components/GlassCard';
+import { SpiritualButton } from '../src/components/SpiritualButton';
 import { consentManager } from '../src/services/consentManager';
 
 export default function ConsentScreen() {
@@ -42,171 +45,157 @@ export default function ConsentScreen() {
   return (
     <View style={styles.safe}>
       <CosmicBackground />
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Privacy & Data Consent</Text>
-      </View>
+      <GlassHeader title="Privacy & Data Consent" subtitle="DPDP Act 2023 Compliance" />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.iconContainer}>
-          <Ionicons name="shield-checkmark" size={48} color={Colors.primary} />
+          <View style={styles.iconCircle}>
+            <Ionicons name="shield-checkmark" size={38} color={Colors.primary} />
+          </View>
         </View>
 
-        <Text style={styles.title}>Your Privacy Preferences</Text>
-        <Text style={styles.subtitle}>
-          In compliance with the DPDP Act, you can choose how your data is processed. You can update these settings anytime in your Profile.
+        <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+          Your Spiritual Privacy
+        </Text>
+        <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+          In accordance with the Digital Personal Data Protection Act 2023, you retain sovereign control over your data.
         </Text>
 
-        <View style={styles.toggleCard}>
+        {/* Devotional Notifications */}
+        <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
             <Text style={styles.toggleTitle}>Devotional Notifications</Text>
-            <Text style={styles.toggleDesc}>Receive daily Brahma Muhurta reminders and Sadhana updates.</Text>
+            <Text style={styles.toggleDesc}>
+              Daily Brahma Muhurta prayer reminders & Sandhya Sadhana alerts.
+            </Text>
           </View>
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: '#E0E0E0', true: Colors.primary + '80' }}
-            thumbColor={notifications ? Colors.primary : '#F4F4F4'}
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.primary + '80' }}
+            thumbColor={notifications ? Colors.primary : '#888'}
             accessibilityLabel="Toggle devotional notifications"
           />
-        </View>
+        </GlassCard>
 
-        <View style={styles.toggleCard}>
+        {/* AI Guidance */}
+        <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleTitle}>AI Spiritual Guidance</Text>
-            <Text style={styles.toggleDesc}>Allow AI assistant to provide personalized mantra meanings and pronunciation feedback.</Text>
+            <Text style={styles.toggleTitle}>Sanskrit Pronunciation AI</Text>
+            <Text style={styles.toggleDesc}>
+              Enable AI pronunciation guidance for authentic Vedic recitation.
+            </Text>
           </View>
           <Switch
             value={ai}
             onValueChange={setAi}
-            trackColor={{ false: '#E0E0E0', true: Colors.primary + '80' }}
-            thumbColor={ai ? Colors.primary : '#F4F4F4'}
-            accessibilityLabel="Toggle AI spiritual guidance"
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.secondary + '80' }}
+            thumbColor={ai ? Colors.secondary : '#888'}
+            accessibilityLabel="Toggle Sanskrit pronunciation AI"
           />
-        </View>
+        </GlassCard>
 
-        <View style={styles.toggleCard}>
+        {/* App Reliability */}
+        <GlassCard style={styles.toggleCard}>
           <View style={styles.toggleInfo}>
-            <Text style={styles.toggleTitle}>App Performance & Analytics</Text>
-            <Text style={styles.toggleDesc}>Help improve app stability with anonymous crash reporting.</Text>
+            <Text style={styles.toggleTitle}>Telemetry & Reliability</Text>
+            <Text style={styles.toggleDesc}>
+              Anonymous error telemetry to ensure zero audio latency and app stability.
+            </Text>
           </View>
           <Switch
             value={analytics}
             onValueChange={setAnalytics}
-            trackColor={{ false: '#E0E0E0', true: Colors.primary + '80' }}
-            thumbColor={analytics ? Colors.primary : '#F4F4F4'}
-            accessibilityLabel="Toggle performance analytics"
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.primary + '80' }}
+            thumbColor={analytics ? Colors.primary : '#888'}
+            accessibilityLabel="Toggle performance telemetry"
+          />
+        </GlassCard>
+
+        <View style={{ marginTop: Spacing.large }}>
+          <SpiritualButton
+            title="Save Privacy Preferences"
+            onPress={handleSave}
+            loading={saving}
+            variant="primary"
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={saving}
-          accessibilityRole="button"
-          accessibilityLabel="Save privacy preferences"
-        >
-          <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save Preferences'}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.policyLink}
-          onPress={() => router.push('/privacy')}
-          accessibilityRole="link"
-          accessibilityLabel="Read full Privacy Policy"
-        >
-          <Text style={styles.policyLinkText}>Read full Privacy Policy</Text>
-        </TouchableOpacity>
+        <View style={{ marginTop: Spacing.standard, alignItems: 'center' }}>
+          <SpiritualButton
+            title="Read Full Privacy Policy"
+            onPress={() => router.push('/privacy')}
+            variant="glass"
+            fullWidth={false}
+          />
+        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  header: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 18,
-    color: Colors.text,
-    fontWeight: 'bold',
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
   },
   container: {
-    padding: 20,
+    padding: Spacing.standard,
     paddingBottom: 40,
   },
   iconContainer: {
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: Spacing.standard,
+  },
+  iconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: 'rgba(255, 153, 51, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
+    fontFamily: Typography.families.heading,
     fontSize: 22,
+    fontWeight: '800',
     color: Colors.text,
     textAlign: 'center',
     marginBottom: 6,
-    fontWeight: '800',
   },
   subtitle: {
-    fontSize: 14,
+    fontFamily: Typography.families.body,
+    fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.large,
     lineHeight: 20,
+    maxWidth: 320,
+    alignSelf: 'center',
   },
   toggleCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    padding: Spacing.standard,
+    marginBottom: Spacing.compact,
   },
   toggleInfo: {
     flex: 1,
-    marginRight: 12,
+    marginRight: Spacing.standard,
   },
   toggleTitle: {
-    fontSize: 14,
+    fontFamily: Typography.families.heading,
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
-    fontWeight: 'bold',
     marginBottom: 2,
   },
   toggleDesc: {
     fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 16,
-  },
-  saveButton: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: 25,
-    alignItems: 'center',
-    marginTop: 20,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  saveButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  policyLink: {
-    alignItems: 'center',
-    marginTop: 20,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  policyLinkText: {
-    color: Colors.primary,
-    fontSize: 13,
-    textDecorationLine: 'underline',
   },
 });

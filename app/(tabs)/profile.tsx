@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Switch, Modal, Alert, FlatList
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  Modal,
+  Alert,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors } from '../../src/constants/theme';
+import { Colors, Spacing, Radius, Typography } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
+import { GlassCard } from '../../src/components/GlassCard';
+import { SpiritualButton } from '../../src/components/SpiritualButton';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import { storage } from '../../src/services/storage';
@@ -71,7 +80,7 @@ export default function ProfileScreen() {
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out?',
+      'Are you sure you want to sign out from your spiritual account?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -88,574 +97,506 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <CosmicBackground />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        
-        {/* ── User Header ── */}
-        <View style={styles.profileHeader}>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {/* ── Devotee Header ── */}
+        <GlassCard style={styles.profileHeader} glow>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={42} color={Colors.primary} />
+            <Ionicons name="person" size={36} color={Colors.primary} />
           </View>
-          <Text style={styles.name}>{user ? (user.full_name || 'Sacred Devotee') : 'Guest Devotee'}</Text>
-          <Text style={styles.email}>{user ? user.email : 'Explore mantras & sync your favorites'}</Text>
-          
-          {!user && (
-            <TouchableOpacity style={styles.signInBtn} onPress={() => router.push('/login')}>
-              <Ionicons name="log-in-outline" size={18} color="#FFF" />
-              <Text style={styles.signInBtnText}>Sign In / Sign Up</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+          <Text style={styles.name} maxFontSizeMultiplier={1.3}>
+            {user ? user.full_name || 'Sacred Devotee' : 'Guest Devotee'}
+          </Text>
+          <Text style={styles.email} maxFontSizeMultiplier={1.3}>
+            {user ? user.email : 'Explore scriptures & sync your spiritual sadhana'}
+          </Text>
+
+          {!user ? (
+            <View style={{ marginTop: Spacing.standard, width: '100%' }}>
+              <SpiritualButton
+                title="Sign In / Register"
+                onPress={() => router.push('/login')}
+                variant="primary"
+                icon={<Ionicons name="log-in-outline" size={18} color="#0C0A1A" />}
+              />
+            </View>
+          ) : null}
+        </GlassCard>
 
         {/* ── Devotion & Jaap Logs Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Jaap & Devotion Tracking</Text>
-          
-          <TouchableOpacity style={styles.menuItem} onPress={handleOpenJaapLogs} activeOpacity={0.7}>
+          <Text style={styles.sectionHeader}>Sadhana & Devotion Tracking</Text>
+          <GlassCard onPress={handleOpenJaapLogs} style={styles.menuCard}>
             <View style={styles.menuIconBadge}>
               <Ionicons name="calendar-outline" size={22} color={Colors.primary} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.menuLabelBold}>Jaap Log & Daily History</Text>
-              <Text style={styles.menuSubLabel}>View total counts and completed malas date-wise</Text>
+              <Text style={styles.menuSubLabel}>View total chants and completed malas date-wise</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </GlassCard>
         </View>
 
         {/* ── App Preferences Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Preferences & Settings</Text>
-          
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="alarm-outline" size={22} color={Colors.primary} />
-              <Text style={styles.settingLabel}>Daily Mantra Reminder</Text>
+
+          <GlassCard style={styles.settingsCard}>
+            {/* Daily Reminder */}
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="alarm-outline" size={22} color={Colors.primary} />
+                <Text style={styles.settingLabel}>Daily Brahma Muhurta Reminder</Text>
+              </View>
+              <Switch
+                value={dailyReminder}
+                onValueChange={setDailyReminder}
+                trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.primary + '80' }}
+                thumbColor={dailyReminder ? Colors.primary : '#888'}
+              />
             </View>
-            <Switch
-              value={dailyReminder}
-              onValueChange={setDailyReminder}
-              trackColor={{ false: '#E0E0E0', true: Colors.primary + '80' }}
-              thumbColor={dailyReminder ? Colors.primary : '#F4F4F4'}
-            />
-          </View>
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Ionicons name="volume-medium-outline" size={22} color={Colors.secondary} />
-              <Text style={styles.settingLabel}>Auto-play Audio on Open</Text>
+            <View style={styles.divider} />
+
+            {/* Autoplay Audio */}
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name="volume-medium-outline" size={22} color={Colors.secondary} />
+                <Text style={styles.settingLabel}>Auto-play Sacred Audio</Text>
+              </View>
+              <Switch
+                value={autoPlayAudio}
+                onValueChange={setAutoPlayAudio}
+                trackColor={{ false: 'rgba(255,255,255,0.1)', true: Colors.secondary + '80' }}
+                thumbColor={autoPlayAudio ? Colors.secondary : '#888'}
+              />
             </View>
-            <Switch
-              value={autoPlayAudio}
-              onValueChange={setAutoPlayAudio}
-              trackColor={{ false: '#E0E0E0', true: Colors.secondary + '80' }}
-              thumbColor={autoPlayAudio ? Colors.secondary : '#F4F4F4'}
-            />
-          </View>
 
-          <TouchableOpacity
-            style={styles.settingRow}
-            onPress={() => {
-              const langs: ('Hindi' | 'English' | 'Sanskrit')[] = ['Hindi', 'English', 'Sanskrit'];
-              const nextIdx = (langs.indexOf(preferredLang) + 1) % langs.length;
-              setPreferredLang(langs[nextIdx]);
-            }}
-          >
-            <View style={styles.settingInfo}>
-              <Ionicons name="language-outline" size={22} color="#0095D9" />
-              <Text style={styles.settingLabel}>Preferred Translation</Text>
-            </View>
-            <View style={styles.valueBadge}>
-              <Text style={styles.valueBadgeText}>{preferredLang}</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+            <View style={styles.divider} />
 
-        {/* ── Content Sub-Menus Directory ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Content Sub-Menus</Text>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/categories')}>
-            <Ionicons name="apps-outline" size={22} color={Colors.primary} />
-            <Text style={styles.menuLabel}>All Categories</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/chalisa/' as any)}>
-            <Ionicons name="book-outline" size={22} color={Colors.secondary} />
-            <Text style={styles.menuLabel}>Chalisa Collection</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/pooja_vidhi/' as any)}>
-            <Ionicons name="flame-outline" size={22} color="#FFD700" />
-            <Text style={styles.menuLabel}>Pooja Vidhi Procedures</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/stotra/' as any)}>
-            <Ionicons name="sparkles-outline" size={22} color="#2ECC71" />
-            <Text style={styles.menuLabel}>Sacred Stotras</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/vrat_katha/' as any)}>
-            <Ionicons name="moon-outline" size={22} color="#9B59B6" />
-            <Text style={styles.menuLabel}>Vrat Katha Stories</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/upanishad' as any)}>
-            <Ionicons name="library-outline" size={22} color="#E67E22" />
-            <Text style={styles.menuLabel}>Upanishads Library</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Privacy & Data Rights Section (DPDP Compliance) ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Privacy & Data Rights (DPDP)</Text>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/consent')} activeOpacity={0.7}>
-            <View style={styles.menuIconBadge}>
-              <Ionicons name="shield-checkmark-outline" size={22} color={Colors.primary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.menuLabelBold}>Privacy Consent Preferences</Text>
-              <Text style={styles.menuSubLabel}>Manage notifications, analytics & AI consent</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/privacy')} activeOpacity={0.7}>
-            <Ionicons name="document-text-outline" size={22} color={Colors.secondary} />
-            <Text style={styles.menuLabel}>Privacy Policy & Terms</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          {user && (
-            <>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={async () => {
-                  const { syncManager } = require('../../src/services/syncManager');
-                  const { api } = require('../../src/services/api');
-                  const creds = await syncManager.getAuthCredentials();
-                  if (creds) {
-                    const data = await api.exportUserData(creds);
-                    if (data && data.status === 'success') {
-                      Alert.alert('Data Export Ready', JSON.stringify(data.data, null, 2).slice(0, 500) + '\n\nFull JSON export downloaded.');
-                    } else {
-                      Alert.alert('Export Failed', 'Unable to fetch data export.');
-                    }
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="download-outline" size={22} color="#0095D9" />
-                <Text style={styles.menuLabel}>Export My Data (JSON)</Text>
-                <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.menuItem, { borderColor: '#FFD6D6' }]}
-                onPress={() => {
-                  Alert.alert(
-                    'Delete Account & All Data',
-                    'Are you sure you want to permanently delete your account, Jaap logs, and favorites? This action CANNOT be undone.',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Delete Forever',
-                        style: 'destructive',
-                        onPress: async () => {
-                          const { syncManager } = require('../../src/services/syncManager');
-                          const { api } = require('../../src/services/api');
-                          const creds = await syncManager.getAuthCredentials();
-                          if (creds) {
-                            await api.deleteAccount(creds);
-                          }
-                          await signOut();
-                        },
-                      },
-                    ]
-                  );
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="trash-bin-outline" size={22} color="#FF3B30" />
-                <Text style={[styles.menuLabel, { color: '#FF3B30' }]}>Delete My Account & Data</Text>
-                <Ionicons name="chevron-forward" size={18} color="#FF3B30" />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
-        {/* ── System & Information Section ── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Support & System</Text>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => setSupportModalVisible(true)}>
-            <Ionicons name="help-circle-outline" size={22} color={Colors.primary} />
-            <Text style={styles.menuLabel}>Help & Support</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => setAboutModalVisible(true)}>
-            <Ionicons name="shield-checkmark-outline" size={22} color="#2ECC71" />
-            <Text style={styles.menuLabel}>Security & About App</Text>
-            <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Sign Out Button ── */}
-        {user && (
-          <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
-            <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut} activeOpacity={0.85}>
-              <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-              <Text style={styles.signOutBtnText}>Sign Out Account</Text>
+            {/* Language Selection */}
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => {
+                const langs: ('Hindi' | 'English' | 'Sanskrit')[] = ['Hindi', 'English', 'Sanskrit'];
+                const nextIdx = (langs.indexOf(preferredLang) + 1) % langs.length;
+                setPreferredLang(langs[nextIdx]);
+              }}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="language-outline" size={22} color={Colors.accent} />
+                <Text style={styles.settingLabel}>Preferred Language</Text>
+              </View>
+              <View style={styles.valueBadge}>
+                <Text style={styles.valueBadgeText}>{preferredLang}</Text>
+              </View>
             </TouchableOpacity>
-          </View>
-        )}
+          </GlassCard>
+        </View>
 
+        {/* ── Privacy, DPDP & Legal ── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>Privacy & Legal Governance</Text>
+          <GlassCard style={styles.settingsCard}>
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => router.push('/consent')}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="shield-checkmark-outline" size={22} color={Colors.success} />
+                <Text style={styles.settingLabel}>Data Privacy & Consent (DPDP)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => router.push('/privacy')}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="document-text-outline" size={22} color={Colors.secondary} />
+                <Text style={styles.settingLabel}>Privacy Policy & Data Safety</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => setAboutModalVisible(true)}
+            >
+              <View style={styles.settingInfo}>
+                <Ionicons name="information-circle-outline" size={22} color={Colors.primary} />
+                <Text style={styles.settingLabel}>About Mantra App & Sacred Covenant</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+          </GlassCard>
+        </View>
+
+        {/* ── Sign Out ── */}
+        {user ? (
+          <View style={{ marginHorizontal: Spacing.standard, marginTop: Spacing.large }}>
+            <SpiritualButton
+              title="Sign Out"
+              onPress={handleSignOut}
+              variant="destructive"
+            />
+          </View>
+        ) : null}
       </ScrollView>
 
-      {/* ── Jaap Log & History Modal ── */}
-      <Modal visible={jaapLogModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
+      {/* ── Jaap History Modal ── */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={jaapLogModalVisible}
+        onRequestClose={() => setJaapLogModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Ionicons name="calendar" size={36} color={Colors.primary} />
-              <Text style={styles.modalTitle}>Jaap Log & Daily History</Text>
-              <Text style={styles.modalSubTitle}>Date-wise record of your sacred chants</Text>
-            </View>
-
-            {/* Total Summary Cards */}
-            <View style={styles.summaryContainer}>
-              <View style={styles.summaryCard}>
-                <Ionicons name="hand-right-outline" size={20} color={Colors.primary} />
-                <Text style={styles.summaryNumber}>{totalLifetimeChants}</Text>
-                <Text style={styles.summaryLabel}>Total Chants</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="calendar" size={22} color={Colors.primary} />
+                <Text style={styles.modalTitle}>Sadhana History</Text>
               </View>
-              <View style={styles.summaryCard}>
-                <Ionicons name="ribbon-outline" size={20} color={Colors.secondary} />
-                <Text style={styles.summaryNumber}>{totalLifetimeMalas}</Text>
-                <Text style={styles.summaryLabel}>Malas Completed</Text>
-              </View>
-            </View>
-
-            {/* Date-wise Log List */}
-            {jaapLogs.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="hourglass-outline" size={44} color={Colors.textSecondary + '60'} />
-                <Text style={styles.emptyStateTitle}>No Jaap Recorded Yet</Text>
-                <Text style={styles.emptyStateText}>
-                  Start chanting on the home screen counter. Every tap and completed mala will be recorded here date-wise automatically!
-                </Text>
-              </View>
-            ) : (
-              <ScrollView style={{ marginTop: 8 }} showsVerticalScrollIndicator={false}>
-                {jaapLogs.map((item, index) => (
-                  <View key={item.date || index.toString()} style={styles.logCard}>
-                    <View style={styles.logCardLeft}>
-                      <View style={styles.dateIconBadge}>
-                        <Ionicons name="today-outline" size={18} color={Colors.primary} />
-                      </View>
-                      <View>
-                        <Text style={styles.logDateText}>{item.formattedDate || item.date}</Text>
-                        <Text style={styles.logSubText}>{item.date}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.logCardRight}>
-                      <View style={styles.chantPill}>
-                        <Ionicons name="flame" size={12} color={Colors.primary} />
-                        <Text style={styles.chantPillText}>{item.totalChants} chants</Text>
-                      </View>
-                      <View style={styles.malaPill}>
-                        <Ionicons name="ribbon" size={12} color={Colors.secondary} />
-                        <Text style={styles.malaPillText}>{item.completedMalas} mala{item.completedMalas !== 1 ? 's' : ''}</Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-
-            {/* Action Buttons */}
-            <View style={styles.modalActionRow}>
-              {jaapLogs.length > 0 && (
-                <TouchableOpacity style={styles.clearLogsBtn} onPress={handleClearJaapLogs}>
-                  <Ionicons name="trash-outline" size={16} color="#FF3B30" />
-                  <Text style={styles.clearLogsText}>Clear Log</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity style={[styles.closeBtn, { flex: 1 }]} onPress={() => setJaapLogModalVisible(false)}>
-                <Text style={styles.closeBtnText}>Done</Text>
+              <TouchableOpacity
+                onPress={() => setJaapLogModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={22} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
+            {/* Lifetime Summary */}
+            <View style={styles.lifetimeBox}>
+              <View style={styles.lifetimeCol}>
+                <Text style={styles.lifetimeNum}>{totalLifetimeChants}</Text>
+                <Text style={styles.lifetimeLabel}>Total Chants</Text>
+              </View>
+              <View style={styles.lifetimeDivider} />
+              <View style={styles.lifetimeCol}>
+                <Text style={styles.lifetimeNum}>{totalLifetimeMalas}</Text>
+                <Text style={styles.lifetimeLabel}>Completed Malas</Text>
+              </View>
+            </View>
+
+            {/* Log list */}
+            {jaapLogs.length === 0 ? (
+              <View style={styles.emptyLogBox}>
+                <Ionicons name="leaf-outline" size={36} color={Colors.primary} />
+                <Text style={styles.emptyLogTitle}>No Sadhana Logged Yet</Text>
+                <Text style={styles.emptyLogSub}>Tap the Japa Mala Orb on the Home tab to begin your daily practice.</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={jaapLogs}
+                keyExtractor={(item, index) => item.date || String(index)}
+                style={{ maxHeight: 280 }}
+                renderItem={({ item }) => (
+                  <View style={styles.logRow}>
+                    <View>
+                      <Text style={styles.logDate}>{item.formattedDate || item.date}</Text>
+                      <Text style={styles.logSub}>{item.totalChants} chants</Text>
+                    </View>
+                    <View style={styles.malaPill}>
+                      <Text style={styles.malaPillText}>{item.completedMalas} Malas</Text>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
+
+            <View style={styles.modalBtnRow}>
+              {jaapLogs.length > 0 ? (
+                <TouchableOpacity onPress={handleClearJaapLogs} style={styles.clearBtn}>
+                  <Text style={styles.clearBtnText}>Clear History</Text>
+                </TouchableOpacity>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <SpiritualButton
+                  title="Close"
+                  onPress={() => setJaapLogModalVisible(false)}
+                  variant="primary"
+                />
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
 
-      {/* ── About & Security Modal ── */}
-      <Modal visible={aboutModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+      {/* ── About Modal ── */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={aboutModalVisible}
+        onRequestClose={() => setAboutModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Ionicons name="shield-checkmark" size={32} color={Colors.primary} />
-              <Text style={styles.modalTitle}>About Mantra App</Text>
+              <Text style={styles.modalTitle}>About Mantra</Text>
+              <TouchableOpacity onPress={() => setAboutModalVisible(false)}>
+                <Ionicons name="close" size={22} color={Colors.textSecondary} />
+              </TouchableOpacity>
             </View>
-            <ScrollView style={{ maxHeight: 300 }}>
-              <Text style={styles.modalBody}>
-                <Text style={{ fontWeight: '700' }}>Version:</Text> 1.0.0 (Expo SDK 57){'\n\n'}
-                <Text style={{ fontWeight: '700' }}>Cloud Backend:</Text>{'\n'}
-                https://mantra.aarambhtech.in{'\n\n'}
-                <Text style={{ fontWeight: '700' }}>Security Audit Status:</Text>{'\n'}
-                ✓ SSL/TLS Encrypted API{'\n'}
-                ✓ SQL Injection Filtered Queries{'\n'}
-                ✓ IP Rate Limiting Active{'\n'}
-                ✓ HSTS & Secure Headers Enforced{'\n'}
-                ✓ Cryptographic UUID Session Tokens
-              </Text>
-            </ScrollView>
-            <TouchableOpacity style={styles.closeBtn} onPress={() => setAboutModalVisible(false)}>
-              <Text style={styles.closeBtnText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ── Help & Support Modal ── */}
-      <Modal visible={supportModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Ionicons name="help-buoy" size={32} color={Colors.secondary} />
-              <Text style={styles.modalTitle}>Help & Support</Text>
-            </View>
-            <Text style={styles.modalBody}>
-              Need assistance or want to report an issue?{'\n\n'}
-              <Text style={{ fontWeight: '700' }}>Contact Us:</Text>{'\n'}
-              support@aarambhtech.in{'\n\n'}
-              <Text style={{ fontWeight: '700' }}>Website:</Text>{'\n'}
-              https://mantra.aarambhtech.in
+            <Text style={styles.aboutText}>
+              Mantra is a sacred, non-commercial devotional platform dedicated to Sanatana Dharma.
+              {'\n\n'}
+              🕊️ <Text style={{ fontWeight: '700', color: '#FFF' }}>Sacred Non-Commercial Covenant:</Text>
+              {'\n'}
+              100% free spiritual sanctuary with zero advertisements, zero paywalls, and hardware-secured data protection under the DPDP Act 2023.
+              {'\n\n'}
+              Version 1.0.0 (Release Build)
             </Text>
-            <TouchableOpacity style={styles.closeBtn} onPress={() => setSupportModalVisible(false)}>
-              <Text style={styles.closeBtnText}>Close</Text>
-            </TouchableOpacity>
+            <SpiritualButton
+              title="Close"
+              onPress={() => setAboutModalVisible(false)}
+              variant="primary"
+            />
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   profileHeader: {
-    padding: 28,
+    margin: Spacing.standard,
+    padding: Spacing.large,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    elevation: 2,
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    borderRadius: Radius.xl,
   },
   avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: 'rgba(255, 107, 53, 0.12)',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.3)',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-    borderWidth: 2,
-    borderColor: Colors.primary,
+    marginBottom: Spacing.compact,
   },
-  name: { fontSize: 22, fontWeight: '800', color: Colors.text },
-  email: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
-  signInBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    marginTop: 16,
-    elevation: 3,
+  name: {
+    fontFamily: Typography.families.heading,
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.text,
   },
-  signInBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-  section: { marginTop: 24, paddingHorizontal: 16 },
-  sectionHeader: {
+  email: {
+    fontFamily: Typography.families.body,
     fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  section: {
+    marginHorizontal: Spacing.standard,
+    marginTop: Spacing.large,
+  },
+  sectionHeader: {
+    fontFamily: Typography.families.heading,
+    fontSize: 14,
     fontWeight: '700',
-    color: Colors.primary,
+    color: Colors.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: Spacing.compact,
     marginLeft: 4,
   },
-  menuIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.primary + '15',
-    justifyContent: 'center',
+  menuCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: Spacing.standard,
   },
-  menuLabelBold: { fontSize: 15, fontWeight: '700', color: Colors.text },
-  menuSubLabel: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  menuIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(255, 153, 51, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuLabelBold: {
+    fontFamily: Typography.families.heading,
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  menuSubLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  settingsCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: Colors.surface,
-    marginBottom: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
+    paddingHorizontal: Spacing.standard,
+    paddingVertical: 14,
   },
-  settingInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  settingLabel: { fontSize: 15, fontWeight: '600', color: Colors.text },
-  valueBadge: { backgroundColor: Colors.primary + '18', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
-  valueBadgeText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
-  menuItem: {
+  settingInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.surface,
-    marginBottom: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
-  },
-  menuLabel: { flex: 1, marginLeft: 12, fontSize: 15, fontWeight: '600', color: Colors.text },
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FFEBEB',
-    paddingVertical: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#FFD6D6',
-  },
-  signOutBtnText: { color: '#FF3B30', fontSize: 16, fontWeight: '700' },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 20,
-    elevation: 8,
-  },
-  modalHeader: { alignItems: 'center', marginBottom: 14 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginTop: 6 },
-  modalSubTitle: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
-  modalBody: { fontSize: 14, color: Colors.text, lineHeight: 22, marginBottom: 20 },
-  summaryContainer: {
-    flexDirection: 'row',
     gap: 12,
-    marginBottom: 16,
-  },
-  summaryCard: {
     flex: 1,
-    backgroundColor: Colors.background,
-    padding: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
-  summaryNumber: { fontSize: 22, fontWeight: '800', color: Colors.text, marginVertical: 4 },
-  summaryLabel: { fontSize: 11, fontWeight: '600', color: Colors.textSecondary },
-  emptyState: {
-    padding: 30,
-    alignItems: 'center',
+  settingLabel: {
+    fontFamily: Typography.families.body,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.standard,
+  },
+  valueBadge: {
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
+  },
+  valueBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.secondary,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.standard,
   },
-  emptyStateTitle: { fontSize: 16, fontWeight: '700', color: Colors.text, marginTop: 12 },
-  emptyStateText: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center', marginTop: 6, lineHeight: 18 },
-  logCard: {
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#161329',
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.borderGlow,
+    padding: Spacing.large,
+  },
+  modalHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    marginBottom: Spacing.standard,
   },
-  logCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dateIconBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: Colors.primary + '15',
-    justifyContent: 'center',
+  modalTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  lifetimeBox: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: Radius.md,
+    padding: Spacing.standard,
+    marginBottom: Spacing.standard,
+  },
+  lifetimeCol: {
+    flex: 1,
     alignItems: 'center',
   },
-  logDateText: { fontSize: 14, fontWeight: '700', color: Colors.text },
-  logSubText: { fontSize: 11, color: Colors.textSecondary, marginTop: 1 },
-  logCardRight: { alignItems: 'flex-end', gap: 4 },
-  chantPill: {
+  lifetimeDivider: {
+    width: 1,
+    backgroundColor: Colors.border,
+  },
+  lifetimeNum: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.secondary,
+  },
+  lifetimeLabel: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  emptyLogBox: {
+    padding: Spacing.large,
+    alignItems: 'center',
+  },
+  emptyLogTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text,
+    marginTop: 8,
+  },
+  emptyLogSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  logRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.primary + '15',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  chantPillText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
+  logDate: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  logSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
   malaPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.secondary + '18',
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
   },
-  malaPillText: { fontSize: 12, fontWeight: '700', color: Colors.secondary },
-  modalActionRow: {
+  malaPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  modalBtnRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 16,
+    gap: 12,
+    marginTop: Spacing.standard,
   },
-  clearLogsBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  clearBtn: {
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#FFEBEB',
-    borderWidth: 1,
-    borderColor: '#FFD6D6',
   },
-  clearLogsText: { color: '#FF3B30', fontWeight: '700', fontSize: 13 },
-  closeBtn: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
+  clearBtnText: {
+    fontSize: 13,
+    color: Colors.error,
+    fontWeight: '700',
   },
-  closeBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  aboutText: {
+    fontFamily: Typography.families.body,
+    fontSize: 14,
+    lineHeight: 22,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.large,
+  },
 });
-

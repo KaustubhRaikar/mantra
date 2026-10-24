@@ -50,11 +50,10 @@ app-example
 /android
 
 # Documentation & Reports
-*.md
 *.pdf
+*.apk
+*.aab
 
-# Backend
-backend/
 
 # Tests
 tests/

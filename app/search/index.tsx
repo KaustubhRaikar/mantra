@@ -1,9 +1,13 @@
-import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Colors } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect } from 'react';
+import { Colors, Spacing, Radius, Typography } from '../../src/constants/theme';
+import { CosmicBackground } from '../../src/components/CosmicBackground';
+import { SearchBar } from '../../src/components/SearchBar';
+import { ScriptureCard } from '../../src/components/ScriptureCard';
+import { EmptyState } from '../../src/components/EmptyState';
 import { api } from '../../src/services/api';
 import { storage } from '../../src/services/storage';
 import { Mantra } from '../../src/types/navigation';
@@ -27,21 +31,29 @@ export default function SearchScreen() {
 
   const fetchMantras = async () => {
     setLoading(true);
-    const data = await api.getMantras();
-    setMantras(data);
-    setLoading(false);
+    try {
+      const data = await api.getMantras();
+      setMantras(data);
+    } catch (e) {
+      console.warn('Failed loading mantras for search:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const results = query.trim() === '' ? [] : mantras.filter((m) => {
-    const term = query.toLowerCase();
-    return (
-      m.title?.toLowerCase().includes(term) ||
-      m.name?.toLowerCase().includes(term) ||
-      m.sanskrit_title?.includes(term) ||
-      m.sanskrit?.includes(term) ||
-      m.category_name?.toLowerCase().includes(term)
-    );
-  });
+  const results =
+    query.trim() === ''
+      ? []
+      : mantras.filter((m) => {
+          const term = query.toLowerCase();
+          return (
+            m.title?.toLowerCase().includes(term) ||
+            m.name?.toLowerCase().includes(term) ||
+            m.sanskrit_title?.includes(term) ||
+            m.sanskrit?.includes(term) ||
+            m.category_name?.toLowerCase().includes(term)
+          );
+        });
 
   const handleRecentPress = (term: string) => {
     setQuery(term);
@@ -54,107 +66,157 @@ export default function SearchScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Mantra }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/mantra/${item.id}` as any)}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.cardSanskrit}>{item.sanskrit_title || item.sanskrit}</Text>
-      <Text style={styles.cardName}>{item.title || item.name}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+      <CosmicBackground />
+
+      {/* Top Search Header */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="chevron-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color={Colors.textSecondary} />
-          <TextInput
-            style={styles.input}
-            placeholder="Search mantras, gods, or benefits..."
+
+        <View style={styles.searchBarWrapper}>
+          <SearchBar
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={handleSearchSubmit}
-            returnKeyType="search"
+            placeholder="Search mantras, gods, suktas..."
             autoFocus
           />
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')}>
-              <Ionicons name="close-circle" size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
-      {query.length === 0 ? (
-        <>
-          <Text style={styles.sectionTitle}>Recent Searches</Text>
-          <View style={styles.chipsContainer}>
-            {recentSearches.map((item, index) => (
-              <TouchableOpacity key={index} style={styles.chip} onPress={() => handleRecentPress(item)}>
-                <Text style={styles.chipText}>{item}</Text>
+      {/* Recent Searches */}
+      {query.trim() === '' && recentSearches.length > 0 ? (
+        <View style={styles.recentContainer}>
+          <Text style={styles.recentHeading}>Recent Searches</Text>
+          <View style={styles.recentWrap}>
+            {recentSearches.map((term, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.recentChip}
+                onPress={() => handleRecentPress(term)}
+              >
+                <Ionicons name="time-outline" size={14} color={Colors.primary} />
+                <Text style={styles.recentText}>{term}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <View style={styles.emptyResults}>
-            <Ionicons name="search-outline" size={60} color={Colors.border} />
-            <Text style={styles.emptyText}>Find your inner peace</Text>
-          </View>
-        </>
-      ) : loading ? (
-        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} />
-      ) : results.length > 0 ? (
-        <FlatList
-          data={results}
-          renderItem={renderItem}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        </View>
+      ) : null}
+
+      {/* Results Content */}
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Searching sacred catalog...</Text>
+        </View>
+      ) : query.trim() !== '' && results.length === 0 ? (
+        <EmptyState
+          icon="search-outline"
+          title="No Matching Verses Found"
+          description={`We couldn't find scriptures matching "${query}". Try searching for Lord Shiva, Gayatri, or Aarti.`}
         />
       ) : (
-        <View style={styles.emptyResults}>
-          <Ionicons name="moon-outline" size={60} color={Colors.border} />
-          <Text style={styles.emptyText}>No mantras found matching "{query}"</Text>
-        </View>
+        <FlatList
+          data={results}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <ScriptureCard
+              title={item.title || item.name}
+              sanskritTitle={item.sanskrit_title || item.sanskrit}
+              category={item.category_name || item.god}
+              onPress={() => {
+                handleSearchSubmit();
+                router.push(`/mantra/${item.id}` as any);
+              }}
+            />
+          )}
+        />
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, padding: 16 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  backButton: { marginRight: 12 },
-  searchBar: {
+  container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.standard,
+    paddingVertical: Spacing.compact,
+    gap: 10,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchBarWrapper: {
+    flex: 1,
+  },
+  recentContainer: {
+    paddingHorizontal: Spacing.standard,
+    marginTop: Spacing.standard,
+  },
+  recentHeading: {
+    fontFamily: Typography.families.heading,
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: Spacing.compact,
+  },
+  recentWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingHorizontal: 12,
-    height: 50,
-    borderRadius: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  input: { flex: 1, marginLeft: 10, fontSize: 16, color: Colors.text },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: Colors.text, marginBottom: 12 },
-  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  recentText: {
+    fontSize: 13,
+    color: Colors.text,
   },
-  chipText: { color: Colors.textSecondary },
-  emptyResults: { flex: 1, justifyContent: 'center', alignItems: 'center', opacity: 0.5 },
-  emptyText: { marginTop: 12, fontSize: 16, color: Colors.textSecondary },
-  card: { backgroundColor: Colors.surface, padding: 16, borderRadius: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, borderLeftWidth: 4, borderLeftColor: Colors.primary },
-  cardSanskrit: { fontSize: 18, color: Colors.text, marginBottom: 4 },
-  cardName: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.compact,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  listContent: {
+    paddingHorizontal: Spacing.standard,
+    paddingTop: Spacing.standard,
+    paddingBottom: 40,
+  },
 });

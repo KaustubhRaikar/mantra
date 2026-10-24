@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter, Stack } from 'expo-router';
-import { api } from '../../src/services/api';
+import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Colors, Spacing } from '../../src/constants/theme';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
-
-const C = { bg: '#FFF9F4', surface: '#FFFFFF', primary: '#FF6B35', text: '#1A1A2E', secondary: '#5D3FD3', border: '#EBEBF5' };
+import { GlassHeader } from '../../src/components/GlassHeader';
+import { ScriptureCard } from '../../src/components/ScriptureCard';
+import { api } from '../../src/services/api';
 
 export default function ChalisaListScreen() {
   const router = useRouter();
@@ -16,45 +15,60 @@ export default function ChalisaListScreen() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const res = await api.getChalisas();
-      setData(res);
-      setLoading(false);
+      try {
+        const res = await api.getChalisas();
+        setData(res || []);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
   return (
-    <SafeAreaView style={s.root} edges={['top']}>
+    <View style={styles.container}>
       <CosmicBackground />
-      <Stack.Screen options={{ headerShown: false }} />
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={s.headerTitle} numberOfLines={1}>All Chalisas</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <GlassHeader
+        title="Chalisa Sangrah"
+        subtitle="40-Verse Sacred Hymns"
+      />
+
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator size="large" color={C.primary}/></View>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          {data.map((item, idx) => (
-            <TouchableOpacity key={idx} style={s.card} onPress={() => router.push(`/chalisa/${item.id}` as any)}>
-              <Text style={s.god}>{item.chalisa_name}</Text>
-              <Text style={s.sub}>{item.deity_name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <FlatList
+          data={data}
+          keyExtractor={(item, index) => String(item.id || index)}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <ScriptureCard
+              title={item.chalisa_name}
+              category={item.deity_name || 'Chalisa'}
+              onPress={() => router.push(`/chalisa/${item.id}` as any)}
+            />
+          )}
+        />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 15, backgroundColor: C.secondary },
-  headerTitle: { flex: 1, fontSize: 18, fontWeight: 'bold', color: '#FFF', textAlign: 'center' },
-  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  card: { backgroundColor: C.surface, padding: 20, borderRadius: 16, elevation: 2, marginBottom: 15, borderLeftWidth: 4, borderLeftColor: C.primary },
-  god: { fontSize: 18, fontWeight: '800', color: C.text, marginBottom: 5 },
-  sub: { fontSize: 14, color: '#6B6B80' },
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listContent: {
+    padding: Spacing.standard,
+    paddingBottom: 40,
+  },
 });

@@ -6,64 +6,68 @@ const { width, height } = Dimensions.get('window');
 
 export function CosmicBackground() {
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Top Right Aura */}
+    <View style={styles.rootCanvas} pointerEvents="none">
+      {/* Top Right Saffron Aura */}
       <View
         style={[
           styles.aura,
           {
             backgroundColor: Colors.primary,
             top: -height * 0.1,
-            right: -width * 0.2,
+            right: -width * 0.25,
+            opacity: 0.12,
           },
         ]}
       />
 
-      {/* Bottom Left Aura */}
+      {/* Bottom Left Celestial Purple Nebula */}
       <View
         style={[
           styles.aura,
           {
-            backgroundColor: Colors.secondary,
+            backgroundColor: Colors.accent,
             bottom: -height * 0.1,
-            left: -width * 0.2,
-            width: width * 0.9,
-            height: width * 0.9,
+            left: -width * 0.25,
+            width: width * 1.0,
+            height: width * 1.0,
+            opacity: 0.14,
           },
         ]}
       />
 
-      {/* Central Symbol (Om) */}
+      {/* Sacred Central Om Silhouette */}
       <Text style={styles.omSymbol}>ॐ</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  rootCanvas: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.background,
+    overflow: 'hidden',
+  },
   aura: {
     position: 'absolute',
-    width: width * 0.8,
-    height: width * 0.8,
+    width: width * 0.85,
+    height: width * 0.85,
     borderRadius: width,
-    opacity: 0.15, // boosted from 0.05
-    transform: [{ scale: 1.5 }],
-    shadowColor: Colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 50,
-    elevation: 4,
+    transform: [{ scale: 1.4 }],
   },
   omSymbol: {
     position: 'absolute',
-    top: height * 0.25, // moved slightly up
-    left: width * 0.05, // better centering for generic phones
+    top: height * 0.22,
+    left: width * 0.05,
     fontSize: width * 0.9,
     color: Colors.primary,
-    opacity: 0.08, // boosted from 0.03 so it's actually noticeable
+    opacity: 0.04,
     includeFontPadding: false,
     lineHeight: width * 0.9,
     fontWeight: '300',
-    textShadowColor: 'rgba(255,107,53, 0.4)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
+    textAlign: 'center',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,34 +7,25 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  Animated,
   Dimensions,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { Colors, Spacing, Radius, Typography } from '../../src/constants/theme';
 import { CosmicBackground } from '../../src/components/CosmicBackground';
+import { GlassCard } from '../../src/components/GlassCard';
+import { JapaOrb } from '../../src/components/JapaOrb';
+import { SkeletonLoader } from '../../src/components/SkeletonLoader';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 import { useFavorites } from '../../src/contexts/FavoritesContext';
-
-// ─── Color Palette ──────────────────────────────────────────────────────────
-const C = {
-  primary: '#FF6B35',
-  secondary: '#5D3FD3',
-  accent: '#FFD700',
-  bg: '#FFF9F4',
-  surface: '#FFFFFF',
-  text: '#1A1A2E',
-  textSub: '#6B6B80',
-  border: '#EBEBF5',
-};
+import { storage } from '../../src/services/storage';
+import { api } from '../../src/services/api';
 
 const { width } = Dimensions.get('window');
-const CARD_W = width * 0.7;
+const CARD_W = width * 0.72;
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface Mantra {
   id: string;
   name: string;
@@ -43,15 +34,6 @@ interface Mantra {
   category: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  count: number;
-}
-
-// ─── Sample Data ─────────────────────────────────────────────────────────────
 const DAILY_MANTRA: Mantra = {
   id: '1',
   name: 'Om Namah Shivaya',
@@ -66,78 +48,102 @@ const FEATURED: Mantra[] = [
   { id: '3', name: 'Hare Krishna', god: 'Krishna', sanskrit: 'हरे कृष्ण हरे कृष्ण', category: 'Vishnu' },
 ];
 
-const CATEGORIES: Category[] = [
-  { id: '1', name: 'Ganesha', icon: 'star', color: '#FF6B35', count: 12 },
-  { id: '2', name: 'Shiva', icon: 'flame', color: '#5D3FD3', count: 18 },
-  { id: '3', name: 'Vishnu', icon: 'heart', color: '#0095D9', count: 15 },
-  { id: '4', name: 'Devi', icon: 'sparkles', color: '#E91E8C', count: 14 },
-  { id: '5', name: 'Surya', icon: 'sunny', color: '#FFD700', count: 8 },
-  { id: '6', name: 'Vedic', icon: 'book', color: '#2ECC71', count: 20 },
-];
-
-const RECENTLY_PLAYED: Mantra[] = [
-  { id: '2', name: 'Mahamrityunjaya', god: 'Shiva', sanskrit: 'ॐ त्र्यम्बकं यजामहे', category: 'Shiva' },
-  { id: '3', name: 'Hare Krishna', god: 'Krishna', sanskrit: 'हरे कृष्ण हरे कृष्ण', category: 'Vishnu' },
-];
-
-// ─── Skeleton Component ───────────────────────────────────────────────────────
-const Skeleton = ({ width: w = '100%', height: h = 16, radius = 8, style = {} }: {
-  width?: number | string; height?: number; radius?: number; style?: object;
-}) => {
-  const opacity = React.useRef(new Animated.Value(0.3)).current;
-  React.useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-  return (
-    <Animated.View
-      style={[{ width: w as any, height: h, borderRadius: radius, backgroundColor: C.border, opacity }, style]}
-    />
-  );
-};
-
-// ─── Section Header ───────────────────────────────────────────────────────────
-const SectionHeader = ({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) => (
-  <View style={s.sectionHeader}>
-    <Text style={s.sectionTitle}>{title}</Text>
-    {onSeeAll && (
-      <TouchableOpacity onPress={onSeeAll}>
-        <Text style={s.seeAll}>See all</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  // Data State
   const [isPlaying, setIsPlaying] = useState(false);
   const [dailyMantra, setDailyMantra] = useState<any>(null);
   const [featuredMantras, setFeaturedMantras] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [festivalAartiMantras, setFestivalAartiMantras] = useState<any[]>([]);
-  const [aartiMantras, setAartiMantras] = useState<any[]>([]);
-  
+  const [festivalAartis, setFestivalAartis] = useState<any[]>([]);
+  const [aartis, setAartis] = useState<any[]>([]);
   const [chalisas, setChalisas] = useState<any[]>([]);
   const [poojaVidhis, setPoojaVidhis] = useState<any[]>([]);
   const [stotras, setStotras] = useState<any[]>([]);
   const [vratKathas, setVratKathas] = useState<any[]>([]);
-  
-  // Loading State
+  const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
+
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
-  const { storage } = require('../../src/services/storage');
 
   // Audio state
-  const soundRef = React.useRef<any>(null);
+  const soundRef = useRef<any>(null);
+
+  // Japa Mala Counter State
+  const [jaapCount, setJaapCount] = useState(0);
+  const [jaapGoal, setJaapGoal] = useState(108);
+  const [completedMalas, setCompletedMalas] = useState(0);
+
+  const handleJaapTap = useCallback(() => {
+    setJaapCount((prev) => {
+      const next = prev + 1;
+      const isMalaComplete = next >= jaapGoal;
+      if (isMalaComplete) {
+        setCompletedMalas((m) => m + 1);
+      }
+      storage.recordJaapTap(1, isMalaComplete ? 1 : 0).catch(() => {});
+      return isMalaComplete ? 0 : next;
+    });
+  }, [jaapGoal]);
+
+  const handleResetJaap = () => {
+    setJaapCount(0);
+    setCompletedMalas(0);
+  };
+
+  const loadData = async () => {
+    try {
+      const [
+        daily,
+        featured,
+        cats,
+        played,
+        festAarti,
+        aartiData,
+        chalData,
+        poojaData,
+        stotraData,
+        vratData,
+      ] = await Promise.all([
+        api.getDailyMantra(),
+        api.getFeaturedMantras(),
+        api.getCategories(),
+        storage.getRecentlyPlayed(),
+        api.getFestivalAartis(),
+        api.getAartis(),
+        api.getChalisas(),
+        api.getPoojaVidhis(),
+        api.getStotras(),
+        api.getVratKathas(),
+      ]);
+
+      setDailyMantra(daily);
+      setFeaturedMantras(featured);
+      setCategories(cats);
+      setRecentlyPlayed(played);
+      setFestivalAartis(festAarti);
+      setAartis(aartiData);
+      setChalisas(chalData);
+      setPoojaVidhis(poojaData);
+      setStotras(stotraData);
+      setVratKathas(vratData);
+    } catch (e) {
+      console.warn('Failed fetching data from API', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, []);
 
   const toggleDailyPlay = useCallback(async () => {
     const target = dailyMantra || DAILY_MANTRA;
@@ -156,24 +162,24 @@ export default function HomeScreen() {
         const { safeCreateSound, safeSetAudioMode } = require('../../src/utils/audioPlayer');
         await safeSetAudioMode();
         setIsPlaying(true);
-        const { sound } = await safeCreateSound(target, (status: any) => {
+        const { sound } = await safeCreateSound(target.audio_url || target, (status: any) => {
           if (status.isLoaded) {
             setIsPlaying(status.isPlaying);
             if (status.didJustFinish) {
               setIsPlaying(false);
-              soundRef.current?.setPositionAsync(0);
+              soundRef.current?.setPositionAsync(0).catch(() => {});
             }
           }
         });
         soundRef.current = sound;
       }
     } catch (e) {
-      console.warn("Failed to play daily mantra audio:", e);
+      console.warn('Failed to play daily mantra audio:', e);
       setIsPlaying(false);
     }
   }, [isPlaying, dailyMantra]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (soundRef.current?.unloadAsync) {
         soundRef.current.unloadAsync().catch(() => {});
@@ -181,322 +187,228 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // Japa Mala Counter State
-  const [jaapCount, setJaapCount] = useState(0);
-  const [jaapGoal, setJaapGoal] = useState(108);
-  const [completedMalas, setCompletedMalas] = useState(0);
-  const counterScaleAnim = React.useRef(new Animated.Value(1)).current;
-
-  const handleJaapTap = useCallback(() => {
-    // Light Haptic feedback on tap
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-
-    // Instant smooth spring animation response
-    counterScaleAnim.setValue(0.92);
-    Animated.spring(counterScaleAnim, {
-      toValue: 1,
-      friction: 5,
-      tension: 300,
-      useNativeDriver: true,
-    }).start();
-
-    setJaapCount((prev) => {
-      const next = prev + 1;
-      const isMalaComplete = next >= jaapGoal;
-      if (isMalaComplete) {
-        setCompletedMalas((m) => m + 1);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      }
-
-      // Record tap to persistent storage for date-wise log
-      storage.recordJaapTap(1, isMalaComplete ? 1 : 0).catch(() => {});
-
-      return isMalaComplete ? 0 : next;
-    });
-  }, [jaapGoal]);
-
-  const handleResetJaap = () => {
-    setJaapCount(0);
-    setCompletedMalas(0);
-  };
-
-  const loadData = async () => {
-    try {
-      // Import the api down here or globally, assuming it's imported at top
-      const { api } = require('../../src/services/api');
-      const [daily, featured, cats, played] = await Promise.all([
-        api.getDailyMantra(),
-        api.getFeaturedMantras(),
-        api.getCategories(),
-        storage.getRecentlyPlayed()
-      ]);
-      setDailyMantra(daily);
-      setFeaturedMantras(featured);
-      setCategories(cats);
-      setRecentlyPlayed(played);
-
-      // Festival Aartis and Aartis now come from their own dedicated database tables
-      const [festAarti, aartiData] = await Promise.all([
-        api.getFestivalAartis(),
-        api.getAartis()
-      ]);
-      
-      setFestivalAartiMantras(festAarti);
-      setAartiMantras(aartiData);
-
-      // Fetch new sections
-      const [chalData, poojaData, stotraData, vratData] = await Promise.all([
-        api.getChalisas(),
-        api.getPoojaVidhis(),
-        api.getStotras(),
-        api.getVratKathas()
-      ]);
-      
-      setChalisas(chalData);
-      setPoojaVidhis(poojaData);
-      setStotras(stotraData);
-      setVratKathas(vratData);
-    } catch (e) {
-      console.warn("Failed fetching from Backend API", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    loadData();
-  }, []);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }, []);
-
-  const activeDaily = dailyMantra || DAILY_MANTRA; // fallback
+  const activeDaily = dailyMantra || DAILY_MANTRA;
   const listFeatured = featuredMantras.length > 0 ? featuredMantras : FEATURED;
-  const listCategories = categories.length > 0 ? categories : CATEGORIES;
 
-  // ── Featured Card ──────────────────────────────────────────────────────────
-  const renderFeaturedCard = (routePrefix: string) => ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={s.featuredCard}
-      activeOpacity={0.85}
-      onPress={() => {
-        storage.addRecentlyPlayed({ ...item, path: routePrefix.replace('/', '') });
-        router.push(`${routePrefix}${item.id}` as any);
-      }}
-    >
-      <View style={[s.featuredBadge, { backgroundColor: C.secondary }]}>
-        <Text style={s.badgeText}>{item.category || item.category_name || item.festival || item.festival_category || 'Divine'}</Text>
-      </View>
-      <Text style={s.featuredSanskrit}>{item.sanskrit || item.sanskrit_title || item.sanskrit_text || ''}</Text>
-      <Text style={s.featuredName}>{item.title || item.name || item.aarti_name || item.chalisa_name || item.vidhi_name || item.stotra_name || item.katha_name}</Text>
-      <Text style={s.featuredGod}>{item.god || item.deity_name}</Text>
-      <View style={s.featuredFooter}>
-        <Ionicons name="play-circle" size={28} color={C.accent} />
+  const renderSectionHeader = (title: string, onSeeAll?: () => void) => (
+    <View style={styles.sectionHeaderRow}>
+      <Text style={styles.sectionHeaderTitle}>{title}</Text>
+      {onSeeAll ? (
         <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation();
-            toggleFavorite({ ...item, path: routePrefix.replace(/\//g, '') || 'mantra' });
-          }}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={onSeeAll}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={`See all ${title}`}
         >
-          <Ionicons
-            name={isFavorite(item.id) ? "heart" : "heart-outline"}
-            size={22}
-            color={isFavorite(item.id) ? C.primary : "rgba(255,255,255,0.8)"}
-            style={{ marginLeft: 12 }}
-          />
+          <Text style={styles.seeAllText}>See all</Text>
         </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+      ) : null}
+    </View>
   );
 
-  // ── Category Card ──────────────────────────────────────────────────────────
-  const renderCategory = ({ item }: { item: any }) => {
-    if (!item) return null;
-    const name = item.name || 'Category';
-    const { icon, color } = getCategoryDisplayProps(name);
+  const renderFeaturedCard = (routePrefix: string) => ({ item }: { item: any }) => {
+    const title = item.title || item.name || item.aarti_name || item.chalisa_name || item.vidhi_name || item.stotra_name || item.katha_name;
+    const sanskrit = item.sanskrit || item.sanskrit_title || item.sanskrit_text || '';
+    const god = item.god || item.deity_name || 'Vedic';
+    const cat = item.category || item.category_name || item.festival || 'Sacred';
+    const fav = isFavorite(item.id);
+
     return (
-      <TouchableOpacity
-        style={[s.categoryCard, { borderTopColor: color }]}
-        activeOpacity={0.85}
+      <GlassCard
+        style={styles.featuredCard}
+        glow
         onPress={() => {
-          if (item.id) {
-            router.push({ pathname: '/category/[id]', params: { id: item.id, name } } as any);
-          }
+          storage.addRecentlyPlayed({ ...item, path: routePrefix.replace(/\//g, '') });
+          router.push(`${routePrefix}${item.id}` as any);
         }}
       >
-        <View style={[s.categoryIconWrap, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon} size={28} color={color} />
+        <View style={styles.badgeRow}>
+          <View style={styles.categoryChip}>
+            <Text style={styles.categoryChipText}>{cat}</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleFavorite({ ...item, path: routePrefix.replace(/\//g, '') || 'mantra' });
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel={fav ? 'Remove favorite' : 'Add favorite'}
+          >
+            <Ionicons
+              name={fav ? 'heart' : 'heart-outline'}
+              size={22}
+              color={fav ? Colors.primary : Colors.textMuted}
+            />
+          </TouchableOpacity>
         </View>
-        <Text style={s.categoryName}>{name}</Text>
-        {item.count ? <Text style={s.categoryCount}>{item.count} mantras</Text> : null}
-      </TouchableOpacity>
+
+        {sanskrit ? (
+          <Text
+            style={styles.featuredSanskrit}
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.3}
+          >
+            {sanskrit}
+          </Text>
+        ) : null}
+
+        <Text
+          style={styles.featuredTitle}
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.3}
+        >
+          {title}
+        </Text>
+
+        <Text style={styles.featuredGod} numberOfLines={1}>
+          {god}
+        </Text>
+
+        <View style={styles.cardPlayRow}>
+          <View style={styles.playBadge}>
+            <Ionicons name="play" size={14} color="#0C0A1A" />
+          </View>
+          <Text style={styles.listenText}>Listen & Recite</Text>
+        </View>
+      </GlassCard>
     );
   };
 
-  // ── Recently Played Row ────────────────────────────────────────────────────
-  const renderRecent = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={s.recentItem} 
-      activeOpacity={0.85}
-      onPress={() => router.push(`/${item.path}/${item.id}` as any)}
-    >
-      <View style={s.recentIconWrap}>
-        <Ionicons name="musical-note" size={20} color={C.primary} />
-      </View>
-      <View style={s.recentInfo}>
-        <Text style={s.recentName}>{item.name}</Text>
-        <Text style={s.recentGod}>{item.category || item.god}</Text>
-      </View>
-      <TouchableOpacity onPress={() => router.push(`/${item.path}/${item.id}` as any)}>
-        <Ionicons name="play-circle-outline" size={30} color={C.secondary} />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
-
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
+    <SafeAreaView style={styles.root} edges={['top']}>
       <CosmicBackground />
+
       <ScrollView
-        style={s.scroll}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={C.primary}
-            colors={[C.primary, C.secondary]}
+            tintColor={Colors.primary}
+            colors={[Colors.primary, Colors.secondary]}
           />
         }
       >
-        {/* ── Header ───────────────────────────────────────────────────── */}
-        <View style={s.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image 
-              source={require('../../assets/images/logo.png')} 
-              style={{ width: 44, height: 44, marginRight: 12 }} 
-              resizeMode="contain" 
+        {/* ── Top Bar ───────────────────────────────────────────── */}
+        <View style={styles.topBar}>
+          <View style={styles.branding}>
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
             />
-            <View style={{ justifyContent: 'center' }}>
-              <Text style={s.headerGreeting}>नमस्ते 🙏</Text>
-              <Text style={s.headerSub}>Find your inner peace</Text>
+            <View>
+              <Text style={styles.greetingText}>नमस्ते 🙏</Text>
+              <Text style={styles.greetingSub}>Sacred Peace & Wisdom</Text>
             </View>
           </View>
-          <View style={s.headerActions}>
-            <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/search/' as any)}>
-              <Ionicons name="search" size={22} color={C.text} />
+
+          <View style={styles.topActions}>
+            <TouchableOpacity
+              style={styles.circleButton}
+              onPress={() => router.push('/search/' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Search scriptures"
+            >
+              <Ionicons name="search" size={20} color={Colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity style={[s.iconBtn, { marginLeft: 8 }]} onPress={() => router.push('/(tabs)/profile')}>
-              <Ionicons name="person-circle-outline" size={26} color={C.secondary} />
+
+            <TouchableOpacity
+              style={[styles.circleButton, { marginLeft: 8 }]}
+              onPress={() => router.push('/(tabs)/profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Open devotee profile"
+            >
+              <Ionicons name="person-circle-outline" size={24} color={Colors.secondary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Daily Mantra Card ─────────────────────────────────────────── */}
+        {/* ── Daily Mantra Card ─────────────────────────────────── */}
         {loading ? (
-          <View style={s.dailySkeleton}>
-            <Skeleton height={14} width={80} style={{ marginBottom: 12 }} />
-            <Skeleton height={32} style={{ marginBottom: 8 }} />
-            <Skeleton height={18} width="60%" style={{ marginBottom: 20 }} />
-            <Skeleton height={44} radius={22} width={120} />
-          </View>
+          <GlassCard style={styles.dailyCard}>
+            <SkeletonLoader height={14} width={100} style={{ marginBottom: 12 }} />
+            <SkeletonLoader height={32} style={{ marginBottom: 10 }} />
+            <SkeletonLoader height={18} width="60%" style={{ marginBottom: 20 }} />
+            <SkeletonLoader height={44} radius={22} width={130} />
+          </GlassCard>
         ) : (
-          <View style={s.dailyCard}>
-            <View style={s.dailyLabel}>
-              <Ionicons name="sunny" size={14} color={C.accent} />
-              <Text style={s.dailyLabelText}>Daily Mantra</Text>
-            </View>
-            <Text style={s.dailySanskrit}>{activeDaily.sanskrit_title || activeDaily.sanskrit}</Text>
-            <Text style={s.dailyName}>{activeDaily.title || activeDaily.name}</Text>
-            <Text style={s.dailyGod}>{activeDaily.god || activeDaily.category_name}</Text>
-            <View style={s.dailyActions}>
+          <GlassCard style={styles.dailyCard} glow>
+            <View style={styles.dailyHeader}>
+              <View style={styles.dailyPill}>
+                <Ionicons name="sunny" size={14} color={Colors.secondary} />
+                <Text style={styles.dailyPillText}>Daily Mantra</Text>
+              </View>
               <TouchableOpacity
-                style={s.playBtn}
-                onPress={toggleDailyPlay}
-                activeOpacity={0.85}
-              >
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={20} color="#FFF" />
-                <Text style={s.playBtnText}>{isPlaying ? 'Pause' : 'Play Mantra'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.heartBtn, activeDaily && isFavorite(activeDaily.id) && { backgroundColor: C.primary, borderColor: C.primary }]}
                 onPress={() => activeDaily && toggleFavorite({ ...activeDaily, path: 'mantra' })}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Favorite daily mantra"
               >
                 <Ionicons
-                  name={activeDaily && isFavorite(activeDaily.id) ? "heart" : "heart-outline"}
-                  size={22}
-                  color={activeDaily && isFavorite(activeDaily.id) ? "#FFF" : C.accent}
+                  name={activeDaily && isFavorite(activeDaily.id) ? 'heart' : 'heart-outline'}
+                  size={24}
+                  color={activeDaily && isFavorite(activeDaily.id) ? Colors.primary : Colors.textMuted}
                 />
               </TouchableOpacity>
             </View>
-          </View>
+
+            <Text
+              style={styles.dailySanskrit}
+              numberOfLines={2}
+              maxFontSizeMultiplier={1.3}
+            >
+              {activeDaily.sanskrit_title || activeDaily.sanskrit}
+            </Text>
+
+            <Text
+              style={styles.dailyTitle}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.3}
+            >
+              {activeDaily.title || activeDaily.name}
+            </Text>
+
+            <Text style={styles.dailyGod} numberOfLines={1}>
+              {activeDaily.god || activeDaily.category_name}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.dailyPlayBtn}
+              onPress={toggleDailyPlay}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Pause daily mantra' : 'Play daily mantra'}
+            >
+              <Ionicons name={isPlaying ? 'pause' : 'play'} size={18} color="#0C0A1A" />
+              <Text style={styles.dailyPlayBtnText}>{isPlaying ? 'Pause' : 'Play Mantra'}</Text>
+            </TouchableOpacity>
+          </GlassCard>
         )}
 
-        {/* ── Mantra Jaap Counter Section ───────────────────────────── */}
-        <View style={s.counterCard}>
-          <View style={s.counterHeader}>
-            <View style={s.counterTitleBox}>
-              <Ionicons name="sparkles" size={18} color={C.accent} />
-              <Text style={s.counterTitle}>Mantra Jaap Counter</Text>
-            </View>
-            <TouchableOpacity style={s.counterResetBtn} onPress={handleResetJaap}>
-              <Ionicons name="refresh" size={14} color={C.accent} />
-              <Text style={s.counterResetText}>Reset</Text>
-            </TouchableOpacity>
-          </View>
+        {/* ── Sacred Japa Mala Orb Component ────────────────────── */}
+        <JapaOrb
+          count={jaapCount}
+          goal={jaapGoal}
+          completedMalas={completedMalas}
+          onTap={handleJaapTap}
+          onReset={handleResetJaap}
+          onSelectGoal={(g) => {
+            setJaapGoal(g);
+            setJaapCount(0);
+          }}
+        />
 
-          {/* Goal Selector */}
-          <View style={s.goalRow}>
-            <Text style={s.goalLabel}>Goal:</Text>
-            {[21, 54, 108, 1008].map((g) => (
-              <TouchableOpacity
-                key={g}
-                style={[s.goalChip, jaapGoal === g && s.goalChipActive]}
-                onPress={() => { setJaapGoal(g); setJaapCount(0); }}
-              >
-                <Text style={[s.goalChipText, jaapGoal === g && s.goalChipTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Counter Display & Tap Circle */}
-          <View style={s.counterBody}>
-            <View style={s.counterInfo}>
-              <Text style={s.counterCountText}>{jaapCount}</Text>
-              <Text style={s.counterGoalText}>/ {jaapGoal} Chants</Text>
-              {completedMalas > 0 && (
-                <View style={s.malaBadge}>
-                  <Ionicons name="ribbon" size={12} color="#FFF" />
-                  <Text style={s.malaBadgeText}>{completedMalas} Malas Completed</Text>
-                </View>
-              )}
-            </View>
-
-            <Animated.View style={{ transform: [{ scale: counterScaleAnim }] }}>
-              <TouchableOpacity
-                style={s.tapButton}
-                onPress={handleJaapTap}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={`Mantra Jaap counter. ${jaapCount} of ${jaapGoal} chants recorded. ${completedMalas} malas completed.`}
-                accessibilityHint="Tap to record 1 chant towards your mala goal"
-              >
-                <Text style={s.tapButtonText}>+1 TAP</Text>
-                <Text style={s.tapButtonSub}>TAP JAAP</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-        </View>
-
-        {/* ── Featured Mantras ──────────────────────────────────────────── */}
-        <SectionHeader title="Featured Mantras" onSeeAll={() => router.push('/(tabs)/categories')} />
+        {/* ── Featured Mantras ─────────────────────────────────── */}
+        {renderSectionHeader('Featured Mantras', () => router.push('/(tabs)/categories'))}
         {loading ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
             {[1, 2].map((i) => (
-              <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
+              <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
             ))}
           </ScrollView>
         ) : (
@@ -506,485 +418,401 @@ export default function HomeScreen() {
             keyExtractor={(item) => item.id.toString()}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.hScroll}
+            contentContainerStyle={styles.hScroll}
             snapToInterval={CARD_W + 14}
             decelerationRate="fast"
           />
         )}
 
-        {/* ── Categories Grid ───────────────────────────────────────────── */}
-        <SectionHeader title="Categories" onSeeAll={() => router.push('/(tabs)/categories')} />
-        {loading ? (
-          <View style={s.grid}>
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} width={(width - 56) / 2} height={110} radius={16} style={{ marginBottom: 12 }} />
-            ))}
-          </View>
-        ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12, marginBottom: 20 }}>
-            {listCategories.map((item) => {
-              if (!item) return null;
-              const name = item.name || 'Category';
-              const { icon, color } = getCategoryDisplayProps(name);
-              return (
-                <TouchableOpacity
-                  key={item.id || name}
-                  style={[s.categoryCard, { borderTopColor: color }]}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    if (item.id) {
-                      router.push({ pathname: '/category/[id]', params: { id: item.id, name } } as any);
-                    }
-                  }}
-                >
-                  <View style={[s.categoryIconWrap, { backgroundColor: color + '20' }]}>
-                    <Ionicons name={icon} size={28} color={color} />
-                  </View>
-                  <Text style={s.categoryName}>{name}</Text>
-                  {item.count ? <Text style={s.categoryCount}>{item.count} mantras</Text> : null}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* ── Festival Aarti ────────────────────────────────────────────── */}
-        {(festivalAartiMantras.length > 0 || loading) && (
-          <>
-            <SectionHeader title="Festival Aarti" onSeeAll={() => router.push('/(tabs)/categories')} />
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={festivalAartiMantras}
-                renderItem={renderFeaturedCard('/festival_aarti/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Aarti ─────────────────────────────────────────────────────── */}
-        {(aartiMantras.length > 0 || loading) && (
-          <>
-            <SectionHeader title="Aarti" onSeeAll={() => router.push('/(tabs)/categories')} />
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={aartiMantras}
-                renderItem={renderFeaturedCard('/aarti/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Chalisa Section ───────────────────────────────────────────── */}
-        {(chalisas.length > 0 || loading) && (
-          <>
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Chalisa</Text>
-              <TouchableOpacity onPress={() => router.push('/chalisa' as any)}>
-                <Text style={s.seeAll}>Explore</Text>
-              </TouchableOpacity>
-            </View>
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={chalisas}
-                renderItem={renderFeaturedCard('/chalisa/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Pooja Vidhi Section ───────────────────────────────────────── */}
-        {(poojaVidhis.length > 0 || loading) && (
-          <>
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Pooja Vidhi</Text>
-              <TouchableOpacity onPress={() => router.push('/pooja_vidhi' as any)}>
-                <Text style={s.seeAll}>Explore</Text>
-              </TouchableOpacity>
-            </View>
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={poojaVidhis}
-                renderItem={renderFeaturedCard('/pooja_vidhi/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Stotra Section ────────────────────────────────────────────── */}
-        {(stotras.length > 0 || loading) && (
-          <>
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Stotra</Text>
-              <TouchableOpacity onPress={() => router.push('/stotra' as any)}>
-                <Text style={s.seeAll}>Explore</Text>
-              </TouchableOpacity>
-            </View>
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={stotras}
-                renderItem={renderFeaturedCard('/stotra/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Vrat Katha Section ────────────────────────────────────────── */}
-        {(vratKathas.length > 0 || loading) && (
-          <>
-            <View style={s.sectionHeader}>
-              <Text style={s.sectionTitle}>Vrat Katha</Text>
-              <TouchableOpacity onPress={() => router.push('/vrat_katha' as any)}>
-                <Text style={s.seeAll}>Explore</Text>
-              </TouchableOpacity>
-            </View>
-            {loading ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.hScroll}>
-                {[1, 2].map((i) => (
-                  <Skeleton key={i} width={CARD_W} height={180} radius={20} style={{ marginRight: 14 }} />
-                ))}
-              </ScrollView>
-            ) : (
-              <FlatList
-                data={vratKathas}
-                renderItem={renderFeaturedCard('/vrat_katha/')}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.hScroll}
-                snapToInterval={CARD_W + 14}
-                decelerationRate="fast"
-              />
-            )}
-          </>
-        )}
-
-        {/* ── Upanishads Section ────────────────────────────────────────────── */}
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionTitle}>Upanishads</Text>
-          <TouchableOpacity onPress={() => router.push('/upanishad' as any)}>
-            <Text style={s.seeAll}>Explore</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity 
-          style={s.upanishadBanner} 
-          activeOpacity={0.8}
+        {/* ── Upanishads Quick Banner ──────────────────────────── */}
+        <GlassCard
+          style={styles.upanishadBanner}
           onPress={() => router.push('/upanishad' as any)}
         >
-          <View style={s.upanishadBannerContent}>
-            <Ionicons name="book" size={24} color={C.primary} style={{ marginBottom: 8 }} />
-            <Text style={s.upanishadBannerTitle}>Ancient Wisdom</Text>
-            <Text style={s.upanishadBannerSub}>Explore mantras from the core Upanishads</Text>
+          <View style={styles.upanishadIconCircle}>
+            <Ionicons name="book" size={24} color={Colors.primary} />
           </View>
-          <Ionicons name="arrow-forward-circle" size={32} color={C.primary} />
-        </TouchableOpacity>
+          <View style={{ flex: 1, paddingHorizontal: 12 }}>
+            <Text style={styles.upanishadTitle}>Sacred Upanishads</Text>
+            <Text style={styles.upanishadSub}>Explore eternal philosophical wisdom</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Colors.secondary} />
+        </GlassCard>
 
-        {/* ── Recently Played ───────────────────────────────────────────── */}
-        {recentlyPlayed && Array.isArray(recentlyPlayed) && recentlyPlayed.length > 0 ? (
+        {/* ── Categories Grid ──────────────────────────────────── */}
+        {renderSectionHeader('Categories', () => router.push('/(tabs)/categories'))}
+        <View style={styles.grid}>
+          {categories.map((cat, idx) => {
+            const { icon, color } = getCategoryDisplayProps(cat.name);
+            return (
+              <GlassCard
+                key={idx}
+                style={styles.categoryCard}
+                onPress={() => router.push({ pathname: '/category/[id]', params: { id: cat.id, name: cat.name } } as any)}
+              >
+                <View style={[styles.categoryIconWrap, { backgroundColor: color + '20' }]}>
+                  <Ionicons name={icon} size={26} color={color} />
+                </View>
+                <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
+                {cat.count ? <Text style={styles.categoryCount}>{cat.count} verses</Text> : null}
+              </GlassCard>
+            );
+          })}
+        </View>
+
+        {/* ── Festival Aartis ──────────────────────────────────── */}
+        {festivalAartis.length > 0 ? (
           <>
-            <SectionHeader title="Recently Played" />
-            <View style={{ paddingHorizontal: 20, paddingBottom: 120 }}>
-              {recentlyPlayed.map((item, index) => {
-                if (!item) return null;
-                const path = item.path || 'mantra';
-                const name = item.name || item.title || 'Sacred Chant';
-                const god = item.category || item.god || item.category_name || 'Divine';
-                const itemId = item.id ? String(item.id) : String(index);
-
-                return (
-                  <TouchableOpacity
-                    key={itemId + '_' + index}
-                    style={s.recentItem}
-                    activeOpacity={0.85}
-                    onPress={() => router.push(`/${path}/${itemId}` as any)}
-                  >
-                    <View style={s.recentIconWrap}>
-                      <Ionicons name="musical-note" size={20} color={C.primary} />
-                    </View>
-                    <View style={s.recentInfo}>
-                      <Text style={s.recentName}>{name}</Text>
-                      <Text style={s.recentGod}>{god}</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => router.push(`/${path}/${itemId}` as any)}>
-                      <Ionicons name="play-circle-outline" size={30} color={C.secondary} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {renderSectionHeader('Festival Aartis')}
+            <FlatList
+              data={festivalAartis}
+              renderItem={renderFeaturedCard('/festival_aarti/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
           </>
-        ) : (
-          <View style={{ paddingBottom: 120 }} />
-        )}
+        ) : null}
+
+        {/* ── Chalisas ─────────────────────────────────────────── */}
+        {chalisas.length > 0 ? (
+          <>
+            {renderSectionHeader('Chalisas', () => router.push('/chalisa' as any))}
+            <FlatList
+              data={chalisas}
+              renderItem={renderFeaturedCard('/chalisa/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
+          </>
+        ) : null}
+
+        {/* ── Stotras ──────────────────────────────────────────── */}
+        {stotras.length > 0 ? (
+          <>
+            {renderSectionHeader('Stotras', () => router.push('/stotra' as any))}
+            <FlatList
+              data={stotras}
+              renderItem={renderFeaturedCard('/stotra/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
+          </>
+        ) : null}
+
+        {/* ── Pooja Vidhi ──────────────────────────────────────── */}
+        {poojaVidhis.length > 0 ? (
+          <>
+            {renderSectionHeader('Pooja Vidhis', () => router.push('/pooja_vidhi' as any))}
+            <FlatList
+              data={poojaVidhis}
+              renderItem={renderFeaturedCard('/pooja_vidhi/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
+          </>
+        ) : null}
+
+        {/* ── Vrat Kathas ──────────────────────────────────────── */}
+        {vratKathas.length > 0 ? (
+          <>
+            {renderSectionHeader('Vrat Kathas', () => router.push('/vrat_katha' as any))}
+            <FlatList
+              data={vratKathas}
+              renderItem={renderFeaturedCard('/vrat_katha/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
+          </>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg },
-  scroll: { flex: 1 },
-
-  // Header
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
-  headerGreeting: { fontSize: 22, fontWeight: '800', color: C.text },
-  headerSub: { fontSize: 13, color: C.textSub, marginTop: 2 },
-  headerActions: { flexDirection: 'row', alignItems: 'center' },
-  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
-
-  // Daily Mantra Card
-  dailyCard: { marginHorizontal: 20, borderRadius: 24, padding: 24, marginBottom: 28, backgroundColor: C.secondary, elevation: 6, shadowColor: C.secondary, shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 } },
-  dailySkeleton: { marginHorizontal: 20, borderRadius: 24, padding: 24, marginBottom: 28, backgroundColor: C.surface, elevation: 2, height: 200, justifyContent: 'center' },
-  dailyLabel: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  dailyLabelText: { color: C.accent, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginLeft: 6, textTransform: 'uppercase' },
-  dailySanskrit: { fontSize: 32, color: '#FFF', textAlign: 'center', marginBottom: 8, lineHeight: 44, fontWeight: '500' },
-  dailyName: { fontSize: 16, color: 'rgba(255,255,255,0.9)', textAlign: 'center', fontWeight: '600' },
-  dailyGod: { fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 4, marginBottom: 20 },
-  dailyActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  playBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 50, gap: 8 },
-  playBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
-  heartBtn: { width: 46, height: 46, borderRadius: 23, borderWidth: 1.5, borderColor: C.accent, justifyContent: 'center', alignItems: 'center' },
-
-  // Section Header
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: C.text },
-  seeAll: { fontSize: 13, color: C.primary, fontWeight: '600' },
-
-  // Featured Cards
-  hScroll: { paddingLeft: 20, paddingRight: 6, paddingBottom: 8, marginBottom: 28 },
-  featuredCard: { width: CARD_W, marginRight: 14, borderRadius: 20, backgroundColor: C.primary, padding: 20, elevation: 4, shadowColor: C.primary, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
-  featuredBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginBottom: 14 },
-  badgeText: { color: '#FFF', fontSize: 11, fontWeight: '700' },
-  featuredSanskrit: { fontSize: 20, color: '#FFF', marginBottom: 8, lineHeight: 28 },
-  featuredName: { fontSize: 15, color: 'rgba(255,255,255,0.95)', fontWeight: '700', marginBottom: 2 },
-  featuredGod: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 14 },
-  featuredFooter: { flexDirection: 'row', alignItems: 'center' },
-
-  // Upanishad Banner
-  upanishadBanner: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    backgroundColor: C.surface,
-    borderRadius: 20,
-    padding: 20,
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Space for custom tab bar
+  },
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    elevation: 3,
-    shadowColor: C.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: C.primary,
+    paddingHorizontal: Spacing.standard,
+    paddingVertical: Spacing.compact,
+    marginBottom: Spacing.compact,
   },
-  upanishadBannerContent: { flex: 1 },
-  upanishadBannerTitle: { fontSize: 18, fontWeight: 'bold', color: C.text, marginBottom: 4 },
-  upanishadBannerSub: { fontSize: 13, color: C.textSub },
-
-  // Categories
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12, marginBottom: 28 },
-  gridRow: { justifyContent: 'space-between', marginBottom: 12 },
-  categoryCard: { width: (width - 56) / 2, backgroundColor: C.surface, borderRadius: 16, padding: 16, borderTopWidth: 3, elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
-  categoryIconWrap: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  categoryName: { fontSize: 15, fontWeight: '700', color: C.text, marginBottom: 2 },
-  categoryCount: { fontSize: 12, color: C.textSub },
-
-  // Recently Played
-  recentItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderRadius: 14, padding: 14, marginBottom: 10, elevation: 1, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
-  recentIconWrap: { width: 42, height: 42, borderRadius: 12, backgroundColor: C.primary + '18', justifyContent: 'center', alignItems: 'center' },
-  recentInfo: { flex: 1, marginLeft: 12 },
-  recentName: { fontSize: 14, fontWeight: '700', color: C.text },
-  recentGod: { fontSize: 12, color: C.textSub, marginTop: 2 },
-
-  // Jaap Counter Card Styles
-  counterCard: {
-    marginHorizontal: 20,
-    marginBottom: 28,
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: C.primary,
-    elevation: 6,
-    shadowColor: C.primary,
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-  },
-  counterHeader: {
+  branding: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
   },
-  counterTitleBox: {
+  logo: {
+    width: 44,
+    height: 44,
+    marginRight: 12,
+  },
+  greetingText: {
+    fontFamily: Typography.families.heading,
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  greetingSub: {
+    fontFamily: Typography.families.body,
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  topActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  circleButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dailyCard: {
+    marginHorizontal: Spacing.standard,
+    marginBottom: Spacing.large,
+    padding: Spacing.large,
+    alignItems: 'center',
+  },
+  dailyHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.small,
+  },
+  dailyPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.3)',
   },
-  counterTitle: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  counterResetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  counterResetText: {
-    color: C.accent,
-    fontSize: 12,
+  dailyPillText: {
+    fontSize: 11,
     fontWeight: '700',
+    color: Colors.secondary,
+    textTransform: 'uppercase',
   },
-  goalRow: {
+  dailySanskrit: {
+    fontFamily: Typography.families.devanagari,
+    fontSize: 26,
+    lineHeight: 38,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginVertical: Spacing.compact,
+  },
+  dailyTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  dailyGod: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+    marginBottom: Spacing.standard,
+  },
+  dailyPlayBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 18,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: Radius.full,
   },
-  goalLabel: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    fontWeight: '600',
+  dailyPlayBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0C0A1A',
   },
-  goalChip: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  goalChipActive: {
-    backgroundColor: C.accent,
-  },
-  goalChipText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  goalChipTextActive: {
-    color: C.text,
-  },
-  counterBody: {
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: Spacing.standard,
+    marginBottom: Spacing.small,
+    marginTop: Spacing.standard,
   },
-  counterInfo: {
-    flex: 1,
+  sectionHeaderTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
   },
-  counterCountText: {
-    fontSize: 44,
-    fontWeight: '900',
-    color: '#FFF',
-    lineHeight: 48,
+  seeAllText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
   },
-  counterGoalText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    fontWeight: '600',
+  hScroll: {
+    paddingLeft: Spacing.standard,
+    paddingRight: Spacing.compact,
+    paddingBottom: Spacing.compact,
+    marginBottom: Spacing.medium,
   },
-  malaBadge: {
+  featuredCard: {
+    width: CARD_W,
+    marginRight: 14,
+    padding: Spacing.standard,
+    borderRadius: Radius.lg,
+  },
+  badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: C.secondary,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.small,
   },
-  malaBadgeText: {
-    color: '#FFF',
-    fontSize: 11,
+  categoryChip: {
+    backgroundColor: 'rgba(255, 153, 51, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.25)',
+  },
+  categoryChipText: {
+    fontSize: 10,
     fontWeight: '700',
+    color: Colors.secondary,
+    textTransform: 'uppercase',
   },
-  tapButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  tapButtonText: {
-    color: C.primary,
+  featuredSanskrit: {
+    fontFamily: Typography.families.devanagari,
     fontSize: 18,
-    fontWeight: '900',
+    lineHeight: 26,
+    color: Colors.primary,
+    marginBottom: 4,
   },
-  tapButtonSub: {
-    color: C.textSub,
-    fontSize: 9,
+  featuredTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 15,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  featuredGod: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.standard,
+  },
+  cardPlayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  playBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listenText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  upanishadBanner: {
+    marginHorizontal: Spacing.standard,
+    marginVertical: Spacing.standard,
+    padding: Spacing.standard,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  upanishadIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  upanishadTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  upanishadSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: Spacing.standard,
+    gap: 12,
+    marginBottom: Spacing.large,
+  },
+  categoryCard: {
+    width: (width - 44) / 2,
+    padding: Spacing.standard,
+    borderRadius: Radius.md,
+  },
+  categoryIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  categoryName: {
+    fontFamily: Typography.families.heading,
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  categoryCount: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

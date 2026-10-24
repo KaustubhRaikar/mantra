@@ -1,0 +1,64 @@
+# ==============================================================================
+# MANTRA WEB PORTAL & ADMIN SECURITY CONFIGURATION (.htaccess)
+# ==============================================================================
+
+# Disable directory browsing
+Options -Indexes
+
+# Default character encoding
+AddDefaultCharset UTF-8
+
+# Serve Android Digital Asset Links with accurate application/json MIME type
+<Files "assetlinks.json">
+    ForceType application/json
+    Header set Access-Control-Allow-Origin "*"
+</Files>
+
+# Block access to hidden, environment, backup, and sensitive files
+<FilesMatch "^\.|\.(bak|config|sql|fla|psd|ini|log|sh|env|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Allow access to .well-known directory for Android App Links verification
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.well-known/ - [L]
+</IfModule>
+
+# Security HTTP Response Headers
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+
+    # Clickjacking protection
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # Cross-site scripting (XSS) filter
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Referrer policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Enforce HTTPS via Strict-Transport-Security (1 year + subdomains)
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # Restrict device sensor capabilities
+    Header set Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()"
+
+    # Content Security Policy (Allows Google Fonts, safe inline scripts/styles for UI effects)
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; media-src 'self' https:;"
+</IfModule>
+
+# Force HTTPS rewrite rule
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} ^mantra\.aarambhtech\.in$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>

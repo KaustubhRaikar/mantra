@@ -1,53 +1,45 @@
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, Alert,
-  Animated
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors } from '../src/constants/theme';
+import { Colors, Spacing, Radius, Typography } from '../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/contexts/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { CosmicBackground } from '../src/components/CosmicBackground';
+import { GlassCard } from '../src/components/GlassCard';
+import { SpiritualButton } from '../src/components/SpiritualButton';
+import { useRouter } from 'expo-router';
 
 type LoginStep = 'email' | 'otp';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { signIn, verifyOtp } = useAuth();
-  const [step, setStep]         = useState<LoginStep>('email');
-  const [email, setEmail]       = useState('');
+  const [step, setStep] = useState<LoginStep>('email');
+  const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [otp, setOtp]           = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Animated slide for step transitions
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const slideToOtp = () => {
     Animated.timing(slideAnim, {
       toValue: -400,
-      duration: 300,
+      duration: 250,
       useNativeDriver: true,
     }).start(() => {
       setStep('otp');
       slideAnim.setValue(400);
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
-
-  const slideBack = () => {
-    Animated.timing(slideAnim, {
-      toValue: 400,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setStep('email');
-      setOtp('');
-      slideAnim.setValue(-400);
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 250,
@@ -56,7 +48,23 @@ export default function LoginScreen() {
     });
   };
 
-  // Direct Login (OTP verification bypassed for now)
+  const slideBack = () => {
+    Animated.timing(slideAnim, {
+      toValue: 400,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setStep('email');
+      setOtp('');
+      slideAnim.setValue(-400);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+
   const handleSendOtp = async () => {
     if (!email.trim() || !fullName.trim()) {
       Alert.alert('Missing Fields', 'Please enter both your full name and email address.');
@@ -79,7 +87,6 @@ export default function LoginScreen() {
     }
   };
 
-  // Step 2: Verify OTP (Fallback)
   const handleVerifyOtp = async () => {
     setLoading(true);
     try {
@@ -105,126 +112,133 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <LinearGradient
-        colors={[Colors.surface, '#fff4e6', '#ffe8cc']}
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+      <CosmicBackground />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
       >
-        {/* Logo Section */}
+        {/* Sacred Branding */}
         <View style={styles.logoContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="sparkles" size={48} color={Colors.primary} />
+            <Text style={styles.omBig}>ॐ</Text>
           </View>
-          <Text style={styles.title}>Hindu Mantras</Text>
-          <Text style={styles.subtitle}>Find your inner peace and connect with the divine.</Text>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+            MANTRA
+          </Text>
+          <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+            Connect with the Divine & Find Inner Serenity
+          </Text>
         </View>
 
-        <Animated.View style={[styles.formContainer, { transform: [{ translateX: slideAnim }] }]}>
-
-          {step === 'email' ? (
-            /* ── Step 1: Email + Name ── */
-            <>
-              <Text style={styles.stepLabel}>
-                <Ionicons name="person-circle-outline" size={15} color={Colors.primary} /> Enter Details to Begin
-              </Text>
-
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your full name"
-                  placeholderTextColor="#A0A0A0"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoCapitalize="words"
-                />
-              </View>
-
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#A0A0A0"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-
-              <TouchableOpacity style={styles.loginButton} onPress={handleSendOtp} disabled={loading} activeOpacity={0.8}>
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Begin Journey</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ marginTop: 20, alignItems: 'center', minHeight: 44, justifyContent: 'center' }}
-                onPress={() => require('expo-router').router.push('/privacy')}
-                accessibilityRole="link"
-                accessibilityLabel="View Privacy Policy"
-              >
-                <Text style={{ fontSize: 13, color: Colors.textSecondary, textDecorationLine: 'underline' }}>
-                  By proceeding, you agree to our Privacy Policy
+        {/* Auth Glass Card */}
+        <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
+          <GlassCard style={styles.authCard} glow>
+            {step === 'email' ? (
+              <>
+                <Text style={styles.stepLabel}>
+                  <Ionicons name="sparkles" size={14} color={Colors.primary} /> Devotee Registration
                 </Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            /* ── Step 2: OTP Verification ── */
-            <>
-              <TouchableOpacity style={styles.backButton} onPress={slideBack}>
-                <Ionicons name="arrow-back" size={20} color={Colors.primary} />
-                <Text style={styles.backText}>Back</Text>
-              </TouchableOpacity>
 
-              <Text style={styles.stepLabel}>
-                <Ionicons name="shield-checkmark-outline" size={15} color={Colors.primary} /> Step 2 of 2 — Verify Code
-              </Text>
-              <Text style={styles.otpHint}>
-                We sent a 6-digit code to{'\n'}
-                <Text style={styles.emailHighlight}>{email}</Text>
-              </Text>
+                <Text style={styles.label}>Full Name</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your sacred name"
+                    placeholderTextColor={Colors.textMuted}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    autoCapitalize="words"
+                    maxFontSizeMultiplier={1.3}
+                  />
+                </View>
 
-              <Text style={styles.label}>Verification Code</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="key-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, styles.otpInput]}
-                  placeholder="Enter 6-digit code"
-                  placeholderTextColor="#A0A0A0"
-                  value={otp}
-                  onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  autoFocus
-                />
-              </View>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="devotee@sanctuary.in"
+                    placeholderTextColor={Colors.textMuted}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    maxFontSizeMultiplier={1.3}
+                  />
+                </View>
 
-              <TouchableOpacity style={styles.loginButton} onPress={handleVerifyOtp} disabled={loading || otp.length < 6} activeOpacity={0.8}>
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <Text style={styles.loginButtonText}>Verify & Begin Journey</Text>
-                )}
-              </TouchableOpacity>
+                <View style={{ marginTop: Spacing.standard }}>
+                  <SpiritualButton
+                    title="Begin Spiritual Journey"
+                    onPress={handleSendOtp}
+                    loading={loading}
+                    variant="primary"
+                  />
+                </View>
 
-              <TouchableOpacity style={styles.resendButton} onPress={handleResend} disabled={loading}>
-                <Text style={styles.resendText}>Didn't receive it? <Text style={styles.resendAction}>Resend Code</Text></Text>
-              </TouchableOpacity>
-            </>
-          )}
+                <TouchableOpacity
+                  style={styles.policyLink}
+                  onPress={() => router.push('/privacy')}
+                  accessibilityRole="link"
+                  accessibilityLabel="Read Privacy Policy"
+                >
+                  <Text style={styles.policyText}>
+                    By proceeding, you agree to our DPDP Privacy Policy
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.backButton} onPress={slideBack}>
+                  <Ionicons name="chevron-back" size={18} color={Colors.primary} />
+                  <Text style={styles.backText}>Change Details</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.stepLabel}>
+                  <Ionicons name="shield-checkmark" size={14} color={Colors.primary} /> Step 2: Verification Code
+                </Text>
+                <Text style={styles.otpHint}>
+                  We sent a 6-digit code to{'\n'}
+                  <Text style={styles.emailHighlight}>{email}</Text>
+                </Text>
+
+                <Text style={styles.label}>Verification Code</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, styles.otpInput]}
+                    placeholder="123456"
+                    placeholderTextColor={Colors.textMuted}
+                    value={otp}
+                    onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    autoFocus
+                    maxFontSizeMultiplier={1.3}
+                  />
+                </View>
+
+                <View style={{ marginTop: Spacing.standard }}>
+                  <SpiritualButton
+                    title="Verify & Enter Sanctuary"
+                    onPress={handleVerifyOtp}
+                    loading={loading}
+                    disabled={otp.length < 6}
+                    variant="primary"
+                  />
+                </View>
+
+                <TouchableOpacity style={styles.resendButton} onPress={handleResend} disabled={loading}>
+                  <Text style={styles.resendText}>
+                    Didn't receive it? <Text style={styles.resendAction}>Resend Code</Text>
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </GlassCard>
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -232,132 +246,141 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: Spacing.large,
     justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: Spacing.large,
   },
   iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
-    justifyContent: 'center',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 153, 51, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 153, 51, 0.3)',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: Spacing.compact,
+  },
+  omBig: {
+    fontFamily: Typography.families.devanagari,
+    fontSize: 40,
+    color: Colors.primary,
   },
   title: {
-    fontSize: 32,
+    fontFamily: Typography.families.heading,
+    fontSize: 26,
     fontWeight: '800',
     color: Colors.text,
-    marginBottom: 10,
+    letterSpacing: 2,
   },
   subtitle: {
-    fontSize: 15,
+    fontFamily: Typography.families.body,
+    fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 20,
+    marginTop: 4,
+    maxWidth: 280,
   },
-  formContainer: { width: '100%' },
+  authCard: {
+    padding: Spacing.large,
+    borderRadius: Radius.xl,
+  },
   stepLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 16,
-  },
-  otpHint: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  emailHighlight: {
+    fontFamily: Typography.families.heading,
+    fontSize: 13,
     fontWeight: '700',
-    color: Colors.text,
+    color: Colors.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: Spacing.standard,
   },
   label: {
-    fontSize: 14,
+    fontFamily: Typography.families.body,
+    fontSize: 12,
     fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 8,
-    marginLeft: 4,
+    color: Colors.textSecondary,
+    marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-    elevation: 2,
-    shadowColor: Colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.standard,
+    height: 48,
+    marginBottom: Spacing.standard,
   },
-  inputIcon: { marginRight: 10 },
+  inputIcon: {
+    marginRight: 10,
+  },
   input: {
     flex: 1,
-    height: 56,
-    fontSize: 16,
+    fontFamily: Typography.families.body,
+    fontSize: 15,
     color: Colors.text,
+    height: '100%',
   },
   otpInput: {
-    fontSize: 22,
-    fontWeight: '700',
     letterSpacing: 6,
-  },
-  loginButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 4,
-    elevation: 4,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  loginButtonText: {
-    color: '#FFF',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
+  },
+  policyLink: {
+    marginTop: Spacing.standard,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  policyText: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 4,
+    marginBottom: Spacing.standard,
+    alignSelf: 'flex-start',
   },
   backText: {
-    fontSize: 15,
-    color: Colors.primary,
+    fontSize: 13,
     fontWeight: '600',
+    color: Colors.primary,
+    marginLeft: 4,
+  },
+  otpHint: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.standard,
+    lineHeight: 18,
+  },
+  emailHighlight: {
+    color: Colors.primary,
+    fontWeight: '700',
   },
   resendButton: {
+    marginTop: Spacing.standard,
     alignItems: 'center',
-    marginTop: 20,
-    paddingVertical: 8,
+    padding: Spacing.compact,
   },
   resendText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
   },
   resendAction: {
     color: Colors.primary,
     fontWeight: '700',
-    textDecorationLine: 'underline',
   },
 });

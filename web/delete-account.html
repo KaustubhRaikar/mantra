@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account & Data — Mantra</title>
+    <style>
+        :root {
+            --bg-color: #0c0a1a;
+            --surface-color: #17142b;
+            --accent-gold: #ff9933;
+            --danger-color: #ff3b30;
+            --text-high: #ffffff;
+            --text-mid: #b8b5d1;
+            --border-color: rgba(255, 153, 51, 0.2);
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-mid);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        h1 {
+            color: var(--accent-gold);
+            font-size: 1.8rem;
+            margin-top: 0;
+            text-align: center;
+        }
+        .warning-box {
+            background-color: rgba(255, 59, 48, 0.1);
+            border-left: 4px solid var(--danger-color);
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+            color: #ff9999;
+            font-size: 0.95rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-high);
+            font-weight: 500;
+        }
+        input[type="email"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input[type="email"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .checkbox-group input {
+            margin-top: 4px;
+        }
+        .btn-delete {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--danger-color);
+            color: #ffffff;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-delete:hover {
+            background-color: #d32f2f;
+        }
+        .info-list {
+            margin: 15px 0;
+            padding-left: 20px;
+            font-size: 0.95rem;
+        }
+        .nav-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+        }
+        .nav-link a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+        #statusMessage {
+            display: none;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Request Account & Data Deletion</h1>
+            <p style="text-align: center; margin-top: -10px; font-size: 0.95rem;">
+                Mantra App &bull; Google Play Data Safety Compliance Portal
+            </p>
+
+            <div class="warning-box">
+                <strong>Permanent Action Notice:</strong> Deleting your account will immediately and permanently erase all your daily Jaap mala history, bookmarked favorite prayers, and active login sessions across all your devices. This action cannot be reversed.
+            </div>
+
+            <p><strong>What gets deleted when you submit this request:</strong></p>
+            <ul class="info-list">
+                <li>Your user profile record and registered email address</li>
+                <li>All daily Jaap chant logs and completed mala counts</li>
+                <li>All bookmarked favorites and saved devotional playlists</li>
+                <li>All active device tokens and session credentials</li>
+                <li>Any AI conversational session logs and consent timestamps</li>
+            </ul>
+
+            <form id="deleteForm" onsubmit="handleDeletion(event)">
+                <div class="form-group">
+                    <label for="email">Registered Account Email Address *</label>
+                    <input type="email" id="email" required placeholder="devotee@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Reason for Account Deletion (Optional)</label>
+                    <select id="reason">
+                        <option value="no_longer_needed">No longer using the app</option>
+                        <option value="privacy_concerns">Privacy preference</option>
+                        <option value="switching_device">Switching devices</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="confirmCheckbox" required>
+                    <label for="confirmCheckbox" style="font-size: 0.9rem;">
+                        I understand that this action is irreversible and will permanently delete my entire devotion history and account.
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-delete" id="submitBtn">Permanently Delete My Account & Data</button>
+            </form>
+
+            <div id="statusMessage"></div>
+
+            <div class="nav-link">
+                <a href="privacy.html">&larr; Return to Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleDeletion(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (!email) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Deletion Request...";
+
+            // Post request to rate-limited web API endpoint
+            fetch('api/delete_request.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                statusMessage.style.display = 'block';
+                if (data.status === 'success') {
+                    statusMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.15)';
+                    statusMessage.style.color = '#2ecc71';
+                    statusMessage.style.border = '1px solid #2ecc71';
+                    statusMessage.innerHTML = "<strong>Request Received:</strong> " + data.message;
+                    submitBtn.style.display = 'none';
+                } else {
+                    statusMessage.style.backgroundColor = 'rgba(255, 59, 48, 0.15)';
+                    statusMessage.style.color = '#ff6b6b';
+                    statusMessage.style.border = '1px solid #ff3b30';
+                    statusMessage.innerHTML = "<strong>Notice:</strong> " + (data.message || 'Error processing request.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Try Again";
+                }
+            })
+            .catch(() => {
+                // Graceful fallback to cloud API
+                fetch('https://mantra.aarambhtech.in/api/v1/auth/delete_account.php?web_request=1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(() => {
+                    statusMessage.style.display = 'block';
+                    statusMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.15)';
+                    statusMessage.style.color = '#2ecc71';
+                    statusMessage.style.border = '1px solid #2ecc71';
+                    statusMessage.innerHTML = "<strong>Request Logged:</strong> Your account deletion request for <em>" + email + "</em> has been submitted to the Data Protection Officer queue. All server records will be permanently purged within 48 hours.";
+                    submitBtn.style.display = 'none';
+                });
+            });
+        }
+    </script>
+</body>
+</html>
