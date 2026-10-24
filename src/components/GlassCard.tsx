@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, TouchableOpacity, StyleProp } from 'react-native';
-import { Colors, Radius, Spacing } from '../constants/theme';
+import { Radius, Spacing } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -17,8 +18,17 @@ export function GlassCard({
   glow = false,
   activeOpacity = 0.85,
 }: GlassCardProps) {
+  const { isDark, colors } = useTheme();
+
+  const dynamicCardStyle: ViewStyle = {
+    backgroundColor: colors.glassCard,
+    borderColor: glow ? colors.borderGlow : colors.border,
+    shadowColor: glow ? colors.primary : (isDark ? colors.primary : 'rgba(0, 0, 0, 0.4)'),
+  };
+
   const cardStyle = [
     styles.card,
+    dynamicCardStyle,
     glow && styles.cardGlow,
     style,
   ];
@@ -40,16 +50,12 @@ export function GlassCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.glassCard,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
     padding: Spacing.standard,
     overflow: 'hidden',
   },
   cardGlow: {
-    borderColor: Colors.borderGlow,
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

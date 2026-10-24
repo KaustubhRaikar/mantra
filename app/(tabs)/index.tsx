@@ -20,6 +20,7 @@ import { JapaOrb } from '../../src/components/JapaOrb';
 import { SkeletonLoader } from '../../src/components/SkeletonLoader';
 import { getCategoryDisplayProps } from '../../src/utils/categoryHelper';
 import { useFavorites } from '../../src/contexts/FavoritesContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { storage } from '../../src/services/storage';
 import { api } from '../../src/services/api';
 
@@ -51,6 +52,7 @@ const FEATURED: Mantra[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isDark, toggleTheme, colors } = useTheme();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [dailyMantra, setDailyMantra] = useState<any>(null);
@@ -309,21 +311,43 @@ export default function HomeScreen() {
 
           <View style={styles.topActions}>
             <TouchableOpacity
-              style={styles.circleButton}
+              style={[
+                styles.circleButton,
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)', borderColor: colors.border }
+              ]}
               onPress={() => router.push('/search/' as any)}
               accessibilityRole="button"
               accessibilityLabel="Search scriptures"
             >
-              <Ionicons name="search" size={20} color={Colors.text} />
+              <Ionicons name="search" size={20} color={colors.text} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.circleButton, { marginLeft: 8 }]}
+              style={[
+                styles.circleButton,
+                { marginLeft: 8, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)', borderColor: colors.border }
+              ]}
+              onPress={toggleTheme}
+              accessibilityRole="button"
+              accessibilityLabel={isDark ? "Switch to Sacred Dawn Light Theme" : "Switch to Cosmic Dark Night Theme"}
+            >
+              <Ionicons
+                name={isDark ? "sunny-outline" : "moon-outline"}
+                size={20}
+                color={isDark ? colors.primary : colors.secondary}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.circleButton,
+                { marginLeft: 8, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)', borderColor: colors.border }
+              ]}
               onPress={() => router.push('/(tabs)/profile')}
               accessibilityRole="button"
               accessibilityLabel="Open devotee profile"
             >
-              <Ionicons name="person-circle-outline" size={24} color={Colors.secondary} />
+              <Ionicons name="person-circle-outline" size={24} color={colors.secondary} />
             </TouchableOpacity>
           </View>
         </View>

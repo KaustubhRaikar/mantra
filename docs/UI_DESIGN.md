@@ -31,20 +31,42 @@ The Mantra application embodies **Cosmic Vedic Serenity**. Rather than sterile f
 
 ## 2. Color Palette & Semantic Tokens
 
-### 2.1 Primary & Accent Palettes
+### 2.1 Dual Theme Palette System
 
+#### A. Cosmic Dark Mode (Night Devotion — Default)
 | Token Name | Hex Code | Semantic Role | Usage Guidance |
 |---|---|---|---|
-| `cosmicDark` | `#080711` | Root Canvas Background | Base deep space backdrop |
-| `cosmicSurface` | `#161329` | Card / Sheet Background | Elevated surfaces with 60% opacity |
-| `vedicSaffron` | `#FF9933` | Primary Spiritual Accent | Active tabs, prayer buttons, mala counter |
-| `sacredGold` | `#F5B041` | Secondary Divine Highlight | Deity badges, verse highlights, glowing borders |
-| `celestialPurple`| `#6C5CE7` | Ambient Glow / Gradients | Background nebula gradients |
-| `sereneTextHigh` | `#FFFFFF` | High-Emphasis Text | Sanskrit Devanagari headings, titles |
-| `sereneTextMid`  | `#B3B1C9` | Medium-Emphasis Text | English translations, meanings, descriptions |
-| `sereneTextLow`  | `#716D8E` | Low-Emphasis Text / Placeholders| Inactive labels, timestamp markers |
-| `dangerFlame`    | `#E74C3C` | Destructive Actions | Account deletion, reset Japa logs |
-| `divineSuccess`  | `#2ECC71` | Positive Feedback | 108 Mala completed, accurate pronunciation |
+| `background` | `#080711` | Root Canvas Background | Base deep space backdrop |
+| `surface` | `#161329` | Card / Sheet Background | Elevated surfaces with 85% opacity |
+| `surfaceElevated` | `#1F1A3A` | Dialog / Sheet Surface | High-elevation surface |
+| `primary` | `#FF9933` | Radiant Vedic Saffron | Active tabs, prayer buttons, mala counter |
+| `secondary` | `#F5B041` | Sacred Gold Highlight | Deity badges, verse highlights, glowing borders |
+| `accent` | `#6C5CE7` | Ambient Glow / Gradients | Background nebula gradients |
+| `text` | `#FFFFFF` | High-Emphasis Text | Sanskrit Devanagari headings, titles |
+| `textSecondary` | `#B3B1C9` | Medium-Emphasis Text | English translations, meanings, descriptions |
+| `textMuted` | `#716D8E` | Low-Emphasis Text / Placeholders| Inactive labels, timestamp markers |
+| `border` | `rgba(255, 255, 255, 0.08)` | Glassmorphic Borders | Subtle card separators |
+| `borderGlow` | `rgba(255, 153, 51, 0.25)` | Saffron Radiance | Glowing active cards & orb border |
+
+#### B. Sacred Dawn Mode (Suryodaya Light)
+| Token Name | Hex Code | Semantic Role | Usage Guidance |
+|---|---|---|---|
+| `background` | `#F8F6F0` | Sacred Ivory Canvas | Base temple marble backdrop |
+| `surface` | `#FFFFFF` | Pure Marble Surface | High-elevation card surfaces |
+| `surfaceElevated` | `#F2EDE4` | Sandalwood Wash Surface | Dialog and floating sheet surface |
+| `primary` | `#E67E22` | Deep Radiant Saffron | High-contrast Vedic saffron for bright daylight |
+| `secondary` | `#D4AC0D` | Sacred Temple Gold | Deity badges, warm golden highlights |
+| `accent` | `#5E48C8` | Deep Celestial Purple | Daylight spiritual accent |
+| `text` | `#171426` | Deep Slate Charcoal | High-contrast Sanskrit Devanagari & Latin text |
+| `textSecondary` | `#4E4968` | Twilight Indigo | Legible translations, meanings, and subtitles |
+| `textMuted` | `#847E9C` | Incense Ash | Secondary metadata, timestamps |
+| `border` | `rgba(0, 0, 0, 0.08)` | Clean Inset Borders | Clean boundaries on light marble |
+| `borderGlow` | `rgba(230, 126, 34, 0.30)` | Radiant Daylight Glow | Gold/saffron borders on active cards |
+
+### 2.2 CosmicThemeProvider Architecture
+* Managed via `src/contexts/ThemeContext.tsx` with dynamic `Colors` Proxy in `src/constants/theme.ts`.
+* Persists user choice in `SecureStore` under `'mantra_theme_mode'` (`'dark' | 'light' | 'system'`).
+* One-tap instant switchers present in Home header, Login header, and Profile preferences.
 
 ---
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SearchBarProps {
   value: string;
@@ -18,15 +19,23 @@ export function SearchBar({
   placeholder = 'Search mantras, aartis, suktas...',
   autoFocus = false,
 }: SearchBarProps) {
+  const { isDark, colors } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Ionicons name="search" size={20} color={Colors.primary} style={styles.searchIcon} />
+    <View style={[
+      styles.container,
+      {
+        backgroundColor: isDark ? 'rgba(22, 19, 43, 0.85)' : 'rgba(255, 255, 255, 0.92)',
+        borderColor: colors.border,
+      }
+    ]}>
+      <Ionicons name="search" size={20} color={colors.primary} style={styles.searchIcon} />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: colors.text }]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         autoFocus={autoFocus}
         autoCapitalize="none"
         autoCorrect={false}
@@ -44,7 +53,7 @@ export function SearchBar({
           accessibilityRole="button"
           accessibilityLabel="Clear search text"
         >
-          <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          <Ionicons name="close-circle" size={18} color={colors.textMuted} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -54,10 +63,8 @@ export function SearchBar({
 const styles = StyleSheet.create({
   container: {
     height: 48,
-    backgroundColor: 'rgba(22, 19, 43, 0.85)',
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.standard,
@@ -68,11 +75,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: Typography.families.body,
-    fontSize: 15,
-    color: Colors.text,
+    fontSize: Typography.sizes.body,
     height: '100%',
   },
   clearButton: {
-    padding: Spacing.micro,
+    padding: 4,
   },
 });

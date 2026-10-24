@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Typography } from '../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/contexts/AuthContext';
+import { useTheme } from '../src/contexts/ThemeContext';
 import { CosmicBackground } from '../src/components/CosmicBackground';
 import { GlassCard } from '../src/components/GlassCard';
 import { SpiritualButton } from '../src/components/SpiritualButton';
@@ -25,6 +26,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { sendOtp, verifyOtp, guestSignIn, signIn, sessionError } = useAuth();
+  const { isDark, toggleTheme, colors } = useTheme();
 
   const [step, setStep] = useState<LoginStep>('email');
   const [fullName, setFullName] = useState('');
@@ -212,15 +214,38 @@ export default function LoginScreen() {
           bounces={false}
         >
           <View style={styles.contentWrapper}>
+            {/* Quick Theme Toggle Row */}
+            <View style={styles.topActionRow}>
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity
+                style={[
+                  styles.themeToggleBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                    borderColor: colors.border,
+                  }
+                ]}
+                onPress={toggleTheme}
+                accessibilityRole="button"
+                accessibilityLabel={isDark ? "Switch to Sacred Dawn Light Theme" : "Switch to Cosmic Dark Night Theme"}
+              >
+                <Ionicons
+                  name={isDark ? "sunny-outline" : "moon-outline"}
+                  size={18}
+                  color={isDark ? colors.primary : colors.secondary}
+                />
+              </TouchableOpacity>
+            </View>
+
             {/* Sacred Branding */}
             <View style={styles.logoContainer}>
               <View style={styles.iconCircle}>
                 <Text style={styles.omBig}>ॐ</Text>
               </View>
-              <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+              <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
                 MANTRA
               </Text>
-              <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
                 Sacred Vedic Sanctuary & Sadhana Companion
               </Text>
             </View>
@@ -426,6 +451,19 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     alignSelf: 'center',
+  },
+  topActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  themeToggleBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',

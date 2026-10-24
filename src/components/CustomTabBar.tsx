@@ -1,18 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated, Dimensions, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../src/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as NavigationBar from 'expo-navigation-bar';
-
 import { useRouter } from 'expo-router';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export function CustomTabBar({ state, descriptors, navigation }: any) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isDark, colors } = useTheme();
   
   // Animation value from 0 to 1
   const flowAnim = useRef(new Animated.Value(0)).current;
@@ -46,12 +46,29 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
 
   const bottomPadding = Platform.OS === 'ios' ? insets.bottom : 0;
 
+  const gradientColors = isDark
+    ? (['#141126', '#1F1A3A', '#281E48', '#141126'] as const)
+    : (['#FFFFFF', '#FDF8F0', '#F7EEDD', '#FFFFFF'] as const);
+
   return (
-    <View style={[styles.container, { paddingBottom: bottomPadding, height: 64 + bottomPadding }]}>
-      <View style={styles.barBackground}>
+    <View style={[
+      styles.container,
+      {
+        paddingBottom: bottomPadding,
+        height: 64 + bottomPadding,
+        shadowColor: isDark ? colors.primary : 'rgba(0, 0, 0, 0.15)',
+      }
+    ]}>
+      <View style={[
+        styles.barBackground,
+        {
+          backgroundColor: isDark ? '#0F0C20' : '#FFFFFF',
+          borderColor: colors.border,
+        }
+      ]}>
         <Animated.View style={[StyleSheet.absoluteFill, { width: width * 3, transform: [{ translateX }] }]}>
           <LinearGradient
-            colors={['#141126', '#1F1A3A', '#281E48', '#141126']} // Celestial deep indigo flowing gradient
+            colors={gradientColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}
@@ -104,9 +121,17 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
               <Ionicons
                 name={iconName}
                 size={24}
-                color={isFocused ? Colors.primary : Colors.textMuted}
+                color={isFocused ? colors.primary : colors.textMuted}
               />
-              {isFocused && <View style={styles.dot} />}
+              {isFocused && (
+                <View style={[
+                  styles.dot,
+                  {
+                    backgroundColor: colors.primary,
+                    shadowColor: colors.primary,
+                  }
+                ]} />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -122,7 +147,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     elevation: 12,
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -133,11 +157,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#0F0C20',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
   },
   tabContent: {
@@ -156,9 +178,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: Colors.primary,
     marginTop: 4,
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 6,

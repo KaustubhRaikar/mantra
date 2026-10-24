@@ -143,4 +143,7 @@ The Mantra app navigation hierarchy is structured to minimize cognitive load, al
 ## 5. Cognitive Load & Spiritual Focus Principles
 * **Zero Dark Patterns:** No countdown timers, no artificial urgency, no paywalls blocking sacred verses.
 * **Reverent Transitions:** All modal presentations and page routes utilize serene 250ms cross-fades rather than aggressive sliding motions.
-* **Night Devotion Mode:** Dark cosmic theme is default; eliminates harsh blue light during early morning (Brahma Muhurta) or bedtime prayers.
+* **Dual Sanctuary Appearance Modes:**
+  * **Night Devotion (Cosmic Dark — Default):** Eliminates harsh blue light during early morning (Brahma Muhurta, 4:00 AM - 6:00 AM) or bedtime prayers.
+  * **Sacred Dawn (Suryodaya Light):** Warm ivory and marble aesthetic with deep charcoal contrast for comfortable outdoor reading in bright temple environments.
+  * **Instant One-Tap Switcher:** Accessible via top header actions on Home and Login, plus a segmented selector in Profile & Preferences. Preferences persist offline in device `SecureStore`.

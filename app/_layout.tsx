@@ -4,9 +4,9 @@ import { Stack, useRouter, useSegments, ThemeProvider } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts, TiroDevanagariHindi_400Regular } from '@expo-google-fonts/tiro-devanagari-hindi';
-import { Theme, Colors } from "../src/constants/theme";
 import { AuthProvider, useAuth } from "../src/contexts/AuthContext";
 import { FavoritesProvider } from "../src/contexts/FavoritesContext";
+import { CosmicThemeProvider, useTheme } from "../src/contexts/ThemeContext";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, sqlitePersister } from '../src/services/queryClient';
 import { LogBox } from 'react-native';
@@ -20,6 +20,7 @@ LogBox.ignoreLogs([
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
+  const { isDark, navigationTheme, colors } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -38,15 +39,15 @@ function RootLayoutNav() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <ThemeProvider value={Theme}>
-      <StatusBar style="light" />
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="login" options={{ animationTypeForReplace: user ? 'push' : 'pop' }} />
         <Stack.Screen name="(tabs)" />
@@ -76,8 +77,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#080711' }}>
+        <ActivityIndicator size="large" color="#FF9933" />
       </View>
     );
   }
@@ -87,11 +88,13 @@ export default function RootLayout() {
       client={queryClient}
       persistOptions={{ persister: sqlitePersister }}
     >
-      <AuthProvider>
-        <FavoritesProvider>
-          <RootLayoutNav />
-        </FavoritesProvider>
-      </AuthProvider>
+      <CosmicThemeProvider>
+        <AuthProvider>
+          <FavoritesProvider>
+            <RootLayoutNav />
+          </FavoritesProvider>
+        </AuthProvider>
+      </CosmicThemeProvider>
     </PersistQueryClientProvider>
   );
 }

@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Spacing, Typography } from '../constants/theme';
+import { Spacing, Typography } from '../constants/theme';
 import { SpiritualButton } from './SpiritualButton';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -19,15 +20,17 @@ export function EmptyState({
   actionTitle,
   onAction,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={36} color={Colors.primary} />
+      <View style={[styles.iconCircle, { borderColor: colors.borderGlow }]}>
+        <Ionicons name={icon} size={36} color={colors.primary} />
       </View>
-      <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+      <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>
         {title}
       </Text>
-      <Text style={styles.description} maxFontSizeMultiplier={1.3}>
+      <Text style={[styles.description, { color: colors.textSecondary }]} maxFontSizeMultiplier={1.3}>
         {description}
       </Text>
       {actionTitle && onAction ? (
@@ -56,7 +59,6 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     backgroundColor: 'rgba(255, 153, 51, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 153, 51, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.standard,
@@ -65,19 +67,17 @@ const styles = StyleSheet.create({
     fontFamily: Typography.families.heading,
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.text,
     textAlign: 'center',
     marginBottom: Spacing.compact,
   },
   description: {
     fontFamily: Typography.families.body,
     fontSize: 14,
-    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 280,
   },
   buttonWrapper: {
-    marginTop: Spacing.medium,
+    marginTop: Spacing.standard,
   },
 });

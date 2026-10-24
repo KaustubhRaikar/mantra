@@ -17,6 +17,7 @@ import { CosmicBackground } from '../../src/components/CosmicBackground';
 import { GlassCard } from '../../src/components/GlassCard';
 import { SpiritualButton } from '../../src/components/SpiritualButton';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useTheme } from '../../src/contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { storage } from '../../src/services/storage';
 
@@ -29,6 +30,7 @@ interface JaapLogItem {
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
+  const { themeMode, setThemeMode, isDark, toggleTheme, colors } = useTheme();
   const router = useRouter();
 
   // Settings State
@@ -143,14 +145,50 @@ export default function ProfileScreen() {
 
         {/* ── App Preferences Section ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>Preferences & Settings</Text>
+          <Text style={[styles.sectionHeader, { color: colors.secondary }]}>Preferences & Settings</Text>
 
           <GlassCard style={styles.settingsCard}>
+            {/* Sanctuary Appearance / Theme Mode */}
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Ionicons name={isDark ? "moon-outline" : "sunny-outline"} size={22} color={colors.primary} />
+                <View>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>Sanctuary Theme</Text>
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}>
+                    {isDark ? 'Cosmic Dark (Night Devotion)' : 'Sacred Dawn (Suryodaya)'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.themePillsContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderColor: colors.border }]}>
+                <TouchableOpacity
+                  style={[styles.themePill, isDark && { backgroundColor: colors.primary }]}
+                  onPress={() => setThemeMode('dark')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cosmic Dark theme"
+                >
+                  <Ionicons name="moon" size={13} color={isDark ? '#0C0A1A' : colors.textMuted} style={{ marginRight: 3 }} />
+                  <Text style={[styles.themePillText, { color: isDark ? '#0C0A1A' : colors.textMuted }]}>Dark</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.themePill, !isDark && { backgroundColor: colors.primary }]}
+                  onPress={() => setThemeMode('light')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Sacred Dawn theme"
+                >
+                  <Ionicons name="sunny" size={13} color={!isDark ? '#0C0A1A' : colors.textMuted} style={{ marginRight: 3 }} />
+                  <Text style={[styles.themePillText, { color: !isDark ? '#0C0A1A' : colors.textMuted }]}>Light</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
             {/* Daily Reminder */}
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Ionicons name="alarm-outline" size={22} color={Colors.primary} />
-                <Text style={styles.settingLabel}>Daily Brahma Muhurta Reminder</Text>
+                <Ionicons name="alarm-outline" size={22} color={colors.primary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Daily Brahma Muhurta Reminder</Text>
               </View>
               <Switch
                 value={dailyReminder}
@@ -479,6 +517,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: Colors.secondary,
+  },
+  themePillsContainer: {
+    flexDirection: 'row',
+    borderRadius: Radius.full,
+    padding: 3,
+    borderWidth: 1,
+  },
+  themePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+  },
+  themePillText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   modalBackdrop: {
     flex: 1,

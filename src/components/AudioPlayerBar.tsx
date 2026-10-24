@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Radius, Spacing, Typography } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface AudioPlayerBarProps {
   title: string;
@@ -25,6 +26,8 @@ export function AudioPlayerBar({
   isLooping = false,
   onToggleLoop,
 }: AudioPlayerBarProps) {
+  const { isDark, colors } = useTheme();
+
   const formatTime = (millis: number) => {
     const totalSec = Math.floor(millis / 1000);
     const m = Math.floor(totalSec / 60);
@@ -36,23 +39,30 @@ export function AudioPlayerBar({
 
   return (
     <View style={styles.floatingContainer}>
-      <View style={styles.card}>
+      <View style={[
+        styles.card,
+        {
+          backgroundColor: isDark ? 'rgba(22, 19, 43, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+          borderColor: colors.borderGlow,
+          shadowColor: colors.primary,
+        }
+      ]}>
         {/* Progress Track at top edge of player */}
-        <View style={styles.progressBarTrack}>
-          <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+        <View style={[styles.progressBarTrack, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)' }]}>
+          <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.primary }]} />
         </View>
 
         <View style={styles.contentRow}>
           {/* Track Info */}
           <View style={styles.infoCol}>
             <Text
-              style={styles.titleText}
+              style={[styles.titleText, { color: colors.text }]}
               numberOfLines={1}
               maxFontSizeMultiplier={1.3}
             >
               {title}
             </Text>
-            <Text style={styles.timeText}>
+            <Text style={[styles.timeText, { color: colors.textSecondary }]}>
               {formatTime(positionMillis)} / {formatTime(durationMillis)}
             </Text>
           </View>
@@ -68,20 +78,20 @@ export function AudioPlayerBar({
                 accessibilityLabel="Loop chant audio"
               >
                 <Ionicons
-                  name={isLooping ? 'repeat' : 'repeat-outline'}
+                  name="repeat"
                   size={20}
-                  color={isLooping ? Colors.primary : Colors.textMuted}
+                  color={isLooping ? colors.primary : colors.textMuted}
                 />
               </TouchableOpacity>
             ) : null}
 
-            {/* Play/Pause Button */}
+            {/* Main Play/Pause Button */}
             <TouchableOpacity
               onPress={onTogglePlay}
-              style={styles.playButton}
-              activeOpacity={0.8}
+              style={[styles.playButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+              accessibilityLabel={isPlaying ? 'Pause chant' : 'Play chant'}
             >
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
@@ -104,12 +114,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   card: {
-    backgroundColor: 'rgba(22, 19, 43, 0.94)',
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: Colors.borderGlow,
     overflow: 'hidden',
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
@@ -117,12 +124,10 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     width: '100%',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
   },
   contentRow: {
     flexDirection: 'row',
@@ -139,18 +144,16 @@ const styles = StyleSheet.create({
     fontFamily: Typography.families.heading,
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.text,
   },
   timeText: {
+    fontFamily: Typography.families.body,
     fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary,
     marginTop: 2,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   auxButton: {
     width: 36,
@@ -162,12 +165,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 4,
   },

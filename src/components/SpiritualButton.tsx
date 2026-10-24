@@ -10,7 +10,8 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Radius, Spacing, Typography } from '../constants/theme';
+import { Radius, Spacing, Typography } from '../constants/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 export type ButtonVariant = 'primary' | 'glass' | 'destructive' | 'secondary';
 
@@ -37,15 +38,25 @@ export function SpiritualButton({
   textStyle,
   fullWidth = true,
 }: SpiritualButtonProps) {
+  const { isDark, colors } = useTheme();
+
   const isPrimary = variant === 'primary';
   const isGlass = variant === 'glass';
   const isDestructive = variant === 'destructive';
   const isSecondary = variant === 'secondary';
 
+  const dynamicGlassStyle: ViewStyle | null = isGlass
+    ? {
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+        borderColor: colors.border,
+      }
+    : null;
+
   const containerStyle = [
     styles.baseButton,
     fullWidth && styles.fullWidth,
     isGlass && styles.glassButton,
+    dynamicGlassStyle,
     isDestructive && styles.destructiveButton,
     isSecondary && styles.secondaryButton,
     disabled && styles.disabledButton,
@@ -57,7 +68,7 @@ export function SpiritualButton({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={isPrimary ? '#0C0A1A' : Colors.text}
+          color={isPrimary ? '#0C0A1A' : colors.text}
           style={styles.spinner}
         />
       ) : (
@@ -67,9 +78,9 @@ export function SpiritualButton({
             style={[
               styles.baseText,
               isPrimary && styles.primaryText,
-              isGlass && styles.glassText,
+              isGlass && [styles.glassText, { color: colors.text }],
               isDestructive && styles.destructiveText,
-              isSecondary && styles.secondaryText,
+              isSecondary && [styles.secondaryText, { color: isDark ? '#A29BFE' : '#5E48C8' }],
               disabled && styles.disabledText,
               textStyle,
             ]}
@@ -91,7 +102,7 @@ export function SpiritualButton({
         style={[containerStyle, { paddingHorizontal: 0, paddingVertical: 0 }]}
       >
         <LinearGradient
-          colors={[Colors.primary, Colors.secondary]}
+          colors={[colors.primary, colors.secondary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradientContainer}
@@ -136,9 +147,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.standard,
   },
   glassButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   secondaryButton: {
     backgroundColor: 'rgba(108, 92, 231, 0.15)',
@@ -176,15 +185,15 @@ const styles = StyleSheet.create({
     color: '#0C0A1A',
   },
   glassText: {
-    color: Colors.text,
+    fontWeight: '600',
   },
   secondaryText: {
-    color: '#A29BFE',
+    fontWeight: '600',
   },
   destructiveText: {
-    color: Colors.error,
+    color: '#FF3B30',
   },
   disabledText: {
-    color: Colors.textMuted,
+    color: '#716D8E',
   },
 });

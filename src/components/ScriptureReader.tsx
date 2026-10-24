@@ -16,6 +16,7 @@ import { GlassHeader } from './GlassHeader';
 import { AudioPlayerBar } from './AudioPlayerBar';
 import { GlassCard } from './GlassCard';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { safeSetAudioMode, safeCreateSound } from '../utils/audioPlayer';
 
 interface ScriptureReaderProps {
@@ -45,6 +46,7 @@ export function ScriptureReader({
 }: ScriptureReaderProps) {
   const insets = useSafeAreaInsets();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
+  const { isDark, colors } = useTheme();
   const isFav = checkFavorite(id);
 
   // View Mode Tabs
@@ -272,6 +274,7 @@ export function ScriptureReader({
             <Text
               style={[
                 styles.verseText,
+                { color: colors.text },
                 isDevanagari && styles.devaVerseText,
                 { fontSize, lineHeight: isDevanagari ? fontSize * 1.6 : fontSize * 1.5 },
               ]}
@@ -396,13 +399,11 @@ const styles = StyleSheet.create({
   },
   verseText: {
     fontFamily: Typography.families.body,
-    color: Colors.text,
     textAlign: 'center',
     letterSpacing: 0.3,
   },
   devaVerseText: {
     fontFamily: Typography.families.devanagari,
-    color: '#FFFFFF',
   },
   playerDock: {
     position: 'absolute',

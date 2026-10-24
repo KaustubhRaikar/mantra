@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '../constants/theme';
 import { GlassCard } from './GlassCard';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface JapaOrbProps {
   count: number;
@@ -33,6 +34,7 @@ export function JapaOrb({
   onReset,
   onSelectGoal,
 }: JapaOrbProps) {
+  const { isDark, colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -112,9 +114,12 @@ export function JapaOrb({
               end={{ x: 1, y: 1 }}
               style={styles.orbGradient}
             >
-              <View style={styles.orbInnerGlass}>
+              <View style={[
+                styles.orbInnerGlass,
+                { backgroundColor: isDark ? 'rgba(22, 19, 43, 0.65)' : 'rgba(255, 255, 255, 0.88)' }
+              ]}>
                 <Text style={styles.orbOmSymbol}>ॐ</Text>
-                <Text style={styles.orbCountText}>{count}</Text>
+                <Text style={[styles.orbCountText, { color: colors.text }]}>{count}</Text>
                 <Text style={styles.orbGoalText}>/ {goal}</Text>
                 <View style={styles.tapPrompt}>
                   <Text style={styles.tapPromptText}>TAP JAAP</Text>

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Radius, Spacing, Typography } from '../constants/theme';
 import { GlassCard } from './GlassCard';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ScriptureCardProps {
   title: string;
@@ -25,6 +26,7 @@ export function ScriptureCard({
   onToggleFavorite,
   showPlayIcon = true,
 }: ScriptureCardProps) {
+  const { colors } = useTheme();
   const displayCategory = category || god || 'Vedic';
 
   return (
@@ -41,7 +43,7 @@ export function ScriptureCard({
         ) : null}
 
         <Text
-          style={styles.titleText}
+          style={[styles.titleText, { color: colors.text }]}
           numberOfLines={1}
           maxFontSizeMultiplier={1.3}
         >
