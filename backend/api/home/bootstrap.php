@@ -91,7 +91,7 @@ try {
     }
 
     // 7. Pooja Vidhis
-    $stmtPooja = $db->query("SELECT * FROM pooja_vidhis ORDER BY id ASC");
+    $stmtPooja = $db->query("SELECT * FROM pooja_vidhi ORDER BY id ASC");
     if ($stmtPooja) {
         $payload["pooja_vidhis"] = $stmtPooja->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
@@ -103,7 +103,7 @@ try {
     }
 
     // 9. Vrat Kathas
-    $stmtVrat = $db->query("SELECT * FROM vrat_kathas ORDER BY id ASC");
+    $stmtVrat = $db->query("SELECT * FROM vrat_katha ORDER BY id ASC");
     if ($stmtVrat) {
         $payload["vrat_kathas"] = $stmtVrat->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
