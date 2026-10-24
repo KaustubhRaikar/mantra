@@ -8,16 +8,13 @@ if ($key !== 'sacred_root_check_2026') {
     exit();
 }
 
-// In web/backend/api/auth/, __DIR__ is .../public_html/web/backend/api/auth
-// So dirname(__DIR__, 4) is .../public_html!
 $publicHtml = dirname(__DIR__, 4);
 
-$files = scandir($publicHtml);
+$indexPhpContent = file_exists($publicHtml . '/index.php') ? file_get_contents($publicHtml . '/index.php') : null;
+$htaccessContent = file_exists($publicHtml . '/.htaccess') ? file_get_contents($publicHtml . '/.htaccess') : null;
 
 echo json_encode([
-    "public_html" => $publicHtml,
-    "files" => $files,
-    "has_index" => file_exists($publicHtml . '/index.html'),
-    "has_htaccess" => file_exists($publicHtml . '/.htaccess'),
-    "index_preview" => file_exists($publicHtml . '/index.html') ? substr(file_get_contents($publicHtml . '/index.html'), 0, 300) : null
+    "index_php_length" => strlen($indexPhpContent ?? ''),
+    "index_php_sample" => substr($indexPhpContent ?? '', 0, 800),
+    "htaccess_sample" => substr($htaccessContent ?? '', 0, 800)
 ], JSON_PRETTY_PRINT);
