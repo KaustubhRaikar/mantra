@@ -142,8 +142,8 @@
         </div>
 
         <h2>4. Data Retention, Storage & Security</h2>
-        <p>All sensitive credentials (session tokens and device identifiers) are stored in encrypted client-side storage backed by the hardware <strong>Android KeyStore</strong> via <code>expo-secure-store</code>. Devotional history is maintained locally in an embedded SQLite database and synchronized via TLS 1.3 encrypted HTTPS requests to our secure servers.</p>
-        <p>OTP verification codes are hashed using <code>HMAC-SHA256</code> with a server-side pepper secret and expire automatically after 10 minutes.</p>
+        <p>All sensitive credentials (session tokens and device identifiers) are protected using hardware-backed cryptographic encryption. Devotional sadhana history is stored safely on your device and synchronized via secure TLS 1.3 encrypted connections to our protected cloud infrastructure.</p>
+        <p>One-time verification codes are cryptographically hashed and automatically expire after a strict short-lived window.</p>
 
         <h2>5. Your Rights: Export & Permanent Account Deletion</h2>
         <p>Under the DPDP Act and Google Play guidelines, you hold absolute authority over your personal records:</p>

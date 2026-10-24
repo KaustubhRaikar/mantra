@@ -230,5 +230,27 @@ class DatabaseManager {
             total_clicked INT NOT NULL DEFAULT 0,
             created_at {$nowDef}
         );");
+
+        // 15. Admin Users Table
+        $db->exec("CREATE TABLE IF NOT EXISTS admin_users (
+            id {$autoInc},
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            full_name VARCHAR(150) NOT NULL DEFAULT 'Administrator',
+            role VARCHAR(50) NOT NULL DEFAULT 'SuperAdmin',
+            status VARCHAR(30) NOT NULL DEFAULT 'active',
+            last_login_at DATETIME NULL,
+            created_at {$nowDef}
+        );");
+
+        // 16. Admin OTPs Table
+        $db->exec("CREATE TABLE IF NOT EXISTS admin_otps (
+            id {$autoInc},
+            email VARCHAR(255) NOT NULL,
+            otp_hash VARCHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            attempts INT NOT NULL DEFAULT 0,
+            created_at {$nowDef}
+        );");
     }
 }

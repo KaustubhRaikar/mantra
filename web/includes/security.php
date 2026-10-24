@@ -167,6 +167,75 @@ class WebSecurity {
     }
 
     /**
+     * Sliding Window Rate Limiter
+     * Tracks discrete request timestamps within a moving window.
+     * Prevents burst exploits and boundary hopping.
+     *
+     * @param string $action Rate limit scope (e.g. 'admin_password', 'admin_otp')
+     * @param string $identifier Unique client identifier (IP address, email, or combination)
+     * @param int $maxAttempts Allowed attempts within the moving window
+     * @param int $windowSeconds Moving window duration in seconds
+     * @return array [ 'allowed' => bool, 'remaining' => int, 'retry_after' => int, 'total_in_window' => int ]
+     */
+    public static function checkSlidingWindowRateLimit(string $action, string $identifier, int $maxAttempts, int $windowSeconds): array {
+        $rateKey = "sw_{$action}_" . hash('sha256', $identifier);
+        
+        $tempDir = sys_get_temp_dir() . '/mantra_security';
+        if (!is_dir($tempDir)) {
+            @mkdir($tempDir, 0750, true);
+        }
+
+        $filePath = $tempDir . '/' . $rateKey . '.json';
+        $now = time();
+        $timestamps = [];
+
+        if (file_exists($filePath)) {
+            $content = @file_get_contents($filePath);
+            $parsed = json_decode($content, true);
+            if (is_array($parsed)) {
+                // Filter out timestamps outside the active sliding window
+                $timestamps = array_values(array_filter($parsed, function($ts) use ($now, $windowSeconds) {
+                    return is_int($ts) && ($now - $ts) < $windowSeconds;
+                }));
+            }
+        }
+
+        if (count($timestamps) >= $maxAttempts) {
+            $oldestTimestamp = min($timestamps);
+            $retryAfter = $windowSeconds - ($now - $oldestTimestamp);
+            return [
+                'allowed'         => false,
+                'remaining'       => 0,
+                'retry_after'     => max(1, $retryAfter),
+                'total_in_window' => count($timestamps)
+            ];
+        }
+
+        // Record current attempt timestamp
+        $timestamps[] = $now;
+        @file_put_contents($filePath, json_encode($timestamps), LOCK_EX);
+
+        return [
+            'allowed'         => true,
+            'remaining'       => max(0, $maxAttempts - count($timestamps)),
+            'retry_after'     => 0,
+            'total_in_window' => count($timestamps)
+        ];
+    }
+
+    /**
+     * Reset sliding window rate limit for an identifier
+     */
+    public static function resetSlidingWindowRateLimit(string $action, string $identifier): void {
+        $rateKey = "sw_{$action}_" . hash('sha256', $identifier);
+        $tempDir = sys_get_temp_dir() . '/mantra_security';
+        $filePath = $tempDir . '/' . $rateKey . '.json';
+        if (file_exists($filePath)) {
+            @unlink($filePath);
+        }
+    }
+
+    /**
      * Reset rate limit upon successful action
      */
     public static function resetRateLimit(string $action): void {
@@ -179,3 +248,4 @@ class WebSecurity {
         }
     }
 }
+
