@@ -4,6 +4,29 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.3.0] - 2026-10-24
+
+### 🪔 Pooja Vidhi Interactive Step Cards & Samagri Architecture
+- **Parsed Structured Scripture Payloads (`src/utils/scriptureParser.ts`):** Resolved raw JSON string dumps (`[{"step":1,"name":"..."}]`) by decoding backend JSON arrays for `steps`, `required_items`, `katha_chapters`, and metadata into strongly typed models (`ParsedPoojaStep[]`, `ParsedSamagriItem[]`, `ParsedVidhiMeta`).
+- **Interactive Step Cards (`src/components/ScriptureReader.tsx`):** Implemented dedicated step-by-step cards featuring:
+  - Step counter badges (`चरण १`, `चरण २`...) with saffron accent highlights.
+  - Sanskrit/Hindi ritual step titles and clear Devanagari instructional text.
+  - Individual step chant buttons for listening to specific ritual instructions.
+  - Devotional completion checkmarks allowing devotees to mark progress during rituals.
+- **Dedicated "पूजा सामग्री (Samagri)" View:** Replaced raw text with a structured preparation checklist featuring item names, quantities (`21 गांठें`, `1 कटोरी`), and interactive checkboxes.
+- **Ceremony Details & Significance Tab:** Organized ceremony duration, auspicious timing, day of the week, benefits, and scriptural precautions into formatted glassmorphic cards with sacred iconography.
+
+### 🎙️ Natural Human-Like TTS & Strict Audio Engine
+- **Fixed URL Vocalization Bug (`src/utils/audioPlayer.ts`):** Completely eradicated the bug where URL paths or file locations were passed to speech synthesis. Implemented `sanitizeDevotionalText()` to strictly discard URL schemes (`http://`, `https://`, `file://`), file extensions (`.mp3`, `.wav`), and filesystem paths.
+- **Enhanced Natural Neural Voice Discovery:** Implemented dynamic device voice detection via `Speech.getAvailableVoicesAsync()`, automatically prioritizing Google Neural2/WaveNet and Apple Enhanced Siri voices for natural, reverent Devanagari pronunciation.
+- **Tap-to-Chant Verses & Steps:** Devotees can now tap the "मंत्र पाठ सुनें (Listen)" button or individual step audio icons to hear verses recited naturally.
+- **Japa Loop & Repetition Presets (`src/components/AudioPlayerBar.tsx`):**
+  - Integrated top-docked repetition selector supporting sacred Vedic counts: `1x` (Single), `11x` (Auspicious), `21x` (Devotional), `108x` (Full Mala Japa), and `∞` (Continuous Loop).
+  - Real-time cycle tracking (`जप चक्र: 1 / 108`) with automatic smooth looping between recitations.
+- **Graceful Audio Availability Handling:** When no audio recording is uploaded, the player cleanly displays "ध्वनि रिकॉर्डिंग जल्द उपलब्ध होगी (Audio coming soon)" with disabled playback controls, completely preventing erroneous speech synthesis.
+
+---
+
 ## 🚀 [2.2.0] - 2026-10-24
 
 ### 🌐 Public Website Overhaul & Zero-Architecture Privacy

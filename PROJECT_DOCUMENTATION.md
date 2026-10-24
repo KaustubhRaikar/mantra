@@ -113,16 +113,20 @@ d:\MobileApps\mantra/
 ### 3.1 Content Delivery & Multilingual Text System
 * **Devanagari Font System:** Uses `@expo-google-fonts/tiro-devanagari-hindi` to ensure high-fidelity rendering of Sanskrit Devanagari ligatures.
 * **Transliteration & Translations:** Supports side-by-side script viewing with English transliteration, English translation, Hindi translation, and regional language translations.
-* **Consolidated Scripture Reader:** All 7 detail categories use `<ScriptureReader />` with adjustable font size scaling (`A-`/`A+`) and segmented views.
+* **Consolidated Scripture Reader (`ScriptureReader.tsx`):** All 7 detail categories use `<ScriptureReader />` with adjustable font size scaling (`A-`/`A+`) and segmented views.
+* **Pooja Vidhi Step Cards & Samagri Architecture:** Dedicated ritual viewer converting backend JSON step arrays into interactive, numbered step cards (`चरण १, २...`) with progress tracking checkmarks, individual step chant buttons, a dedicated "पूजा सामग्री (Samagri)" preparation checklist with item quantities, and ceremony details (Duration, Best Time, Day, Benefits, Precautions).
 
 ### 3.2 Mantra Jaap / Japa Mala Counter Engine
 * **Tactile Japa Orb:** Interactive 220dp Golden Orb (`JapaOrb.tsx`) with dynamic goal targets ($21, 54, 108, 1008$) and radial pulsing animations.
 * **Tactile Haptic Feedback:** Light haptic vibration on single taps; notification feedback sequence upon completing a mala round.
 * **Persistent Daily Log System:** Taps are logged to SQLite (`mantra_devotion.db`) date-wise (`YYYY-MM-DD`), maintaining a 90-day rolling history of total chants and completed malas.
 
-### 3.3 Audio Engine & Voice Synthesis Fallback
-* **Audio Player Component:** Built using `expo-audio` with safe audio mode configuration.
-* **Devotional Speech Voice Fallback:** When custom studio audio is absent, the app synthesizes reverent Devanagari pronunciation locally using `expo-speech` configured with deep devotional pitch ($0.92$) and slower chanting cadence ($0.82$).
+### 3.3 Audio Engine, Neural Voice Synthesis & Japa Looping
+* **Audio Player Component:** Built using `expo-audio` with safe audio mode configuration and full URL resolution for Hostinger server media uploads.
+* **Devotional Neural Speech Synthesis:** When custom studio audio is absent or when devotees tap to chant a verse or step, the app synthesizes reverent Devanagari pronunciation locally using `expo-speech` with automatic device neural voice selection (prioritizing Google WaveNet / Neural2 and Apple Enhanced Siri voices) tuned with deep devotional pitch ($0.95$) and meditative chanting cadence ($0.80$).
+* **Strict Vocalization Sanitization:** Enforces strict regex validation discarding any URL schemes (`http://`, `https://`, `file://`), file extensions (`.mp3`, `.wav`), and filesystem paths, guaranteeing that audio locations are never spoken aloud.
+* **Japa Repetition & Loop Selector:** Top-docked presets (`1x`, `11x`, `21x`, `108x`, `∞`) with live cycle counters (`जप चक्र: 1 / 108`) for tracking completed repetitions during daily prayer.
+* **Coming-Soon Availability Indicator:** Gracefully displays "ध्वनि रिकॉर्डिंग जल्द उपलब्ध होगी" with disabled controls when recordings are not yet available on the server.
 
 ### 3.4 2-Step OTP Auth & Security Architecture
 * **Hardware Device ID Resolution:** Native Android ID (`Application.getAndroidId()`) or iOS Vendor ID (`Application.getIosIdForVendorAsync()`), with cryptographically secure fallback (`expo-crypto` UUID).

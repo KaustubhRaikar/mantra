@@ -23,6 +23,7 @@ import { useFavorites } from '../../src/contexts/FavoritesContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { storage } from '../../src/services/storage';
 import { api } from '../../src/services/api';
+import { safeCreateSound, safeSetAudioMode } from '../../src/utils/audioPlayer';
 
 const { width } = Dimensions.get('window');
 const CARD_W = width * 0.72;
@@ -161,10 +162,14 @@ export default function HomeScreen() {
           setIsPlaying(true);
         }
       } else {
-        const { safeCreateSound, safeSetAudioMode } = require('../../src/utils/audioPlayer');
         await safeSetAudioMode();
         setIsPlaying(true);
-        const { sound } = await safeCreateSound(target.audio_url || target, (status: any) => {
+        const payload = {
+          audio_url: target.audio_url,
+          sanskrit: target.sanskrit || target.sanskrit_title,
+          title: target.title,
+        };
+        const { sound } = await safeCreateSound(payload, (status: any) => {
           if (status.isLoaded) {
             setIsPlaying(status.isPlaying);
             if (status.didJustFinish) {

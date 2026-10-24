@@ -17,7 +17,17 @@ import { AudioPlayerBar } from './AudioPlayerBar';
 import { GlassCard } from './GlassCard';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { safeSetAudioMode, safeCreateSound } from '../utils/audioPlayer';
+import {
+  safeSetAudioMode,
+  safeCreateSound,
+  playWithExpoSpeech,
+  resolveAudioUrl,
+} from '../utils/audioPlayer';
+import {
+  ParsedPoojaStep,
+  ParsedSamagriItem,
+  ParsedVidhiMeta,
+} from '../utils/scriptureParser';
 
 interface ScriptureReaderProps {
   id: string;
@@ -30,6 +40,9 @@ interface ScriptureReaderProps {
   audioUrl?: string;
   categoryPath: string;
   loading?: boolean;
+  poojaSteps?: ParsedPoojaStep[];
+  samagriItems?: ParsedSamagriItem[];
+  vidhiMeta?: ParsedVidhiMeta;
 }
 
 export function ScriptureReader({
@@ -43,37 +56,71 @@ export function ScriptureReader({
   audioUrl,
   categoryPath,
   loading = false,
+  poojaSteps,
+  samagriItems,
+  vidhiMeta,
 }: ScriptureReaderProps) {
   const insets = useSafeAreaInsets();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
   const { isDark, colors } = useTheme();
   const isFav = checkFavorite(id);
 
-  // View Mode Tabs
-  type TabType = 'sanskrit' | 'hindi' | 'meaning' | 'translit';
-  const availableTabs: { key: TabType; label: string }[] = [];
-  if (sanskritText) availableTabs.push({ key: 'sanskrit', label: 'Sanskrit' });
-  if (hindiText) availableTabs.push({ key: 'hindi', label: 'Hindi' });
-  if (englishMeaning) availableTabs.push({ key: 'meaning', label: 'Meaning' });
-  if (transliteration) availableTabs.push({ key: 'translit', label: 'Translit' });
+  const isPoojaVidhi =
+    categoryPath === 'pooja_vidhi' || (poojaSteps && poojaSteps.length > 0);
 
-  // Default to first available tab
+  // Tab Definitions
+  type TabType = 'sanskrit' | 'hindi' | 'meaning' | 'translit' | 'steps' | 'samagri' | 'details';
+  const availableTabs: { key: TabType; label: string }[] = [];
+
+  if (isPoojaVidhi) {
+    if (poojaSteps && poojaSteps.length > 0) {
+      availableTabs.push({ key: 'steps', label: `विधि चरण (${poojaSteps.length})` });
+    }
+    if (samagriItems && samagriItems.length > 0) {
+      availableTabs.push({ key: 'samagri', label: `पूजा सामग्री (${samagriItems.length})` });
+    }
+    availableTabs.push({ key: 'details', label: 'विवरण व महत्व' });
+  } else {
+    if (sanskritText) availableTabs.push({ key: 'sanskrit', label: 'Sanskrit' });
+    if (hindiText) availableTabs.push({ key: 'hindi', label: 'Hindi' });
+    if (englishMeaning) availableTabs.push({ key: 'meaning', label: 'Meaning' });
+    if (transliteration) availableTabs.push({ key: 'translit', label: 'Translit' });
+  }
+
+  // Active Tab
   const [activeTab, setActiveTab] = useState<TabType>(
-    availableTabs.length > 0 ? availableTabs[0].key : 'sanskrit'
+    availableTabs.length > 0 ? availableTabs[0].key : isPoojaVidhi ? 'steps' : 'sanskrit'
   );
+
+  // Checklist tracking for devotee during Pooja Vidhi
+  const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({});
+  const toggleStepCompleted = (stepNum: number) => {
+    setCompletedSteps((prev) => ({ ...prev, [stepNum]: !prev[stepNum] }));
+  };
+
+  const [collectedSamagri, setCollectedSamagri] = useState<Record<number, boolean>>({});
+  const toggleSamagriCollected = (index: number) => {
+    setCollectedSamagri((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
   // Accessibility Font Scaling
   const [fontSize, setFontSize] = useState<number>(18);
   const zoomIn = () => setFontSize((s) => Math.min(28, s + 2));
   const zoomOut = () => setFontSize((s) => Math.max(14, s - 2));
 
-  // Audio Playback
+  // Audio Playback & Repeat Logic
   const soundRef = useRef<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [positionMillis, setPositionMillis] = useState<number>(0);
   const [durationMillis, setDurationMillis] = useState<number>(108000);
-  const [isLooping, setIsLooping] = useState(false);
+  const [repeatCount, setRepeatCount] = useState<number>(1);
+  const [currentCycle, setCurrentCycle] = useState<number>(1);
+  const [targetCycles, setTargetCycles] = useState<number>(1);
+
+  const hasRemoteAudio = Boolean(resolveAudioUrl(audioUrl));
+  const hasTextToChant = Boolean(sanskritText || title);
+  const isAudioAvailable = hasRemoteAudio || hasTextToChant;
 
   useEffect(() => {
     safeSetAudioMode();
@@ -89,6 +136,13 @@ export function ScriptureReader({
       setPositionMillis(status.positionMillis);
       setDurationMillis(status.durationMillis || 108000);
       setIsPlaying(status.isPlaying);
+      if (typeof status.currentCycle === 'number') {
+        setCurrentCycle(status.currentCycle);
+      }
+      if (typeof status.targetCycles === 'number') {
+        setTargetCycles(status.targetCycles);
+      }
+
       const currentProgress =
         status.durationMillis && status.durationMillis > 0
           ? status.positionMillis / status.durationMillis
@@ -111,14 +165,15 @@ export function ScriptureReader({
           await soundRef.current.playAsync();
         }
       } else {
-        const targetUrl =
-          audioUrl ||
-          'https://d237190n90f4i9.cloudfront.net/daily_mantra.mp3';
-        const { sound } = await safeCreateSound(targetUrl, onPlaybackStatusUpdate);
+        const payload = {
+          audio_url: audioUrl,
+          sanskrit: sanskritText,
+          title,
+        };
+        const { sound } = await safeCreateSound(payload, onPlaybackStatusUpdate, {
+          repeatCount,
+        });
         soundRef.current = sound;
-        if (isLooping) {
-          await sound.setIsLoopingAsync(true).catch(() => {});
-        }
         await sound.playAsync();
       }
     } catch (e) {
@@ -127,11 +182,31 @@ export function ScriptureReader({
     }
   };
 
-  const toggleLoop = async () => {
-    const next = !isLooping;
-    setIsLooping(next);
+  const handleSelectRepeatCount = (count: number) => {
+    setRepeatCount(count);
     if (soundRef.current) {
-      await soundRef.current.setIsLoopingAsync(next).catch(() => {});
+      // Re-trigger playback with new repeat count if playing
+      soundRef.current.unloadAsync().catch(() => {});
+      soundRef.current = null;
+      setIsPlaying(false);
+      setProgress(0);
+      setPositionMillis(0);
+    }
+  };
+
+  // Chant specific verse or step with natural human-like voice
+  const chantText = async (textToChant: string, stepTitle?: string) => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync().catch(() => {});
+        soundRef.current = null;
+      }
+      setIsPlaying(true);
+      const sound = playWithExpoSpeech(textToChant, onPlaybackStatusUpdate, stepTitle, repeatCount);
+      soundRef.current = sound;
+    } catch (e) {
+      console.warn('Failed chant speech:', e);
+      setIsPlaying(false);
     }
   };
 
@@ -209,14 +284,16 @@ export function ScriptureReader({
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Fetching sacred verses...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            पावन श्लोक लोड हो रहे हैं...
+          </Text>
         </View>
       ) : (
         <ScrollView
           style={styles.scrollArea}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: insets.bottom + 110 },
+            { paddingBottom: insets.bottom + 120 },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -233,10 +310,14 @@ export function ScriptureReader({
                       styles.tabChip,
                       {
                         backgroundColor: isActive
-                          ? (isDark ? 'rgba(255, 153, 51, 0.2)' : 'rgba(230, 126, 34, 0.15)')
-                          : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'),
+                          ? isDark
+                            ? 'rgba(255, 153, 51, 0.2)'
+                            : 'rgba(230, 126, 34, 0.15)'
+                          : isDark
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'rgba(0, 0, 0, 0.04)',
                         borderColor: isActive ? colors.primary : colors.border,
-                      }
+                      },
                     ]}
                     onPress={() => setActiveTab(tab.key)}
                     activeOpacity={0.7}
@@ -256,13 +337,17 @@ export function ScriptureReader({
             </View>
 
             {/* Accessibility Font Zoom Controls */}
-            <View style={[
-              styles.zoomControls,
-              {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-                borderColor: colors.border,
-              }
-            ]}>
+            <View
+              style={[
+                styles.zoomControls,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(0, 0, 0, 0.04)',
+                  borderColor: colors.border,
+                },
+              ]}
+            >
               <TouchableOpacity
                 onPress={zoomOut}
                 style={styles.zoomButton}
@@ -270,7 +355,14 @@ export function ScriptureReader({
                 accessibilityRole="button"
                 accessibilityLabel="Decrease font size"
               >
-                <Text style={[styles.zoomText, { color: isDark ? colors.secondary : colors.primary }]}>A-</Text>
+                <Text
+                  style={[
+                    styles.zoomText,
+                    { color: isDark ? colors.secondary : colors.primary },
+                  ]}
+                >
+                  A-
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={zoomIn}
@@ -279,26 +371,366 @@ export function ScriptureReader({
                 accessibilityRole="button"
                 accessibilityLabel="Increase font size"
               >
-                <Text style={[styles.zoomText, { color: isDark ? colors.secondary : colors.primary }]}>A+</Text>
+                <Text
+                  style={[
+                    styles.zoomText,
+                    { color: isDark ? colors.secondary : colors.primary },
+                  ]}
+                >
+                  A+
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Verses Container */}
-          <GlassCard style={styles.versesCard} glow>
-            <Text
-              style={[
-                styles.verseText,
-                { color: isDevanagari ? (isDark ? '#FFFFFF' : '#171426') : (isDark ? '#E5E4EE' : '#2D283E') },
-                isDevanagari && styles.devaVerseText,
-                { fontSize, lineHeight: isDevanagari ? fontSize * 1.6 : fontSize * 1.5 },
-              ]}
-              maxFontSizeMultiplier={1.3}
-              selectable
-            >
-              {getCurrentText()}
-            </Text>
-          </GlassCard>
+          {/* POOJA VIDHI: STEP-BY-STEP CARDS VIEW */}
+          {isPoojaVidhi && activeTab === 'steps' ? (
+            <View style={styles.stepsContainer}>
+              {poojaSteps && poojaSteps.length > 0 ? (
+                poojaSteps.map((s) => {
+                  const isDone = completedSteps[s.step] ?? false;
+                  return (
+                    <GlassCard
+                      key={s.step}
+                      style={[
+                        styles.stepCard,
+                        isDone && {
+                          borderColor: 'rgba(46, 204, 113, 0.4)',
+                          backgroundColor: isDark
+                            ? 'rgba(46, 204, 113, 0.05)'
+                            : 'rgba(46, 204, 113, 0.03)',
+                        },
+                      ]}
+                    >
+                      <View style={styles.stepHeaderRow}>
+                        <View style={styles.stepBadgeCol}>
+                          <View
+                            style={[
+                              styles.stepBadge,
+                              { backgroundColor: colors.primary },
+                            ]}
+                          >
+                            <Text style={styles.stepBadgeText}>चरण {s.step}</Text>
+                          </View>
+                          <Text
+                            style={[
+                              styles.stepTitleText,
+                              { color: colors.text, fontSize: fontSize + 1 },
+                            ]}
+                          >
+                            {s.name}
+                          </Text>
+                        </View>
+
+                        <View style={styles.stepActionIcons}>
+                          {/* Tap-to-chant step */}
+                          <TouchableOpacity
+                            onPress={() => chantText(`${s.name}. ${s.description}`, s.name)}
+                            style={styles.stepListenBtn}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Chant step ${s.step}`}
+                          >
+                            <Ionicons
+                              name="volume-medium-outline"
+                              size={20}
+                              color={colors.primary}
+                            />
+                          </TouchableOpacity>
+
+                          {/* Completion toggle checkmark */}
+                          <TouchableOpacity
+                            onPress={() => toggleStepCompleted(s.step)}
+                            style={styles.stepCheckBtn}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              isDone ? 'Mark incomplete' : 'Mark complete'
+                            }
+                          >
+                            <Ionicons
+                              name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
+                              size={22}
+                              color={isDone ? '#2ECC71' : colors.textMuted}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <Text
+                        style={[
+                          styles.stepDescText,
+                          {
+                            color: isDark ? '#E5E4EE' : '#2D283E',
+                            fontSize,
+                            lineHeight: fontSize * 1.55,
+                          },
+                          isDone && { opacity: 0.75 },
+                        ]}
+                        selectable
+                      >
+                        {s.description}
+                      </Text>
+                    </GlassCard>
+                  );
+                })
+              ) : (
+                <GlassCard style={styles.emptyCard}>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    {sanskritText || 'विधि चरण उपलब्ध नहीं हैं।'}
+                  </Text>
+                </GlassCard>
+              )}
+            </View>
+          ) : null}
+
+          {/* POOJA VIDHI: REQUIRED SAMAGRI VIEW */}
+          {isPoojaVidhi && activeTab === 'samagri' ? (
+            <View style={styles.samagriContainer}>
+              <View style={styles.samagriHeader}>
+                <Ionicons
+                  name="basket-outline"
+                  size={20}
+                  color={colors.primary}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                  आवश्यक पूजा सामग्री (Required Samagri)
+                </Text>
+              </View>
+
+              {samagriItems && samagriItems.length > 0 ? (
+                samagriItems.map((item, idx) => {
+                  const isChecked = collectedSamagri[idx] ?? false;
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      onPress={() => toggleSamagriCollected(idx)}
+                      activeOpacity={0.8}
+                    >
+                      <GlassCard
+                        style={[
+                          styles.samagriItemCard,
+                          isChecked && {
+                            borderColor: 'rgba(46, 204, 113, 0.4)',
+                            backgroundColor: isDark
+                              ? 'rgba(46, 204, 113, 0.05)'
+                              : 'rgba(46, 204, 113, 0.03)',
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={isChecked ? 'checkbox' : 'square-outline'}
+                          size={22}
+                          color={isChecked ? '#2ECC71' : colors.primary}
+                          style={{ marginRight: 12 }}
+                        />
+                        <View style={styles.samagriInfoCol}>
+                          <Text
+                            style={[
+                              styles.samagriItemTitle,
+                              {
+                                color: colors.text,
+                                textDecorationLine: isChecked ? 'line-through' : 'none',
+                                opacity: isChecked ? 0.7 : 1,
+                              },
+                            ]}
+                          >
+                            {item.item}
+                          </Text>
+                        </View>
+                        {item.quantity ? (
+                          <View
+                            style={[
+                              styles.quantityBadge,
+                              {
+                                backgroundColor: isDark
+                                  ? 'rgba(255, 153, 51, 0.15)'
+                                  : 'rgba(230, 126, 34, 0.1)',
+                                borderColor: colors.borderGlow,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.quantityText,
+                                { color: colors.primary },
+                              ]}
+                            >
+                              {item.quantity}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </GlassCard>
+                    </TouchableOpacity>
+                  );
+                })
+              ) : (
+                <GlassCard style={styles.emptyCard}>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    {hindiText || 'सामग्री सूची उपलब्ध नहीं है।'}
+                  </Text>
+                </GlassCard>
+              )}
+            </View>
+          ) : null}
+
+          {/* POOJA VIDHI: DETAILS & SIGNIFICANCE VIEW */}
+          {isPoojaVidhi && activeTab === 'details' ? (
+            <View style={styles.detailsContainer}>
+              {/* Meta Grid: Duration, Best Time, Day */}
+              {vidhiMeta?.duration || vidhiMeta?.bestTime || vidhiMeta?.day ? (
+                <View style={styles.metaRow}>
+                  {vidhiMeta?.duration ? (
+                    <GlassCard style={styles.metaCard}>
+                      <Ionicons name="time-outline" size={20} color={colors.primary} />
+                      <Text style={[styles.metaCardLabel, { color: colors.textSecondary }]}>
+                        अवधि (Duration)
+                      </Text>
+                      <Text style={[styles.metaCardVal, { color: colors.text }]}>
+                        {vidhiMeta.duration}
+                      </Text>
+                    </GlassCard>
+                  ) : null}
+
+                  {vidhiMeta?.bestTime ? (
+                    <GlassCard style={styles.metaCard}>
+                      <Ionicons name="sunny-outline" size={20} color={colors.primary} />
+                      <Text style={[styles.metaCardLabel, { color: colors.textSecondary }]}>
+                        शुभ समय (Time)
+                      </Text>
+                      <Text style={[styles.metaCardVal, { color: colors.text }]}>
+                        {vidhiMeta.bestTime}
+                      </Text>
+                    </GlassCard>
+                  ) : null}
+
+                  {vidhiMeta?.day ? (
+                    <GlassCard style={styles.metaCard}>
+                      <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                      <Text style={[styles.metaCardLabel, { color: colors.textSecondary }]}>
+                        शुभ वार (Day)
+                      </Text>
+                      <Text style={[styles.metaCardVal, { color: colors.text }]}>
+                        {vidhiMeta.day}
+                      </Text>
+                    </GlassCard>
+                  ) : null}
+                </View>
+              ) : null}
+
+              {/* Significance */}
+              {vidhiMeta?.significance ? (
+                <GlassCard style={styles.detailSectionCard}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>
+                    ✨ महत्व (Significance)
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailSectionBody,
+                      { color: isDark ? '#E5E4EE' : '#2D283E', fontSize },
+                    ]}
+                    selectable
+                  >
+                    {vidhiMeta.significance}
+                  </Text>
+                </GlassCard>
+              ) : null}
+
+              {/* Benefits */}
+              {vidhiMeta?.benefits ? (
+                <GlassCard style={styles.detailSectionCard}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.primary }]}>
+                    🙏 पूजा के लाभ व फल (Benefits)
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailSectionBody,
+                      { color: isDark ? '#E5E4EE' : '#2D283E', fontSize },
+                    ]}
+                    selectable
+                  >
+                    {vidhiMeta.benefits}
+                  </Text>
+                </GlassCard>
+              ) : null}
+
+              {/* Precautions */}
+              {vidhiMeta?.precautions ? (
+                <GlassCard
+                  style={[
+                    styles.detailSectionCard,
+                    { borderColor: 'rgba(231, 76, 60, 0.4)' },
+                  ]}
+                >
+                  <Text style={[styles.detailSectionTitle, { color: '#E74C3C' }]}>
+                    ⚠️ सावधानियां (Precautions)
+                  </Text>
+                  <Text
+                    style={[
+                      styles.detailSectionBody,
+                      { color: isDark ? '#E5E4EE' : '#2D283E', fontSize },
+                    ]}
+                    selectable
+                  >
+                    {vidhiMeta.precautions}
+                  </Text>
+                </GlassCard>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* STANDARD VERSES VIEW (Mantras, Aartis, Chalisas, Stotras) */}
+          {!isPoojaVidhi ? (
+            <GlassCard style={styles.versesCard} glow>
+              <View style={styles.verseActionHeader}>
+                <TouchableOpacity
+                  onPress={() => chantText(getCurrentText(), title)}
+                  style={[
+                    styles.listenVerseBtn,
+                    {
+                      backgroundColor: isDark
+                        ? 'rgba(255, 153, 51, 0.15)'
+                        : 'rgba(230, 126, 34, 0.12)',
+                      borderColor: colors.borderGlow,
+                    },
+                  ]}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Chant this mantra"
+                >
+                  <Ionicons name="volume-high" size={16} color={colors.primary} />
+                  <Text style={[styles.listenVerseText, { color: colors.primary }]}>
+                    मंत्र पाठ सुनें (Listen)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text
+                style={[
+                  styles.verseText,
+                  {
+                    color: isDevanagari
+                      ? isDark
+                        ? '#FFFFFF'
+                        : '#171426'
+                      : isDark
+                      ? '#E5E4EE'
+                      : '#2D283E',
+                  },
+                  isDevanagari && styles.devaVerseText,
+                  {
+                    fontSize,
+                    lineHeight: isDevanagari ? fontSize * 1.65 : fontSize * 1.5,
+                  },
+                ]}
+                maxFontSizeMultiplier={1.3}
+                selectable
+              >
+                {getCurrentText()}
+              </Text>
+            </GlassCard>
+          ) : null}
         </ScrollView>
       )}
 
@@ -311,8 +743,11 @@ export function ScriptureReader({
           positionMillis={positionMillis}
           durationMillis={durationMillis}
           onTogglePlay={togglePlay}
-          isLooping={isLooping}
-          onToggleLoop={toggleLoop}
+          repeatCount={repeatCount}
+          onSelectRepeatCount={handleSelectRepeatCount}
+          currentCycle={currentCycle}
+          targetCycles={targetCycles}
+          isAvailable={isAudioAvailable}
         />
       </View>
     </View>
@@ -370,31 +805,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: Radius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  tabChipActive: {
-    backgroundColor: 'rgba(255, 153, 51, 0.2)',
-    borderColor: Colors.primary,
   },
   tabChipText: {
     fontSize: 12,
     fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  tabChipTextActive: {
-    color: Colors.primary,
-    fontWeight: '700',
   },
   zoomControls: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
     padding: 3,
   },
   zoomButton: {
@@ -406,11 +828,29 @@ const styles = StyleSheet.create({
   zoomText: {
     fontSize: 13,
     fontWeight: '800',
-    color: Colors.secondary,
   },
   versesCard: {
     padding: Spacing.large,
-    minHeight: 320,
+    minHeight: 280,
+  },
+  verseActionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: Spacing.standard,
+  },
+  listenVerseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  listenVerseText: {
+    fontFamily: Typography.families.body,
+    fontSize: 12,
+    fontWeight: '700',
   },
   verseText: {
     fontFamily: Typography.families.body,
@@ -419,6 +859,142 @@ const styles = StyleSheet.create({
   },
   devaVerseText: {
     fontFamily: Typography.families.devanagari,
+  },
+  stepsContainer: {
+    gap: 12,
+  },
+  stepCard: {
+    padding: Spacing.standard,
+    borderRadius: Radius.md,
+  },
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  stepBadgeCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  stepBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    marginBottom: 4,
+  },
+  stepBadgeText: {
+    fontFamily: Typography.families.body,
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0C0A1A',
+  },
+  stepTitleText: {
+    fontFamily: Typography.families.heading,
+    fontWeight: '700',
+  },
+  stepActionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stepListenBtn: {
+    padding: 4,
+  },
+  stepCheckBtn: {
+    padding: 4,
+  },
+  stepDescText: {
+    fontFamily: Typography.families.devanagari,
+  },
+  samagriContainer: {
+    gap: 8,
+  },
+  samagriHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionHeading: {
+    fontFamily: Typography.families.heading,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  samagriItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.standard,
+    borderRadius: Radius.md,
+    marginBottom: 6,
+  },
+  samagriInfoCol: {
+    flex: 1,
+  },
+  samagriItemTitle: {
+    fontFamily: Typography.families.body,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  quantityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  quantityText: {
+    fontFamily: Typography.families.body,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  detailsContainer: {
+    gap: 12,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  metaCard: {
+    flex: 1,
+    minWidth: 100,
+    padding: Spacing.compact,
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaCardLabel: {
+    fontFamily: Typography.families.body,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  metaCardVal: {
+    fontFamily: Typography.families.heading,
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  detailSectionCard: {
+    padding: Spacing.standard,
+    borderRadius: Radius.md,
+  },
+  detailSectionTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  detailSectionBody: {
+    fontFamily: Typography.families.devanagari,
+    lineHeight: 22,
+  },
+  emptyCard: {
+    padding: Spacing.large,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: Typography.families.body,
+    fontSize: 14,
+    textAlign: 'center',
   },
   playerDock: {
     position: 'absolute',

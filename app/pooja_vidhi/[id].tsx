@@ -38,6 +38,9 @@ export default function PoojaVidhiDetailScreen() {
       audioUrl={data?.audio_url}
       categoryPath="pooja_vidhi"
       loading={loading}
+      poojaSteps={parsed.poojaSteps}
+      samagriItems={parsed.samagriItems}
+      vidhiMeta={parsed.vidhiMeta}
     />
   );
 }
