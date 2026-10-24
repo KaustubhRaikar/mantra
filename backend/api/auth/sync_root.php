@@ -297,7 +297,7 @@ if (file_exists($dbFile)) {
     
     $stmt = $db->prepare("INSERT INTO admin_users (email, password_hash, full_name, role, status)
         VALUES (:email, :hash, 'Kaustubh Raikar', 'SuperAdmin', 'active')
-        ON DUPLICATE KEY UPDATE password_hash = :hash, role = 'SuperAdmin', status = 'active'");
+        ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = 'SuperAdmin', status = 'active'");
     $stmt->execute([':email' => $adminEmail, ':hash' => $adminHash]);
     $log['admin_account_verified'] = $adminEmail;
 
