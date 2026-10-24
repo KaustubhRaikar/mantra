@@ -6,9 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as NavigationBar from 'expo-navigation-bar';
 
+import { useRouter } from 'expo-router';
+
 const { width } = Dimensions.get('window');
 
 export function CustomTabBar({ state, descriptors, navigation }: any) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   
   // Animation value from 0 to 1
@@ -61,14 +64,23 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
           const isFocused = state.index === index;
 
           const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
+            let isDefaultPrevented = false;
+            if (navigation && typeof navigation.emit === 'function') {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+              isDefaultPrevented = event?.defaultPrevented ?? false;
+            }
 
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
+            if (!isFocused && !isDefaultPrevented) {
+              if (navigation && typeof navigation.navigate === 'function') {
+                navigation.navigate(route.name, route.params);
+              } else {
+                const targetPath = route.name === 'index' ? '/(tabs)' : `/(tabs)/${route.name}`;
+                router.navigate(targetPath as any);
+              }
             }
           };
 
