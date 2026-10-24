@@ -196,16 +196,15 @@ JSON_PAYLOAD;
     $checkMantra = $db->prepare("SELECT id FROM mantras WHERE mantra_name = :name LIMIT 1");
     $insertMantra = $db->prepare("INSERT INTO mantras (
         mantra_name, sanskrit_text, transliteration, translation_hindi,
-        translation_english, category_id, created_at, updated_at
+        translation_english, category_id
     ) VALUES (
         :name, :sanskrit, :transliteration, :hi,
-        :en, :cat_id, NOW(), NOW()
+        :en, :cat_id
     )");
 
     $updateMantra = $db->prepare("UPDATE mantras SET
         sanskrit_text = :sanskrit, transliteration = :transliteration,
-        translation_hindi = :hi, translation_english = :en, category_id = :cat_id,
-        updated_at = NOW()
+        translation_hindi = :hi, translation_english = :en, category_id = :cat_id
         WHERE id = :id");
 
     foreach ($data['mantras'] as $m) {
