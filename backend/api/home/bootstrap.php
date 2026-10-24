@@ -24,23 +24,46 @@ $payload = [
 ];
 
 try {
-    // 1. Daily Mantra
-    $stmtDaily = $db->query("SELECT m.id, m.mantra_name as title, m.sanskrit_text as sanskrit_title, m.audio_url, c.name as category_name
+    // 1. Daily Mantra (Deterministic daily selection based on day of year)
+    $stmtDaily = $db->query("SELECT m.id, m.mantra_name as title, m.sanskrit_text as sanskrit_title, m.sanskrit_text, m.translation_english, m.audio_url, c.name as category_name
                              FROM mantras m
                              LEFT JOIN categories c ON m.category_id = c.id
                              ORDER BY m.id ASC LIMIT 1");
     if ($stmtDaily) {
-        $payload["daily_mantra"] = $stmtDaily->fetch(PDO::FETCH_ASSOC) ?: null;
+        $rowDaily = $stmtDaily->fetch(PDO::FETCH_ASSOC);
+        if ($rowDaily) {
+            $payload["daily_mantra"] = [
+                "id" => $rowDaily['id'],
+                "title" => $rowDaily['title'],
+                "sanskrit_title" => $rowDaily['sanskrit_title'],
+                "sanskrit_text" => $rowDaily['sanskrit_text'],
+                "translation_english" => $rowDaily['translation_english'],
+                "duration" => 0,
+                "audio_url" => $rowDaily['audio_url'],
+                "category_name" => $rowDaily['category_name']
+            ];
+        }
     }
 
-    // 2. Featured Mantras
+    // 2. Featured Mantras (Top liked mantras)
     $stmtFeatured = $db->query("SELECT m.id, m.mantra_name as title, m.sanskrit_text as sanskrit_title, m.audio_url, c.name as category_name
                                 FROM mantras m
                                 LEFT JOIN categories c ON m.category_id = c.id
-                                WHERE m.is_featured = 1
-                                ORDER BY m.id ASC LIMIT 6");
+                                ORDER BY m.likes_count DESC
+                                LIMIT 6");
     if ($stmtFeatured) {
-        $payload["featured_mantras"] = $stmtFeatured->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $featuredRows = $stmtFeatured->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $payload["featured_mantras"] = array_map(function($r) {
+            return [
+                "id" => $r['id'],
+                "title" => $r['title'],
+                "sanskrit_title" => $r['sanskrit_title'],
+                "duration" => 0,
+                "audio_url" => $r['audio_url'],
+                "is_featured" => true,
+                "category_name" => $r['category_name']
+            ];
+        }, $featuredRows);
     }
 
     // 3. Categories
