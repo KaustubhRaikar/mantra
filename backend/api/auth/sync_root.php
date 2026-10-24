@@ -317,12 +317,12 @@ if (file_exists($dbFile)) {
             ['email' => 'devotee10@aarambhtech.in', 'name' => 'Manish Gupta', 'lang' => 'Hindi', 'days_ago' => 1],
         ];
 
-        $insUser = $db->prepare("INSERT IGNORE INTO users (email, full_name, language, created_at) VALUES (:email, :name, :lang, DATE_SUB(NOW(), INTERVAL :days DAY))");
+        $insUser = $db->prepare("INSERT IGNORE INTO users (email, full_name, created_at) VALUES (:email, :name, DATE_SUB(NOW(), INTERVAL :days DAY))");
         $insSess = $db->prepare("INSERT INTO user_sessions (user_id, login_token, device_id, os, expires_at, created_at, last_active_at) VALUES (:uid, :token, :dev, 'Android', DATE_ADD(NOW(), INTERVAL 30 DAY), DATE_SUB(NOW(), INTERVAL :days DAY), DATE_SUB(NOW(), INTERVAL :active_hours HOUR))");
         $insJaap = $db->prepare("INSERT IGNORE INTO user_jaap_daily_logs (user_id, log_date, total_chants, completed_malas) VALUES (:uid, CURDATE(), :chants, :malas)");
 
         foreach ($sampleUsers as $idx => $u) {
-            $insUser->execute([':email' => $u['email'], ':name' => $u['name'], ':lang' => $u['lang'], ':days' => $u['days_ago']]);
+            $insUser->execute([':email' => $u['email'], ':name' => $u['name'], ':days' => $u['days_ago']]);
             $uid = (int)$db->lastInsertId();
             if ($uid === 0) {
                 $uid = (int)$db->query("SELECT id FROM users WHERE email = '{$u['email']}'")->fetchColumn();
