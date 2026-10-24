@@ -79,23 +79,15 @@ export const LightColors: typeof DarkColors = {
 // Internal active theme reference (defaults to Cosmic Dark per docs/UX_DESIGN.md)
 let currentTheme: 'dark' | 'light' = 'dark';
 
+export const Colors: typeof DarkColors = { ...DarkColors };
+
 export const setGlobalTheme = (mode: 'dark' | 'light') => {
   currentTheme = mode;
+  const palette = mode === 'light' ? LightColors : DarkColors;
+  Object.assign(Colors, palette);
 };
 
 export const getActivePalette = () => (currentTheme === 'light' ? LightColors : DarkColors);
-
-/**
- * Dynamic Colors Proxy
- * Allows direct property access (e.g. Colors.primary, Colors.background) while
- * dynamically returning the active theme's colors at runtime.
- */
-export const Colors: typeof DarkColors = new Proxy(DarkColors, {
-  get(target, prop: keyof typeof DarkColors) {
-    const palette = currentTheme === 'light' ? LightColors : DarkColors;
-    return palette[prop] ?? target[prop];
-  },
-});
 
 export const Spacing = {
   micro: 4,

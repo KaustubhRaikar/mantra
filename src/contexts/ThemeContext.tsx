@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'react-native';
+import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import * as SecureStore from 'expo-secure-store';
 import { DarkColors, LightColors, setGlobalTheme } from '../constants/theme';
 
@@ -69,23 +70,22 @@ export const CosmicThemeProvider = ({ children }: { children: React.ReactNode })
     setThemeMode(nextMode);
   }, [isDark, setThemeMode]);
 
-  const navigationTheme = useMemo(() => ({
-    dark: isDark,
-    colors: {
-      primary: colors.primary,
-      background: colors.background,
-      card: colors.surface,
-      text: colors.text,
-      border: colors.border,
-      notification: colors.primary,
-    },
-    fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' as const },
-      medium: { fontFamily: 'System', fontWeight: '500' as const },
-      bold: { fontFamily: 'System', fontWeight: '700' as const },
-      heavy: { fontFamily: 'System', fontWeight: '800' as const },
-    },
-  }), [isDark, colors]);
+  const navigationTheme = useMemo(() => {
+    const baseNavTheme = isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...baseNavTheme,
+      dark: isDark,
+      colors: {
+        ...baseNavTheme.colors,
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.primary,
+      },
+    };
+  }, [isDark, colors]);
 
   const contextValue = useMemo(() => ({
     themeMode,
