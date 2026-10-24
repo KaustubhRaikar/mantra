@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 header("Content-Type: application/json; charset=UTF-8");
 
 $key = $_GET['key'] ?? '';
@@ -7,6 +11,8 @@ if ($key !== 'sacred_root_sync_2026') {
     echo json_encode(["error" => "Unauthorized"]);
     exit();
 }
+
+try {
 
 $publicHtml = dirname(__DIR__, 4);
 $repoWebDir = $publicHtml . '/web/web';
@@ -367,3 +373,15 @@ if (file_exists($dbFile)) {
 }
 
 echo json_encode(["success" => true, "log" => $log], JSON_PRETTY_PRINT);
+
+} catch (Throwable $e) {
+    http_response_code(200);
+    echo json_encode([
+        "success" => false,
+        "error" => $e->getMessage(),
+        "file" => $e->getFile(),
+        "line" => $e->getLine(),
+        "trace" => $e->getTraceAsString()
+    ], JSON_PRETTY_PRINT);
+}
+
