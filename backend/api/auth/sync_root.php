@@ -9,12 +9,11 @@ if ($key !== 'sacred_root_check_2026') {
 }
 
 $publicHtml = dirname(__DIR__, 4);
-
-$indexPhpContent = file_exists($publicHtml . '/index.php') ? file_get_contents($publicHtml . '/index.php') : null;
-$htaccessContent = file_exists($publicHtml . '/.htaccess') ? file_get_contents($publicHtml . '/.htaccess') : null;
+$webDir = $publicHtml . '/web';
 
 echo json_encode([
-    "index_php_length" => strlen($indexPhpContent ?? ''),
-    "index_php_sample" => substr($indexPhpContent ?? '', 0, 800),
-    "htaccess_sample" => substr($htaccessContent ?? '', 0, 800)
+    "web_files" => is_dir($webDir) ? scandir($webDir) : null,
+    "has_web_web" => is_dir($webDir . '/web'),
+    "has_web_index" => file_exists($webDir . '/web/index.html'),
+    "has_direct_index" => file_exists($webDir . '/index.html')
 ], JSON_PRETTY_PRINT);
