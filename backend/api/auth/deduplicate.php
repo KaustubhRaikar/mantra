@@ -8,25 +8,50 @@ if ($key !== 'sacred_mantra_dedup_2026') {
     exit();
 }
 
-$db_file = __DIR__ . '/../../config/database.php';
-if (!file_exists($db_file)) {
-    http_response_code(500);
-    echo json_encode(["error" => "database.php not found at: " . $db_file]);
-    exit();
+$candidates = [
+    __DIR__ . '/../../config/database.php',
+    __DIR__ . '/../../../config/database.php',
+    __DIR__ . '/../../../../config/database.php',
+    '/home/u885706413/domains/mantra.aarambhtech.in/public_html/config/database.php',
+    dirname(__DIR__, 2) . '/config/database.php',
+    dirname(__DIR__, 3) . '/config/database.php',
+    dirname(__DIR__, 4) . '/config/database.php'
+];
+
+$loaded = false;
+$loaded_path = '';
+
+foreach ($candidates as $path) {
+    if (file_exists($path)) {
+        include_once $path;
+        $loaded = true;
+        $loaded_path = $path;
+        break;
+    }
 }
 
-include_once $db_file;
+if (!$loaded) {
+    http_response_code(200);
+    echo json_encode([
+        "success" => false,
+        "error" => "database.php not found",
+        "checked" => $candidates,
+        "current_dir" => __DIR__
+    ], JSON_PRETTY_PRINT);
+    exit();
+}
 
 try {
     $database = new Database();
     $db = $database->getConnection();
 
-    $log = [];
+    $log = [
+        "loaded_config" => $loaded_path
+    ];
 
     // 1. Check existing categories 15, 16, 19, 20
     $stmt = $db->query("SELECT id, name FROM categories WHERE id IN (15, 16, 19, 20)");
-    $found = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $log['found_before'] = $found;
+    $log['found_before'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // 2. Merge category 20 -> 19
     $stmt = $db->prepare("UPDATE mantras SET category_id = 19 WHERE category_id = 20");
@@ -50,12 +75,12 @@ try {
     $stmt = $db->query("SELECT name, COUNT(*) as cnt FROM categories GROUP BY name HAVING cnt > 1");
     $log['remaining_duplicates'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 5. Total categories now
+    // 5. Total categories count and list
     $stmt = $db->query("SELECT id, name FROM categories ORDER BY id ASC");
     $log['all_categories'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(["success" => true, "log" => $log], JSON_PRETTY_PRINT);
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(["error" => $e->getMessage()]);
+    http_response_code(200);
+    echo json_encode(["success" => false, "error" => $e->getMessage(), "loaded_path" => $loaded_path], JSON_PRETTY_PRINT);
 }
