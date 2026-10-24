@@ -4,6 +4,24 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.1.0] - 2026-10-24
+
+### ☀️ Theme Contrast & Light Mode Overhaul
+- **Dynamic Text Colors:** Audited and resolved low-contrast text across the entire application in Light Mode (`#F8F6F0` Sacred Ivory). Dynamic `useTheme().colors` bindings applied to `ScriptureCard`, `ScriptureReader`, `JapaOrb`, `CosmicBackground`, `GlassHeader`, `CustomTabBar`, `HomeScreen`, `CategoriesScreen`, `FavoritesScreen`, `ProfileScreen`, `SearchScreen`, `LoginScreen`, `ConsentScreen`, `PrivacyScreen`, and `UpanishadsScreen`.
+- **High-Contrast Typography:** Configured Devanagari verse typography with `#171426` high-contrast slate text and `#4E4968` secondary labels in light mode, preserving `#FFFFFF` in dark mode.
+
+### 🌸 Adaptive Splash Screen
+- **Clean Centered Lotus Icon:** Replaced legacy splash image with high-resolution transparent vector lotus logo from `adaptive-icon.png` without plain text artifacts.
+- **Adaptive Theme Background:** Configured `app.json` with Sacred Ivory `#F8F6F0` in light mode and Celestial Midnight `#080711` in dark mode.
+
+### 🗄️ Database & Frontend Category Deduplication
+- **Production MySQL Deduplication:** Executed database merge and cleanup on live Hostinger production database (`u885706413_mantra`):
+  - Migrated mantras from category 20 to category 19, deleted duplicate category 20 ("Bhakti Movement Hymns").
+  - Migrated mantras from category 16 to category 15, deleted duplicate category 16 ("Tantric & Sri Vidya Mantras").
+- **Defensive Frontend Deduplication:** Added normalization deduplication (`Set<string>`) in `app/(tabs)/categories.tsx` and filtered out top-level section collisions (`Aartis`, `Chalisas`, `Pooja Vidhi`, `Stotras`, `Vrat Katha`, `Upanishads`).
+
+---
+
 ## 🚀 [2.0.0] - 2026-10-05
 
 ### 🔒 Task 1: SECURITY — OTP Abuse & API Hardening (`fix/security-hardening`)
