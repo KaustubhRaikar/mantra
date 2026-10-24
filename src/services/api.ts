@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Mantra } from '../types/navigation';
-
 import * as SecureStore from 'expo-secure-store';
+import { getDB } from './db';
 
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
@@ -40,14 +40,59 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Local SQLite cache helpers for resilience & rate-limit immunity
+const saveLocalCache = async (key: string, data: any) => {
+  try {
+    const db = await getDB();
+    await db.runAsync(
+      `INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)`,
+      [key, JSON.stringify(data)]
+    );
+  } catch {
+    // Ignore cache persistence errors
+  }
+};
+
+const getLocalCache = async <T>(key: string): Promise<T | null> => {
+  try {
+    const db = await getDB();
+    const row = await db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM meta_store WHERE key = ?`,
+      [key]
+    );
+    return row ? (JSON.parse(row.value) as T) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const api = {
+  // Unified Home Bootstrap (1 single network call for all 9 liturgical collections)
+  getHomeBootstrap: async () => {
+    try {
+      const response = await apiClient.get('/home/bootstrap.php');
+      if (response.data) {
+        await saveLocalCache('CACHE_home_bootstrap', response.data);
+        return response.data;
+      }
+    } catch (error) {
+      console.warn('Home bootstrap remote call failed or rate-limited, serving from SQLite cache:', error);
+    }
+    return await getLocalCache<any>('CACHE_home_bootstrap');
+  },
+
   // Categories
   getCategories: async () => {
     try {
       const response = await apiClient.get('/categories/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_categories', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      const cached = await getLocalCache<any[]>('CACHE_categories');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -56,19 +101,28 @@ export const api = {
   getMantra: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/mantras/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_mantra_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching mantra ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_mantra_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getUpanishads: async () => {
     try {
       const response = await apiClient.get('/upanishads/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_upanishads', records);
+      }
+      return records;
     } catch (error: any) {
-      console.error('Error fetching upanishads full URL trace:', error.config?.baseURL, error.config?.url);
+      const cached = await getLocalCache<any[]>('CACHE_upanishads');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -76,25 +130,32 @@ export const api = {
   getUpanishad: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/upanishads/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_upanishad_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching upanishad ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_upanishad_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getMantras: async (categoryId?: number) => {
+    const cacheKey = categoryId ? `CACHE_mantras_cat_${categoryId}` : 'CACHE_mantras_all';
     try {
       const url = categoryId 
         ? `/mantras/read.php?category_id=${categoryId}` 
         : '/mantras/read.php';
       const response = await apiClient.get(url);
-      return response.data.records || [];
-    } catch (error: any) {
-      if (error?.response?.status === 404) {
-        return [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache(cacheKey, records);
       }
-      console.error('Error fetching mantras:', error);
+      return records;
+    } catch (error: any) {
+      const cached = await getLocalCache<any[]>(cacheKey);
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -102,9 +163,14 @@ export const api = {
   getFeaturedMantras: async () => {
     try {
       const response = await apiClient.get('/mantras/featured.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_featured_mantras', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching featured mantras:', error);
+      const cached = await getLocalCache<any[]>('CACHE_featured_mantras');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -112,19 +178,28 @@ export const api = {
   getDailyMantra: async () => {
     try {
       const response = await apiClient.get('/mantras/daily.php');
-      return response.data; // It returns a single object
+      if (response.data) {
+        await saveLocalCache('CACHE_daily_mantra', response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error('Error fetching daily mantra:', error);
-      return null;
+      const cached = await getLocalCache('CACHE_daily_mantra');
+      if (cached) return cached;
     }
+    return null;
   },
 
   getFestivalAartis: async () => {
     try {
       const response = await apiClient.get('/festival_aartis/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_festival_aartis', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching festival aartis:', error);
+      const cached = await getLocalCache<any[]>('CACHE_festival_aartis');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -132,9 +207,14 @@ export const api = {
   getAartis: async () => {
     try {
       const response = await apiClient.get('/aartis/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_aartis', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching aartis from table:', error);
+      const cached = await getLocalCache<any[]>('CACHE_aartis');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -142,29 +222,42 @@ export const api = {
   getFestivalAartiDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/festival_aartis/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_festival_aarti_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching festival aarti ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_festival_aarti_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getAartiDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/aartis/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_aarti_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching aarti ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_aarti_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getChalisas: async () => {
     try {
       const response = await apiClient.get('/chalisas/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_chalisas', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching chalisas:', error);
+      const cached = await getLocalCache<any[]>('CACHE_chalisas');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -172,9 +265,14 @@ export const api = {
   getPoojaVidhis: async () => {
     try {
       const response = await apiClient.get('/pooja_vidhis/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_pooja_vidhis', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching pooja vidhis:', error);
+      const cached = await getLocalCache<any[]>('CACHE_pooja_vidhis');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -182,9 +280,14 @@ export const api = {
   getStotras: async () => {
     try {
       const response = await apiClient.get('/stotras/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_stotras', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching stotras:', error);
+      const cached = await getLocalCache<any[]>('CACHE_stotras');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -192,9 +295,14 @@ export const api = {
   getVratKathas: async () => {
     try {
       const response = await apiClient.get('/vrat_kathas/read.php');
-      return response.data.records || [];
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_vrat_kathas', records);
+      }
+      return records;
     } catch (error) {
-      console.error('Error fetching vrat kathas:', error);
+      const cached = await getLocalCache<any[]>('CACHE_vrat_kathas');
+      if (cached && cached.length > 0) return cached;
       return [];
     }
   },
@@ -202,41 +310,57 @@ export const api = {
   getChalisaDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/chalisas/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_chalisa_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching chalisa ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_chalisa_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getPoojaVidhiDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_pooja_vidhi_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching pooja vidhi ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_pooja_vidhi_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getStotraDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/stotras/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_stotra_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching stotra ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_stotra_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   getVratKathaDetails: async (id: string | number) => {
     try {
       const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
-      return response.data;
+      if (response.data) {
+        await saveLocalCache(`CACHE_vrat_katha_${id}`, response.data);
+        return response.data;
+      }
     } catch (error) {
-      console.error(`Error fetching vrat katha ${id}:`, error);
-      return null;
+      const cached = await getLocalCache(`CACHE_vrat_katha_${id}`);
+      if (cached) return cached;
     }
+    return null;
   },
 
   // Auth — Two-step OTP Login
@@ -354,5 +478,3 @@ export const api = {
     }
   }
 };
-
-

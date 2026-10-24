@@ -101,40 +101,23 @@ export default function HomeScreen() {
 
   const loadData = async () => {
     try {
-      const [
-        daily,
-        featured,
-        cats,
-        played,
-        festAarti,
-        aartiData,
-        chalData,
-        poojaData,
-        stotraData,
-        vratData,
-      ] = await Promise.all([
-        api.getDailyMantra(),
-        api.getFeaturedMantras(),
-        api.getCategories(),
+      const [bootstrap, played] = await Promise.all([
+        api.getHomeBootstrap(),
         storage.getRecentlyPlayed(),
-        api.getFestivalAartis(),
-        api.getAartis(),
-        api.getChalisas(),
-        api.getPoojaVidhis(),
-        api.getStotras(),
-        api.getVratKathas(),
       ]);
 
-      setDailyMantra(daily);
-      setFeaturedMantras(featured);
-      setCategories(cats);
+      if (bootstrap) {
+        if (bootstrap.daily_mantra) setDailyMantra(bootstrap.daily_mantra);
+        if (bootstrap.featured_mantras) setFeaturedMantras(bootstrap.featured_mantras);
+        if (bootstrap.categories) setCategories(bootstrap.categories);
+        if (bootstrap.festival_aartis) setFestivalAartis(bootstrap.festival_aartis);
+        if (bootstrap.aartis) setAartis(bootstrap.aartis);
+        if (bootstrap.chalisas) setChalisas(bootstrap.chalisas);
+        if (bootstrap.pooja_vidhis) setPoojaVidhis(bootstrap.pooja_vidhis);
+        if (bootstrap.stotras) setStotras(bootstrap.stotras);
+        if (bootstrap.vrat_kathas) setVratKathas(bootstrap.vrat_kathas);
+      }
       setRecentlyPlayed(played);
-      setFestivalAartis(festAarti);
-      setAartis(aartiData);
-      setChalisas(chalData);
-      setPoojaVidhis(poojaData);
-      setStotras(stotraData);
-      setVratKathas(vratData);
     } catch (e) {
       console.warn('Failed fetching data from API', e);
     } finally {
