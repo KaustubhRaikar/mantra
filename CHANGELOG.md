@@ -4,6 +4,39 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.6.0] - 2026-10-25
+
+### 🛡️ App-Only API Restriction, Sliding Window Rate Limiting & High-Speed Caching
+
+#### 🌐 1. Elimination of Web API Calls (Web Origin & Privacy Defense)
+- **Web Frontend Hardening:** Removed all client-side `fetch()` API calls from `web/delete-account.html`.
+- **Direct Privacy Channel:** Replaced web API deletion requests with secure DPDP 2023 email verification link (`mailto:privacy@aarambhtech.in`) and in-app deletion instructions, completely insulating backend endpoints from browser-based scraping and CSRF vectors.
+- **Server-Side Web Ban:** Endpoints reject direct browser requests without the mobile app signature with `HTTP 403 Forbidden` (`WEB_API_ACCESS_DISABLED`).
+
+#### ⏱️ 2. Sliding Window Rate Limiter (1 App, 1 Mobile, 1 User, 1 Unique Key)
+- **Composite Identity Matrix:** Computes a unique 256-bit SHA-256 hash combining:
+  - **1 App:** Cryptographic signature `X-App-Key: m_app_c0sm1c_...`
+  - **1 Mobile:** Secure hardware installation UUID (`X-Device-ID`)
+  - **1 User:** Authenticated user account token / ID (`X-User-ID`, `X-Login-Token`)
+  - **1 Origin:** Proxy-safe client IP address
+- **Sliding Window Quotas:**
+  - **Minute Window:** Max 5 calls / 60 seconds (`HTTP 429` on exceed)
+  - **Hourly Window:** Max 15 calls / 3,600 seconds (`HTTP 429` on exceed)
+  - **Daily Window:** Max 100 calls / 86,400 seconds (`HTTP 429` on exceed)
+- **Informative Response Headers:** Injected `X-RateLimit-Limit-*` and `X-RateLimit-Remaining-*` on all successful mobile requests.
+- **Probabilistic Housekeeping:** Background cleanup automatically purges sliding window records older than 24 hours.
+
+#### ⚡ 3. High-Performance NVMe Server Cache Engine
+- **Atomic File Cache:** GET requests for canonical scriptures (`categories`, `mantras`, `stotras`, `chalisas`, `aartis`, `pooja_vidhis`, `vrat_kathas`, `upanishads`) check disk cache prior to executing database queries.
+- **Conditional Validation (HTTP 304):** Supports `If-None-Match` with MD5 ETags, responding in $<1\text{ms}$ with zero payload bandwidth for unchanged data.
+- **Output Buffering:** Automatically intercepts and caches valid 200 OK JSON responses.
+
+#### 📱 4. Mobile Client Request Interceptor (`api.ts`)
+- **Axios Interceptor:** Automatically injects `X-App-Key`, `X-Device-ID`, `X-Login-Token`, and `X-User-ID` on all outgoing network requests.
+- **Graceful Fallback:** Aligns with TanStack Query and local SQLite cache to ensure seamless offline sanctuary reading if quotas are reached.
+
+---
+
 ## 🚀 [2.5.0] - 2026-10-25
 
 ### 🕉️ Canonical Treasury Expansion & Interactive Archana (नामार्चन) Mode

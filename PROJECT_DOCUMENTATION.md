@@ -159,6 +159,15 @@ d:\MobileApps\mantra/
 
 **Base URL:** `https://mantra.aarambhtech.in/api`
 
+> [!IMPORTANT]
+> **App-Only API Access Policy & Sliding Window Rate Limiting:**
+> - Direct web browser API requests are disabled (HTTP 403 Forbidden). Content APIs require the cryptographic mobile signature `X-App-Key: m_app_c0sm1c_...`.
+> - Rate limits are tracked across a sliding window per **1 App, 1 Mobile Device, 1 User Account, 1 Unique Key**:
+>   - **5 calls / minute** (60s sliding window)
+>   - **15 calls / hour** (3600s sliding window)
+>   - **100 calls / day** (86400s sliding window)
+> - All scripture read endpoints utilize an NVMe server-side response cache with HTTP 304 ETag revalidation for $<1\text{ms}$ latency and zero redundant bandwidth consumption.
+
 ### 4.1 Content APIs
 
 | Endpoint | Method | Query Parameters | Description | Sample Response Structure |

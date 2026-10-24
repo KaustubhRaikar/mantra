@@ -184,49 +184,13 @@
 
             if (!email) return;
 
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Processing Deletion Request...";
-
-            // Post request to rate-limited web API endpoint
-            fetch('api/delete_request.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
-            })
-            .then(res => res.json())
-            .then(data => {
-                statusMessage.style.display = 'block';
-                if (data.status === 'success') {
-                    statusMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.15)';
-                    statusMessage.style.color = '#2ecc71';
-                    statusMessage.style.border = '1px solid #2ecc71';
-                    statusMessage.innerHTML = "<strong>Request Received:</strong> " + data.message;
-                    submitBtn.style.display = 'none';
-                } else {
-                    statusMessage.style.backgroundColor = 'rgba(255, 59, 48, 0.15)';
-                    statusMessage.style.color = '#ff6b6b';
-                    statusMessage.style.border = '1px solid #ff3b30';
-                    statusMessage.innerHTML = "<strong>Notice:</strong> " + (data.message || 'Error processing request.');
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Try Again";
-                }
-            })
-            .catch(() => {
-                // Graceful fallback to cloud API
-                fetch('https://mantra.aarambhtech.in/api/v1/auth/delete_account.php?web_request=1', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                })
-                .then(() => {
-                    statusMessage.style.display = 'block';
-                    statusMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.15)';
-                    statusMessage.style.color = '#2ecc71';
-                    statusMessage.style.border = '1px solid #2ecc71';
-                    statusMessage.innerHTML = "<strong>Request Logged:</strong> Your account deletion request for <em>" + email + "</em> has been submitted to the Data Protection Officer queue. All server records will be permanently purged within 48 hours.";
-                    submitBtn.style.display = 'none';
-                });
-            });
+            // Display verification guidance without web API call
+            statusMessage.style.display = 'block';
+            statusMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.15)';
+            statusMessage.style.color = '#2ecc71';
+            statusMessage.style.border = '1px solid #2ecc71';
+            statusMessage.innerHTML = "<strong>Request Initiated:</strong> In adherence with the Digital Personal Data Protection (DPDP) Act 2023, automated browser API calls are disabled to protect against unauthorized web account tampering.<br><br>To finalize deletion of all devotional records for <em>" + email + "</em>, please confirm via email to our Data Protection Officer, or complete instant deletion directly within the authenticated Mantra Mobile App.<br><br><a href='mailto:privacy@aarambhtech.in?subject=DPDP%20Account%20Deletion%20Request%20-%20" + encodeURIComponent(email) + "&body=I%20hereby%20request%20the%20permanent%20deletion%20of%20all%20my%20data%20and%20account%20associated%20with%20email:%20" + encodeURIComponent(email) + "' style='display:inline-block;padding:10px 18px;background:#2ecc71;color:#000;font-weight:700;border-radius:8px;text-decoration:none;margin-top:10px;'>Confirm Deletion via Email &rarr;</a>";
+            submitBtn.style.display = 'none';
         }
     </script>
 </body>

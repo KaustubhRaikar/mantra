@@ -1,14 +1,43 @@
 import axios from 'axios';
 import { Mantra } from '../types/navigation';
 
+import * as SecureStore from 'expo-secure-store';
+
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
+
+export const MANTRA_APP_KEY = 'm_app_c0sm1c_7f9b2d4e81a3e5c7';
 
 const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'X-App-Key': MANTRA_APP_KEY,
   },
+});
+
+apiClient.interceptors.request.use(async (config) => {
+  config.headers['X-App-Key'] = MANTRA_APP_KEY;
+  try {
+    const deviceId = await SecureStore.getItemAsync('device_id');
+    if (deviceId) {
+      config.headers['X-Device-ID'] = deviceId;
+    }
+    const token = await SecureStore.getItemAsync('session_token');
+    if (token) {
+      config.headers['X-Login-Token'] = token;
+    }
+    const userStr = await SecureStore.getItemAsync('user_data');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.id) {
+        config.headers['X-User-ID'] = String(user.id);
+      }
+    }
+  } catch {
+    // Best-effort credential extraction
+  }
+  return config;
 });
 
 export const api = {

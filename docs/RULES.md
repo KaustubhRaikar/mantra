@@ -67,6 +67,14 @@
 ### RULE-SEC-04: Mandatory Parameterized Queries
 * Raw SQL concatenation (e.g., `WHERE id = " . $_GET['id']`) is prohibited under penalty of immediate deployment rejection. All database interactions MUST use PDO prepared statements with explicit parameter binding.
 
+### RULE-SEC-05: App-Only API Restriction & Sliding Window Rate Limiting
+* **Web API Ban:** Direct browser-based API access is disabled. Content endpoints are exclusively reserved for the official Mantra mobile application verified via cryptographic `X-App-Key`.
+* **Sliding Window Quotas:** All API calls are tracked across a composite key ($1\text{ App} + 1\text{ Mobile} + 1\text{ User} = 1\text{ Unique Key}$) enforcing strict sliding windows:
+  - **Minute Window:** Max 5 calls / 60 seconds
+  - **Hourly Window:** Max 15 calls / 3,600 seconds
+  - **Daily Window:** Max 100 calls / 86,400 seconds
+* **High-Speed Caching:** Read endpoints must check NVMe-backed response cache and support HTTP 304 ETag revalidation to minimize latency.
+
 ---
 
 ## 4. UI/UX & Typography Rules
