@@ -133,6 +133,25 @@ d:\MobileApps\mantra/
 * **Token Storage:** Encrypted credential storage via `expo-secure-store`.
 * **HMAC-SHA256 OTP Verification:** All OTP verification runs server-side with secret pepper and constant-time string comparison (`hash_equals()`).
 
+### 3.5 Sacred Astronomical Panchang & Muhurta Subsystem
+* **On-Device Ephemeris Engine (`panchangEngine.ts`):** Calculates local solar/lunar astronomical timings without external APIs or telemetry: Sunrise, Sunset, Solar Noon, Tithi (1–30), Paksha (Shukla/Krishna), Nakshatra (27 lunar mansions), and Yoga.
+* **Auspicious Muhurta Windows:** Calculates Brahma Muhurta (96–48 min before sunrise), Pratah Sandhya, Abhijit Muhurta (solar noon victory window), and Sayam Sandhya.
+* **Caution & Choghadiya:** Calculates Rahu Kaal, Yamaganda, and 8-period Day Choghadiya tables (Amrit, Shubh, Labh, Char, Rog, Kaal, Udveg).
+* **Home Screen Integration:** Rendered as a glassmorphic `<PanchangCard />` with dedicated detail navigation (`/panchang`).
+
+### 3.6 Multi-Day Sankalpa & Anushthan Subsystem
+* **Local SQLite Vow Persistence (`sankalpaStorage.ts`):** Implements `user_anushthans` table managing active and historical multi-day vows.
+* **Shastric Presets & Custom Vows:** Templates for 21-Day Gayatri Sadhana, 40-Day Hanuman Chalisa, 16-Somvar Vrat, and 9-Day Navratri Chandi Path.
+* **JapaOrb Auto-Sync:** Chanting on the Home Screen `JapaOrb` directly increments active Sankalpa beads and daily quotas.
+* **Dashboard & Poorna-Ahuti:** Dedicated dashboard (`/sankalpa`) with streak tracking and completion ceremony.
+
+### 3.7 Dynamic Sacred Yantra & Trātaka Meditation Subsystem
+* **Pure Mathematical Vector SVGs (`src/components/yantras/`):**
+  - **Sri Yantra:** 9 interlocking Shiva/Shakti triangles (43 sub-triangles), 24 lotus petals, 3 Mekhala circles, and 4-gate Bhupura citadel.
+  - **Shiva Yantra:** Shatkona hexagram geometry with 12 petals and central Bindu.
+  - **Gayatri Yantra:** 24 solar petals representing Gayatri syllables with central Savitur Bindu.
+* **Fullscreen Trātaka Visual Focus (`app/yantra/[id].tsx`):** Immersive dark mode session with breath-synchronized Bindu pulsing (Sama Vritti 4s-4s-4s-4s), session timer (3m, 5m, 11m, 21m), and haptic completion bells.
+
 ---
 
 ## 🌐 4. API Endpoints Catalog & Specifications

@@ -24,6 +24,9 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { storage } from '../../src/services/storage';
 import { api } from '../../src/services/api';
 import { safeCreateSound, safeSetAudioMode } from '../../src/utils/audioPlayer';
+import { PanchangCard } from '../../src/components/PanchangCard';
+import { SankalpaProgressCard } from '../../src/components/SankalpaProgressCard';
+import { sankalpaStorage } from '../../src/services/sankalpaStorage';
 
 const { width } = Dimensions.get('window');
 const CARD_W = width * 0.72;
@@ -86,6 +89,7 @@ export default function HomeScreen() {
         setCompletedMalas((m) => m + 1);
       }
       storage.recordJaapTap(1, isMalaComplete ? 1 : 0).catch(() => {});
+      sankalpaStorage.recordAnushthanProgress(1).catch(() => {});
       return isMalaComplete ? 0 : next;
     });
   }, [jaapGoal]);
@@ -363,6 +367,9 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* ── Sacred Daily Panchang & Muhurta Card ──────────── */}
+        <PanchangCard />
+
         {/* ── Daily Mantra Card ─────────────────────────────────── */}
         {loading ? (
           <GlassCard style={styles.dailyCard}>
@@ -443,6 +450,63 @@ export default function HomeScreen() {
             setJaapCount(0);
           }}
         />
+
+        {/* ── Active Sankalpa / Anushthan Tracker ────────────────── */}
+        <SankalpaProgressCard />
+
+        {/* ── Sacred Horizon Quick Liturgical Hub ────────────────── */}
+        <View style={styles.horizonRow}>
+          <TouchableOpacity
+            style={[
+              styles.horizonPill,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255, 153, 51, 0.12)'
+                  : 'rgba(230, 126, 34, 0.08)',
+                borderColor: colors.borderGlow,
+              },
+            ]}
+            onPress={() => router.push('/panchang' as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="calendar-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={[styles.horizonPillText, { color: colors.text }]}>दैनिक पंचांग</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.horizonPill,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255, 153, 51, 0.12)'
+                  : 'rgba(230, 126, 34, 0.08)',
+                borderColor: colors.borderGlow,
+              },
+            ]}
+            onPress={() => router.push('/sankalpa' as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="flame-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={[styles.horizonPillText, { color: colors.text }]}>साधना संकल्प</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.horizonPill,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255, 153, 51, 0.12)'
+                  : 'rgba(230, 126, 34, 0.08)',
+                borderColor: colors.borderGlow,
+              },
+            ]}
+            onPress={() => router.push('/yantra' as any)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="eye-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
+            <Text style={[styles.horizonPillText, { color: colors.text }]}>त्राटक ध्यान</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* ── Featured Mantras ─────────────────────────────────── */}
         {renderSectionHeader('Featured Mantras', () => router.push('/(tabs)/categories'))}
@@ -872,5 +936,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  horizonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: Spacing.standard,
+    marginBottom: Spacing.standard,
+  },
+  horizonPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  horizonPillText: {
+    fontFamily: Typography.families.body,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

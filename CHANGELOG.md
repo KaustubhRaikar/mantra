@@ -4,6 +4,34 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.4.0] - 2026-10-24
+
+### 🌌 Horizon Expansion: Panchang, Sankalpa Tracker & Yantra Trātaka Engine
+
+#### ☀️ 1. Sacred Daily Panchang & Astronomical Muhurta Engine
+- **Local Ephemeris Math (`src/utils/panchangEngine.ts`):** Implemented on-device astronomical calculation for Sunrise, Sunset, Solar Noon, Tithi (1–30), Paksha (Shukla/Krishna), Nakshatra (27 lunar mansions), and Yoga without external API tracking.
+- **Liturgical Auspicious Windows:** Real-time calculation of **Brahma Muhurta** (48-min meditation window), **Pratah Sandhya**, **Abhijit Muhurta** (midday victory window), and **Sayam Sandhya**.
+- **Caution Timings & Choghadiya:** Precise calculation of **Rahu Kaal**, **Yamaganda**, and the 8-period Day Choghadiya table (Amrit, Shubh, Labh, Char, Rog, Kaal, Udveg).
+- **Home Hub Celestial Card (`src/components/PanchangCard.tsx`):** Docked atop the Home screen, providing immediate solar/lunar awareness and active Muhurta alerts.
+- **Dedicated Almanac Screen (`app/panchang.tsx`):** Complete day breakdown with yesterday/today/tomorrow navigation and fasting detection (Ekadashi, Pradosh, Purnima, Sankashti).
+
+#### 📿 2. Multi-Day Sankalpa & Anushthan Tracker
+- **SQLite Vow Persistence (`src/services/sankalpaStorage.ts` & `src/services/db.ts`):** Created `user_anushthans` table to manage multi-day spiritual vows locally on-device.
+- **Shastra-Aligned Presets & Custom Vows:** Built-in templates for *21-Day Gayatri Mahamantra (11 Malas/day)*, *40-Day Hanuman Chalisa (11 Chants/day)*, *16-Somvar Shiva Sankalpa*, and *9-Day Navratri Chandi Path*, plus fully custom vows.
+- **Seamless JapaOrb Integration:** Chanting on the Home Screen `JapaOrb` directly increments daily vow progress in real time via `sankalpaStorage.recordAnushthanProgress(1)`.
+- **Home Progress Widget (`src/components/SankalpaProgressCard.tsx`):** Visual progress bar tracking days elapsed, completed malas, and continuous day streak (`🔥 X दिन निरंतर`).
+- **Dashboard & Poorna-Ahuti Liturgy (`app/sankalpa/index.tsx`, `create.tsx`):** Complete vow management, Sanskrit initiation shlokas, and concluding Poorna-Ahuti rites.
+
+#### 📐 3. Dynamic Sacred Yantra & Trātaka Meditation Engine
+- **Mathematical Vector SVGs (`src/components/yantras/`):**
+  - **Sri Yantra (`SriYantra.tsx`):** 9 interlocking Shiva/Shakti triangles creating 43 sub-triangles, 24 concentric lotus petals, 3 Mekhala circles, and 4-gate Bhupura.
+  - **Shiva Yantra (`ShivaYantra.tsx`):** Sacred Shatkona (hexagram) geometry with 12 petals and central Bindu.
+  - **Gayatri Yantra (`GayatriYantra.tsx`):** Solar 24-akshara petal matrix with glowing Savitur Bindu.
+- **Fullscreen Trātaka Meditation Session (`app/yantra/[id].tsx`):** Immersive dark mode canvas with breath-synchronized central Bindu pulsing (Sama Vritti 4s Inhale - 4s Hold - 4s Exhale - 4s Hold), session countdown timer (3m, 5m, 11m, 21m), and haptic bells.
+- **Yantra Gallery (`app/yantra/index.tsx`):** Philosophical significance and visual meditation guidance.
+
+---
+
 ## 🚀 [2.3.0] - 2026-10-24
 
 ### 🪔 Pooja Vidhi Interactive Step Cards & Samagri Architecture

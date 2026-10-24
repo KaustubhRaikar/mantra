@@ -40,5 +40,23 @@ const initTables = async (db: SQLite.SQLiteDatabase) => {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS user_anushthans (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      deity TEXT NOT NULL,
+      mantra_text TEXT,
+      target_malas INTEGER NOT NULL,
+      target_days INTEGER NOT NULL,
+      completed_malas INTEGER NOT NULL DEFAULT 0,
+      completed_beads INTEGER NOT NULL DEFAULT 0,
+      completed_days INTEGER NOT NULL DEFAULT 0,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      last_practiced_date TEXT,
+      streak INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    );
   `);
 };
