@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
+  ScrollView,
   Platform,
-  Alert,
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,88 +23,168 @@ type LoginStep = 'email' | 'otp';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, verifyOtp } = useAuth();
+  const { sendOtp, verifyOtp, guestSignIn, signIn, sessionError } = useAuth();
+
   const [step, setStep] = useState<LoginStep>('email');
-  const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Smooth step transition animation
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const slideToOtp = () => {
-    Animated.timing(slideAnim, {
-      toValue: -400,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setStep('otp');
-      slideAnim.setValue(400);
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
+  // Surface any session expiration notice from AuthContext
+  useEffect(() => {
+    if (sessionError) {
+      setErrorMessage(sessionError);
+    }
+  }, [sessionError]);
 
-  const slideBack = () => {
-    Animated.timing(slideAnim, {
-      toValue: 400,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setStep('email');
-      setOtp('');
-      slideAnim.setValue(-400);
-      Animated.timing(slideAnim, {
+  // Countdown timer for resend
+  useEffect(() => {
+    let timer: any;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const transitionToStep = (newStep: LoginStep) => {
+    setErrorMessage(null);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 150,
         useNativeDriver: true,
-      }).start();
+      }),
+      Animated.timing(slideAnim, {
+        toValue: newStep === 'otp' ? -30 : 30,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setStep(newStep);
+      slideAnim.setValue(newStep === 'otp' ? 30 : -30);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
     });
   };
 
   const handleSendOtp = async () => {
-    if (!email.trim() || !fullName.trim()) {
-      Alert.alert('Missing Fields', 'Please enter both your full name and email address.');
+    setErrorMessage(null);
+    const trimmedEmail = email.trim();
+    const trimmedName = fullName.trim();
+
+    if (!trimmedName) {
+      setErrorMessage('Please enter your sacred name to begin.');
       return;
     }
+
+    if (!trimmedEmail) {
+      setErrorMessage('Please provide an email address for your sadhana account.');
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      await signIn(email.trim(), fullName.trim());
+      await sendOtp(trimmedEmail, trimmedName);
+      setResendCooldown(45);
+      transitionToStep('otp');
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Unable to sign in. Please try again.';
-      Alert.alert('Error', msg);
+      setErrorMessage(error?.response?.data?.message || error?.message || 'Unable to dispatch code. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyOtp = async () => {
+    setErrorMessage(null);
+    const trimmedOtp = otp.trim();
+
+    if (trimmedOtp.length < 4) {
+      setErrorMessage('Please enter the 6-digit verification code.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await verifyOtp(otp.trim() || '123456');
+      await verifyOtp(trimmedOtp, fullName.trim());
+      router.replace('/(tabs)');
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Sign in failed. Please try again.';
-      Alert.alert('Verification Failed', msg);
+      setErrorMessage(error?.response?.data?.message || error?.message || 'Invalid or expired code. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (resendCooldown > 0 || loading) return;
+    setErrorMessage(null);
     setLoading(true);
     try {
-      await signIn(email.trim(), fullName.trim());
+      await sendOtp(email.trim(), fullName.trim());
+      setResendCooldown(60);
     } catch (error: any) {
-      Alert.alert('Error', 'Could not sign in. Please try again.');
+      setErrorMessage(error?.response?.data?.message || error?.message || 'Failed to resend code. Please wait a moment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestEntry = async () => {
+    setLoading(true);
+    try {
+      await guestSignIn();
+      router.replace('/(tabs)');
+    } catch {
+      setErrorMessage('Could not initialize guest session. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDirectEntry = async () => {
+    setErrorMessage(null);
+    const trimmedEmail = email.trim();
+    const trimmedName = fullName.trim();
+
+    if (!trimmedName) {
+      setErrorMessage('Please enter your sacred name to begin.');
+      return;
+    }
+    if (!trimmedEmail) {
+      setErrorMessage('Please enter an email address.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(trimmedEmail, trimmedName);
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      setErrorMessage(error?.message || 'Direct sign-in unavailable.');
     } finally {
       setLoading(false);
     }
@@ -116,130 +196,201 @@ export default function LoginScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
+        style={styles.keyboardContainer}
       >
-        {/* Sacred Branding */}
-        <View style={styles.logoContainer}>
-          <View style={styles.iconCircle}>
-            <Text style={styles.omBig}>ॐ</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Sacred Vedic Branding */}
+          <View style={styles.logoContainer}>
+            <View style={styles.iconCircle}>
+              <Text style={styles.omBig}>ॐ</Text>
+            </View>
+            <Text style={styles.title} maxFontSizeMultiplier={1.3}>
+              MANTRA
+            </Text>
+            <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
+              Sacred Vedic Sanctuary & Sadhana Companion
+            </Text>
           </View>
-          <Text style={styles.title} maxFontSizeMultiplier={1.3}>
-            MANTRA
-          </Text>
-          <Text style={styles.subtitle} maxFontSizeMultiplier={1.3}>
-            Connect with the Divine & Find Inner Serenity
-          </Text>
-        </View>
 
-        {/* Auth Glass Card */}
-        <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
-          <GlassCard style={styles.authCard} glow>
-            {step === 'email' ? (
-              <>
-                <Text style={styles.stepLabel}>
-                  <Ionicons name="sparkles" size={14} color={Colors.primary} /> Devotee Registration
-                </Text>
-
-                <Text style={styles.label}>Full Name</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your sacred name"
-                    placeholderTextColor={Colors.textMuted}
-                    value={fullName}
-                    onChangeText={setFullName}
-                    autoCapitalize="words"
-                    maxFontSizeMultiplier={1.3}
-                  />
+          {/* Auth Glass Card */}
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
+            <GlassCard style={styles.authCard} glow>
+              {errorMessage && (
+                <View style={styles.errorBanner}>
+                  <Ionicons name="alert-circle" size={16} color={Colors.error} style={{ marginRight: 6 }} />
+                  <Text style={styles.errorText}>{errorMessage}</Text>
                 </View>
+              )}
 
-                <Text style={styles.label}>Email Address</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="devotee@sanctuary.in"
-                    placeholderTextColor={Colors.textMuted}
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    maxFontSizeMultiplier={1.3}
-                  />
-                </View>
+              {step === 'email' ? (
+                <>
+                  <View style={styles.stepHeaderRow}>
+                    <Ionicons name="sparkles" size={15} color={Colors.primary} />
+                    <Text style={styles.stepLabel}>Devotee Sign In</Text>
+                  </View>
 
-                <View style={{ marginTop: Spacing.standard }}>
+                  <Text style={styles.label}>Full Name</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="person-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your sacred name"
+                      placeholderTextColor={Colors.textMuted}
+                      value={fullName}
+                      onChangeText={(t) => {
+                        setFullName(t);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      maxFontSizeMultiplier={1.3}
+                    />
+                  </View>
+
+                  <Text style={styles.label}>Email Address</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="mail-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="devotee@sanctuary.in"
+                      placeholderTextColor={Colors.textMuted}
+                      value={email}
+                      onChangeText={(t) => {
+                        setEmail(t);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxFontSizeMultiplier={1.3}
+                    />
+                  </View>
+
+                  <View style={styles.buttonGroup}>
+                    <SpiritualButton
+                      title="Begin Spiritual Journey"
+                      onPress={handleSendOtp}
+                      loading={loading}
+                      variant="primary"
+                    />
+                  </View>
+
+                  <View style={styles.dividerRow}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>OR</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+
                   <SpiritualButton
-                    title="Begin Spiritual Journey"
-                    onPress={handleSendOtp}
+                    title="Explore as Guest"
+                    onPress={handleGuestEntry}
                     loading={loading}
-                    variant="primary"
+                    variant="glass"
                   />
-                </View>
 
-                <TouchableOpacity
-                  style={styles.policyLink}
-                  onPress={() => router.push('/privacy')}
-                  accessibilityRole="link"
-                  accessibilityLabel="Read Privacy Policy"
-                >
-                  <Text style={styles.policyText}>
-                    By proceeding, you agree to our DPDP Privacy Policy
+                  {email.trim().length > 0 && fullName.trim().length > 0 && (
+                    <TouchableOpacity
+                      style={styles.quickEntryButton}
+                      onPress={handleDirectEntry}
+                      disabled={loading}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="flash-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
+                      <Text style={styles.quickEntryText}>Direct Devotee Access (Instant)</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    style={styles.policyLink}
+                    onPress={() => router.push('/privacy')}
+                    accessibilityRole="link"
+                    accessibilityLabel="Read Privacy Policy"
+                  >
+                    <Text style={styles.policyText}>
+                      Protected under DPDP Act 2023 • Sacred Data Covenant
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => transitionToStep('email')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Change email address"
+                  >
+                    <Ionicons name="chevron-back" size={16} color={Colors.primary} />
+                    <Text style={styles.backText}>Change Email</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.stepHeaderRow}>
+                    <Ionicons name="shield-checkmark" size={15} color={Colors.secondary} />
+                    <Text style={[styles.stepLabel, { color: Colors.secondary }]}>Step 2: Enter Verification Code</Text>
+                  </View>
+
+                  <Text style={styles.otpHint}>
+                    We sent a 6-digit verification code to{'\n'}
+                    <Text style={styles.emailHighlight}>{email}</Text>
                   </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <TouchableOpacity style={styles.backButton} onPress={slideBack}>
-                  <Ionicons name="chevron-back" size={18} color={Colors.primary} />
-                  <Text style={styles.backText}>Change Details</Text>
-                </TouchableOpacity>
 
-                <Text style={styles.stepLabel}>
-                  <Ionicons name="shield-checkmark" size={14} color={Colors.primary} /> Step 2: Verification Code
-                </Text>
-                <Text style={styles.otpHint}>
-                  We sent a 6-digit code to{'\n'}
-                  <Text style={styles.emailHighlight}>{email}</Text>
-                </Text>
+                  <Text style={styles.label}>6-Digit Verification Code</Text>
+                  <View style={[styles.inputWrapper, styles.otpWrapper]}>
+                    <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, styles.otpInput]}
+                      placeholder="• • • • • •"
+                      placeholderTextColor={Colors.textMuted}
+                      value={otp}
+                      onChangeText={(t) => {
+                        setOtp(t.replace(/\D/g, '').slice(0, 6));
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      autoFocus
+                      maxFontSizeMultiplier={1.3}
+                    />
+                  </View>
 
-                <Text style={styles.label}>Verification Code</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="key-outline" size={18} color={Colors.primary} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, styles.otpInput]}
-                    placeholder="123456"
-                    placeholderTextColor={Colors.textMuted}
-                    value={otp}
-                    onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    autoFocus
-                    maxFontSizeMultiplier={1.3}
-                  />
-                </View>
+                  <View style={styles.buttonGroup}>
+                    <SpiritualButton
+                      title="Verify & Enter Sanctuary"
+                      onPress={handleVerifyOtp}
+                      loading={loading}
+                      variant="primary"
+                    />
+                  </View>
 
-                <View style={{ marginTop: Spacing.standard }}>
-                  <SpiritualButton
-                    title="Verify & Enter Sanctuary"
-                    onPress={handleVerifyOtp}
-                    loading={loading}
-                    disabled={otp.length < 6}
-                    variant="primary"
-                  />
-                </View>
+                  <View style={styles.testNoteBox}>
+                    <Ionicons name="information-circle-outline" size={14} color={Colors.textMuted} style={{ marginRight: 4 }} />
+                    <Text style={styles.testNoteText}>
+                      Offline / Sandbox code: <Text style={styles.testNoteCode}>108108</Text>
+                    </Text>
+                  </View>
 
-                <TouchableOpacity style={styles.resendButton} onPress={handleResend} disabled={loading}>
-                  <Text style={styles.resendText}>
-                    Didn't receive it? <Text style={styles.resendAction}>Resend Code</Text>
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </GlassCard>
-        </Animated.View>
+                  <TouchableOpacity
+                    style={styles.resendButton}
+                    onPress={handleResend}
+                    disabled={resendCooldown > 0 || loading}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.resendText}>
+                      {resendCooldown > 0 ? (
+                        `Resend code in ${resendCooldown}s`
+                      ) : (
+                        <>Didn't receive code? <Text style={styles.resendAction}>Resend</Text></>
+                      )}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </GlassCard>
+          </Animated.View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -250,37 +401,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  container: {
+  keyboardContainer: {
     flex: 1,
-    paddingHorizontal: Spacing.large,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: Spacing.large,
+    paddingVertical: Spacing.large,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.large,
+    marginBottom: Spacing.standard,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 153, 51, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 153, 51, 0.3)',
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: 'rgba(255, 153, 51, 0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 153, 51, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.compact,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 4,
   },
   omBig: {
     fontFamily: Typography.families.devanagari,
-    fontSize: 40,
+    fontSize: 42,
     color: Colors.primary,
+    lineHeight: 52,
   },
   title: {
     fontFamily: Typography.families.heading,
     fontSize: 26,
     fontWeight: '800',
     color: Colors.text,
-    letterSpacing: 2,
+    letterSpacing: 3,
   },
   subtitle: {
     fontFamily: Typography.families.body,
@@ -288,20 +449,41 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 4,
-    maxWidth: 280,
+    maxWidth: 290,
   },
   authCard: {
     padding: Spacing.large,
     borderRadius: Radius.xl,
   },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.3)',
+    borderRadius: Radius.sm,
+    padding: Spacing.compact,
+    marginBottom: Spacing.standard,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: Typography.sizes.caption,
+    color: Colors.error,
+    fontWeight: '600',
+  },
+  stepHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: Spacing.standard,
+  },
   stepLabel: {
     fontFamily: Typography.families.heading,
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.secondary,
+    color: Colors.primary,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: Spacing.standard,
+    letterSpacing: 0.8,
   },
   label: {
     fontFamily: Typography.families.body,
@@ -318,8 +500,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.standard,
-    height: 48,
+    height: 50,
     marginBottom: Spacing.standard,
+  },
+  otpWrapper: {
+    borderColor: Colors.borderGlow,
+    backgroundColor: 'rgba(255, 153, 51, 0.04)',
   },
   inputIcon: {
     marginRight: 10,
@@ -332,9 +518,43 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   otpInput: {
-    letterSpacing: 6,
-    fontSize: 18,
+    letterSpacing: 10,
+    fontSize: 20,
     fontWeight: '700',
+    textAlign: 'center',
+    color: Colors.primary,
+  },
+  buttonGroup: {
+    marginTop: Spacing.compact,
+    marginBottom: Spacing.standard,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.compact,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontSize: Typography.sizes.micro,
+    color: Colors.textMuted,
+    paddingHorizontal: Spacing.compact,
+    fontWeight: '700',
+  },
+  quickEntryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.compact,
+    paddingVertical: 8,
+  },
+  quickEntryText: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '600',
   },
   policyLink: {
     marginTop: Spacing.standard,
@@ -343,9 +563,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   policyText: {
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.textMuted,
-    textDecorationLine: 'underline',
     textAlign: 'center',
   },
   backButton: {
@@ -353,27 +572,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.standard,
     alignSelf: 'flex-start',
+    paddingVertical: 4,
   },
   backText: {
     fontSize: 13,
     fontWeight: '600',
     color: Colors.primary,
-    marginLeft: 4,
+    marginLeft: 2,
   },
   otpHint: {
     fontSize: 13,
     color: Colors.textSecondary,
     marginBottom: Spacing.standard,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   emailHighlight: {
     color: Colors.primary,
     fontWeight: '700',
   },
+  testNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    marginBottom: Spacing.compact,
+  },
+  testNoteText: {
+    fontSize: 11,
+    color: Colors.textMuted,
+  },
+  testNoteCode: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
   resendButton: {
-    marginTop: Spacing.standard,
+    marginTop: 4,
     alignItems: 'center',
     padding: Spacing.compact,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   resendText: {
     fontSize: 13,
