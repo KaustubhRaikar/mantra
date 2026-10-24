@@ -43,14 +43,20 @@ d:\MobileApps\mantra/
 │   ├── UI_DESIGN.md               # Cosmic Vedic Glassmorphism tokens & component library
 │   └── UX_DESIGN.md               # Devotional flows & accessibility guidelines
 ├── web/                           # Public Web Portal & Admin Console (Hostinger Cloud)
-│   ├── index.html                 # Cosmic Vedic landing page matching app UI
+│   ├── index.html                 # Mobile App Showcase landing page (zero mantras, zero tech refs)
 │   ├── privacy.html               # Public DPDP Act 2023 & Google Play privacy policy
 │   ├── delete-account.html        # Public Google Play account deletion portal
 │   ├── terms.html                 # Terms of Service & Devotional use covenant
 │   ├── support.html               # Devotee Support Center & FAQ
+│   ├── admin/                     # Unlisted Admin Governance Console (Direct /admin/login.php)
+│   │   ├── login.php              # 2-step OTP portal with strict sliding window rate limiting
+│   │   ├── index.php              # Executive Dashboard with 10 AI Insights & live telemetry
+│   │   └── scriptures.php         # Scriptural Content CMS
+│   └── includes/                  # Web Security & Analytics Engine
+│       ├── security.php           # Sliding window rate limiter & CSRF defense
+│       ├── db.php                 # MySQL 8.0 schema manager & fallback
+│       └── analytics.php          # 150 live telemetry metric calculators
 │   ├── .well-known/assetlinks.json# Android App Links SHA-256 release fingerprint
-│   ├── admin/                     # Admin console with 8 modular sub-dashboards
-│   ├── includes/                  # Security, PDO database & AnalyticsEngine
 │   └── api/                       # Telemetry ingestion & public deletion API
 └── mantra/                        # Mobile Application Source (React Native / Expo SDK 57)
     ├── app/                       # Expo Router File-Based Routing System

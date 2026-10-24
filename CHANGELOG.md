@@ -4,6 +4,28 @@ All notable changes, security enhancements, and structural refactorings implemen
 
 ---
 
+## 🚀 [2.2.0] - 2026-10-24
+
+### 🌐 Public Website Overhaul & Zero-Architecture Privacy
+- **Clean App Showcase Landing Page (`web/index.html`):** Completely transformed public web presence into a high-converting mobile app landing page. Removed all raw mantra texts, Sanskrit verse displays, transliterations, and word meanings.
+- **Removed Technical & Architecture References:** Completely expunged references to internal tech stacks, database engines (SQLite/MySQL/PostgreSQL), API endpoints (`/api/...`), and server file paths from the public web client and legal policies.
+- **Unlisted Administrative Governance:** Removed all Admin Portal, CMS, Telemetry, and architecture links from public website navigation and footer.
+- **Interactive Japa Mala Demo:** Integrated a distraction-free, interactive 108 bead counter orb demo with audio chimes and streak counters with zero mantra text exposure.
+
+### 🛡️ Admin 2-Step OTP Authentication & Sliding Window Rate Limiting
+- **Dedicated Administrator:** Configured root administrative authentication exclusively for `kaustubhraikar10@gmail.com`.
+- **Strict Sliding Window Rate Limiting (`web/includes/security.php`):**
+  - **Password Attempts:** Enforced maximum 3 attempts per 15-minute moving sliding window.
+  - **OTP Verification Attempts:** Enforced maximum 3 attempts per 5-minute moving sliding window.
+  - Implemented moving window timestamp filtering with precise `retry_after` countdowns.
+- **Email-Based 2-Step OTP Delivery (`web/admin/login.php`):** Generated cryptographically secure 6-digit one-time authorization codes with 5-minute TTL, dispatched via PHP `mail()` in branded HTML format.
+
+### 🗄️ Server MySQL Database Initialization (`u885706413_mantra`)
+- **Complete Schema Provisioning:** Created and verified all 16 operational tables on live Hostinger production database: `users`, `user_sessions`, `user_jaap_daily_logs`, `user_favorites`, `user_consents`, `rate_limits`, `app_events`, `api_request_logs`, `app_crashes`, `support_tickets`, `feedback_submissions`, `admin_audit_logs`, `search_terms_log`, `push_notification_logs`, `admin_users`, and `admin_otps`.
+- **Baseline Devotee & Telemetry Seeding:** Seeded baseline devotees, sessions, and telemetry events so administrative executive dashboards render live metric charts immediately upon sign-in.
+
+---
+
 ## 🚀 [2.1.0] - 2026-10-24
 
 ### ☀️ Theme Contrast & Light Mode Overhaul
