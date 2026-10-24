@@ -4,7 +4,7 @@
  * Enforces rate limiting, CSRF verification, password hashing, and session regeneration.
  */
 
-require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../includes/security.php';
 
 // Redirect if already authenticated
 if (!empty($_SESSION['admin_user'])) {

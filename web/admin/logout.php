@@ -3,7 +3,7 @@
  * Admin Secure Logout Handler
  */
 
-require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../includes/security.php';
 
 // Unset all session variables
 $_SESSION = [];
