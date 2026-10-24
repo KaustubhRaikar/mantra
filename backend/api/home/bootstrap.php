@@ -67,7 +67,7 @@ try {
     }
 
     // 3. Categories
-    $stmtCats = $db->query("SELECT id, name, count FROM categories ORDER BY id ASC");
+    $stmtCats = $db->query("SELECT id, name, icon_url as icon_name, description FROM categories ORDER BY name ASC");
     if ($stmtCats) {
         $payload["categories"] = $stmtCats->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
