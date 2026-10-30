@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   Animated,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Typography } from '../src/constants/theme';
@@ -39,6 +40,31 @@ export default function LoginScreen() {
   // Smooth step transition animation
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // Keyboard and Auto-Scroll Tracking
+  const scrollRef = useRef<any>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToInput = (offset: number) => {
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: offset, animated: true });
+    }, 120);
+  };
 
   // Surface any session expiration notice from AuthContext
   useEffect(() => {
@@ -173,15 +199,18 @@ export default function LoginScreen() {
         style={styles.keyboardContainer}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.scrollContent,
             {
               paddingTop: Math.max(insets.top + 16, 36),
-              paddingBottom: Math.max(insets.bottom + 20, 36),
+              paddingBottom: Math.max(insets.bottom + 20, 36) + (keyboardHeight > 0 ? keyboardHeight + 40 : 0),
+              justifyContent: keyboardHeight > 0 ? 'flex-start' : 'center',
             },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           bounces={false}
         >
           <View style={styles.contentWrapper}>
@@ -262,6 +291,7 @@ export default function LoginScreen() {
                         placeholder="Enter your sacred name"
                         placeholderTextColor={colors.textMuted}
                         value={fullName}
+                        onFocus={() => scrollToInput(110)}
                         onChangeText={(t) => {
                           setFullName(t);
                           if (errorMessage) setErrorMessage(null);
@@ -286,6 +316,7 @@ export default function LoginScreen() {
                         placeholder="devotee@sanctuary.in"
                         placeholderTextColor={colors.textMuted}
                         value={email}
+                        onFocus={() => scrollToInput(170)}
                         onChangeText={(t) => {
                           setEmail(t);
                           if (errorMessage) setErrorMessage(null);
@@ -355,6 +386,7 @@ export default function LoginScreen() {
                         placeholder="• • • • • •"
                         placeholderTextColor={colors.textMuted}
                         value={otp}
+                        onFocus={() => scrollToInput(150)}
                         onChangeText={(t) => {
                           setOtp(t.replace(/\D/g, '').slice(0, 6));
                           if (errorMessage) setErrorMessage(null);

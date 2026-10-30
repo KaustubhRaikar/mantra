@@ -90,6 +90,8 @@ Authentication endpoints strictly implement **true sliding window rate limiting*
 ### 2.2 Production-Ready Zero Bypass Baseline
 * **Removal of Offline Sandbox Codes:** Hardcoded bypass test codes (`108108`, `123456`) and offline mock session generation have been completely eliminated from the client application and server verification pipeline.
 * **Mandatory Devotee Email Verification:** Every devotee session must be issued by the production backend with a verified cryptographic 64-character token bound to hardware Keystore/Keychain identifiers.
+* **Official Subdomain OTP Dispatch (`no-reply@mantra.aarambhtech.in`):** Verification codes are delivered from `no-reply@mantra.aarambhtech.in` configured with Hostinger DNS MX, SPF (`v=spf1 include:_spf.mail.hostinger.com ~all`), DMARC (`v=DMARC1; p=none`), and DKIM records to guarantee pristine email deliverability.
+* **Keyboard-Aware Auto-Scrolling UX:** The mobile client (`app/login.tsx`) dynamically listens to virtual keyboard events and programmatically scrolls focused text inputs and action buttons into clear visibility above the keyboard.
 * **Light Theme UI Polish:** The authentication interface (`app/login.tsx`) dynamically adapts to both "Sacred Dawn Light Theme" and "Cosmic Dark Night Theme" without hardcoded dark container overlaps, ensuring pristine Devanagari typography, radiant saffron highlights, and high-contrast readability.
 
 ---

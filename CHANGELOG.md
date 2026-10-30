@@ -2,6 +2,22 @@
 
 All notable changes, security enhancements, and structural refactorings implemented across the Mantra app ecosystem are documented below.
 
+## 🚀 [2.9.1] - 2026-10-31
+
+### 📧 Official Subdomain OTP Dispatch & Keyboard-Aware Auto-Scrolling UX
+
+#### 1. Official OTP Dispatch (`no-reply@mantra.aarambhtech.in`)
+- **Configured Subdomain Sender:** Updated backend `send_otp.php` to dispatch OTP emails from `no-reply@mantra.aarambhtech.in` with matching `From`, `Reply-To`, `Return-Path`, and envelope sender flags (`-f`).
+- **Hostinger DNS Zone Alignment:** Added MX (`mx1.hostinger.com`, `mx2.hostinger.com`), SPF (`v=spf1 include:_spf.mail.hostinger.com ~all`), DMARC (`v=DMARC1; p=none`), and DKIM CNAME records to `aarambhtech.in` zone for the `mantra` subdomain, ensuring pristine inbox deliverability and preventing spam/spoofing rejection.
+- **Sacred HTML Email Template:** Refined email layout with cosmic glassmorphic aesthetics, bold 6-digit OTP presentation, 10-minute validity warnings, and unmonitored mailbox notices.
+
+#### 2. Mobile Keyboard-Aware Focus Auto-Scrolling (`app/login.tsx`)
+- **Dynamic Keyboard Tracking:** Integrated `Keyboard` event listeners (`keyboardDidShow`/`keyboardDidHide` and iOS will-events) to dynamically calculate virtual keyboard height.
+- **Programmatic Focus Auto-Scroll:** Added smooth programmatic auto-scrolling (`scrollRef.current?.scrollTo(...)`) on `onFocus` of Full Name, Email Address, and 6-Digit OTP inputs.
+- **Adaptive Bottom Inset:** Dynamically expands `contentContainerStyle` bottom padding by `keyboardHeight + 40` when keyboard is visible with `keyboardShouldPersistTaps="handled"` and `keyboardDismissMode="on-drag"`, guaranteeing that active inputs and action buttons remain completely unobstructed.
+
+---
+
 ## 🚀 [2.9.0] - 2026-10-30
 
 ### 📖 Katha Section (कथा), Canonical Fasting Narratives Treasury & 0ms Offline Client Cache

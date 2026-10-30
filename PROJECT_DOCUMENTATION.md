@@ -207,7 +207,7 @@ d:\MobileApps\mantra/
 
 | Endpoint | Method | Payload | Description |
 |---|---|---|---|
-| `/auth/send_otp.php` | `POST` | `{ "email": "user@example.com", "full_name": "Devotee" }` | Sends 6-digit OTP code to user's email |
+| `/auth/send_otp.php` | `POST` | `{ "email": "user@example.com", "full_name": "Devotee" }` | Sends 6-digit OTP code to devotee's email from `no-reply@mantra.aarambhtech.in` |
 | `/auth/verify_otp.php` | `POST` | `{ "email": "...", "otp": "123456", "device_id": "...", "device_name": "..." }` | Verifies OTP code and returns session token |
 | `/auth/verify_session.php` | `POST` | `{ "user_id": 1, "login_token": "...", "device_id": "..." }` | Validates session token & device binding |
 
