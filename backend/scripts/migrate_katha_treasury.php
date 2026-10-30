@@ -48,20 +48,34 @@ $results = [
     "seeded_kathas"  => []
 ];
 
+$driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+$isSqlite = ($driver === 'sqlite');
+
 // Helper to add column safely
 function addColumnIfNotExists(PDO $db, string $table, string $column, string $typeDef): string {
     try {
-        $stmt = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS 
-                              WHERE TABLE_SCHEMA = DATABASE() 
-                              AND TABLE_NAME = :table 
-                              AND COLUMN_NAME = :col");
-        $stmt->execute([':table' => $table, ':col' => $column]);
-        $exists = (int)$stmt->fetchColumn() > 0;
-        if (!$exists) {
-            $db->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$typeDef}");
-            return "ADDED";
+        $driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $stmt = $db->query("PRAGMA table_info({$table})");
+            $cols = $stmt->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array($column, $cols, true)) {
+                $db->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$typeDef}");
+                return "ADDED_SQLITE";
+            }
+            return "ALREADY_EXISTS";
+        } else {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS 
+                                  WHERE TABLE_SCHEMA = DATABASE() 
+                                  AND TABLE_NAME = :table 
+                                  AND COLUMN_NAME = :col");
+            $stmt->execute([':table' => $table, ':col' => $column]);
+            $exists = (int)$stmt->fetchColumn() > 0;
+            if (!$exists) {
+                $db->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$typeDef}");
+                return "ADDED_MYSQL";
+            }
+            return "ALREADY_EXISTS";
         }
-        return "ALREADY_EXISTS";
     } catch (Exception $e) {
         return "ERROR: " . $e->getMessage();
     }
@@ -82,8 +96,8 @@ $createTableSql = "CREATE TABLE IF NOT EXISTS `vrat_katha` (
     `synopsis` TEXT DEFAULT NULL,
     `vrat_significance` TEXT DEFAULT NULL,
     `katha_text` LONGTEXT DEFAULT NULL,
-    `katha_chapters` JSON DEFAULT NULL,
-    `chapters` JSON DEFAULT NULL,
+    `katha_chapters` " . ($isSqlite ? "TEXT" : "JSON") . " DEFAULT NULL,
+    `chapters` " . ($isSqlite ? "TEXT" : "JSON") . " DEFAULT NULL,
     `translation_hi` TEXT DEFAULT NULL,
     `translation_en` TEXT DEFAULT NULL,
     `translation_gu` TEXT DEFAULT NULL,
@@ -93,19 +107,24 @@ $createTableSql = "CREATE TABLE IF NOT EXISTS `vrat_katha` (
     `likes_count` INT UNSIGNED DEFAULT 0,
     `is_featured` TINYINT(1) DEFAULT 1,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+)" . ($isSqlite ? ";" : " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
 $db->exec($createTableSql);
 $results["tables_created"][] = "vrat_katha";
 
 // Also ensure `vrat_kathas` view or table exists for compatibility
 try {
-    $db->exec("CREATE OR REPLACE VIEW `vrat_kathas` AS SELECT * FROM `vrat_katha`");
+    if ($isSqlite) {
+        $db->exec("CREATE VIEW IF NOT EXISTS `vrat_kathas` AS SELECT * FROM `vrat_katha`");
+    } else {
+        $db->exec("CREATE OR REPLACE VIEW `vrat_kathas` AS SELECT * FROM `vrat_katha`");
+    }
     $results["tables_created"][] = "vrat_kathas (view)";
 } catch (Exception $e) {
-    // If views are restricted, create clone table
-    $db->exec(str_replace("`vrat_katha`", "`vrat_kathas`", $createTableSql));
-    $results["tables_created"][] = "vrat_kathas (table)";
+    try {
+        $db->exec(str_replace("`vrat_katha`", "`vrat_kathas`", $createTableSql));
+        $results["tables_created"][] = "vrat_kathas (table)";
+    } catch (Exception $e2) {}
 }
 
 // 2. Ensure multi-language translation columns exist
@@ -294,32 +313,44 @@ $kathas = [
     ]
 ];
 
-$upsertSql = "INSERT INTO `vrat_katha` (
-    `id`, `title`, `katha_name`, `sanskrit`, `sanskrit_title`, `category`, `category_label`,
-    `deity`, `deity_name`, `duration`, `synopsis`, `vrat_significance`, `katha_text`,
-    `translation_hi`, `translation_en`, `translation_gu`, `translation_mr`, `is_featured`
-) VALUES (
-    :id, :title, :katha_name, :sanskrit, :sanskrit_title, :category, :category_label,
-    :deity, :deity_name, :duration, :synopsis, :vrat_significance, :katha_text,
-    :translation_hi, :translation_en, :translation_gu, :translation_mr, 1
-) ON DUPLICATE KEY UPDATE 
-    `title` = VALUES(`title`),
-    `katha_name` = VALUES(`katha_name`),
-    `sanskrit` = VALUES(`sanskrit`),
-    `sanskrit_title` = VALUES(`sanskrit_title`),
-    `category` = VALUES(`category`),
-    `category_label` = VALUES(`category_label`),
-    `deity` = VALUES(`deity`),
-    `deity_name` = VALUES(`deity_name`),
-    `duration` = VALUES(`duration`),
-    `synopsis` = VALUES(`synopsis`),
-    `vrat_significance` = VALUES(`vrat_significance`),
-    `katha_text` = VALUES(`katha_text`),
-    `translation_hi` = VALUES(`translation_hi`),
-    `translation_en` = VALUES(`translation_en`),
-    `translation_gu` = VALUES(`translation_gu`),
-    `translation_mr` = VALUES(`translation_mr`),
-    `is_featured` = 1";
+if ($isSqlite) {
+    $upsertSql = "INSERT OR REPLACE INTO `vrat_katha` (
+        `id`, `title`, `katha_name`, `sanskrit`, `sanskrit_title`, `category`, `category_label`,
+        `deity`, `deity_name`, `duration`, `synopsis`, `vrat_significance`, `katha_text`,
+        `translation_hi`, `translation_en`, `translation_gu`, `translation_mr`, `is_featured`
+    ) VALUES (
+        :id, :title, :katha_name, :sanskrit, :sanskrit_title, :category, :category_label,
+        :deity, :deity_name, :duration, :synopsis, :vrat_significance, :katha_text,
+        :translation_hi, :translation_en, :translation_gu, :translation_mr, 1
+    )";
+} else {
+    $upsertSql = "INSERT INTO `vrat_katha` (
+        `id`, `title`, `katha_name`, `sanskrit`, `sanskrit_title`, `category`, `category_label`,
+        `deity`, `deity_name`, `duration`, `synopsis`, `vrat_significance`, `katha_text`,
+        `translation_hi`, `translation_en`, `translation_gu`, `translation_mr`, `is_featured`
+    ) VALUES (
+        :id, :title, :katha_name, :sanskrit, :sanskrit_title, :category, :category_label,
+        :deity, :deity_name, :duration, :synopsis, :vrat_significance, :katha_text,
+        :translation_hi, :translation_en, :translation_gu, :translation_mr, 1
+    ) ON DUPLICATE KEY UPDATE 
+        `title` = VALUES(`title`),
+        `katha_name` = VALUES(`katha_name`),
+        `sanskrit` = VALUES(`sanskrit`),
+        `sanskrit_title` = VALUES(`sanskrit_title`),
+        `category` = VALUES(`category`),
+        `category_label` = VALUES(`category_label`),
+        `deity` = VALUES(`deity`),
+        `deity_name` = VALUES(`deity_name`),
+        `duration` = VALUES(`duration`),
+        `synopsis` = VALUES(`synopsis`),
+        `vrat_significance` = VALUES(`vrat_significance`),
+        `katha_text` = VALUES(`katha_text`),
+        `translation_hi` = VALUES(`translation_hi`),
+        `translation_en` = VALUES(`translation_en`),
+        `translation_gu` = VALUES(`translation_gu`),
+        `translation_mr` = VALUES(`translation_mr`),
+        `is_featured` = 1";
+}
 
 $stmt = $db->prepare($upsertSql);
 
