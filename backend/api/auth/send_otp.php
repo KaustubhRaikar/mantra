@@ -64,7 +64,7 @@ try {
 } catch (Throwable $dbErr) {
     error_log("OTP DB Error: " . $dbErr->getMessage());
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Unable to store verification record. Please try again."]);
+    echo json_encode(["status" => "error", "message" => "Unable to store verification record: " . $dbErr->getMessage()]);
     exit();
 }
 
