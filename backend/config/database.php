@@ -75,6 +75,21 @@ class Database {
                     attempts INT NOT NULL DEFAULT 0,
                     INDEX idx_exp (expires_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+                // Self-healing column verification for older table schemas
+                try {
+                    $cols = $this->conn->query("SHOW COLUMNS FROM pending_otps")->fetchAll(PDO::FETCH_COLUMN);
+                    if (!in_array('full_name', $cols, true)) {
+                        $this->conn->exec("ALTER TABLE pending_otps ADD COLUMN full_name VARCHAR(100) NOT NULL DEFAULT 'Devotee' AFTER email;");
+                    }
+                    if (!in_array('otp_hash', $cols, true)) {
+                        $this->conn->exec("ALTER TABLE pending_otps ADD COLUMN otp_hash VARCHAR(64) NOT NULL DEFAULT '' AFTER full_name;");
+                    }
+                    if (!in_array('attempts', $cols, true)) {
+                        $this->conn->exec("ALTER TABLE pending_otps ADD COLUMN attempts INT NOT NULL DEFAULT 0 AFTER expires_at;");
+                    }
+                } catch (Throwable $colErr) {}
+
                 $this->conn->exec("CREATE TABLE IF NOT EXISTS api_sliding_rate_limits (
                     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                     client_key VARCHAR(64) NOT NULL,

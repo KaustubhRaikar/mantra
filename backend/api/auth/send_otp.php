@@ -45,21 +45,28 @@ $otp_hash = hash_hmac('sha256', $otp, $serverSecret);
 $expires_at = date('Y-m-d H:i:s', time() + 600); // 10 minutes
 
 // Store OTP in DB
-$upsert = $db->prepare(
-    "INSERT INTO pending_otps (email, full_name, otp_hash, expires_at, attempts) 
-     VALUES (:email, :full_name, :otp_hash, :expires_at, 0)
-     ON DUPLICATE KEY UPDATE 
-       full_name = :full_name, 
-       otp_hash = :otp_hash, 
-       expires_at = :expires_at, 
-       attempts = 0"
-);
-$upsert->execute([
-    ':email'     => $email,
-    ':full_name' => $full_name,
-    ':otp_hash'  => $otp_hash,
-    ':expires_at'=> $expires_at
-]);
+try {
+    $upsert = $db->prepare(
+        "INSERT INTO pending_otps (email, full_name, otp_hash, expires_at, attempts) 
+         VALUES (:email, :full_name, :otp_hash, :expires_at, 0)
+         ON DUPLICATE KEY UPDATE 
+           full_name = :full_name, 
+           otp_hash = :otp_hash, 
+           expires_at = :expires_at, 
+           attempts = 0"
+    );
+    $upsert->execute([
+        ':email'     => $email,
+        ':full_name' => $full_name,
+        ':otp_hash'  => $otp_hash,
+        ':expires_at'=> $expires_at
+    ]);
+} catch (Throwable $dbErr) {
+    error_log("OTP DB Error: " . $dbErr->getMessage());
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => "Unable to store verification record. Please try again."]);
+    exit();
+}
 
 // Send email via PHP mail() from official subdomain address
 $fromEmail = "no-reply@mantra.aarambhtech.in";
