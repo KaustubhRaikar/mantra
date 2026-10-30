@@ -4,9 +4,14 @@ import {
   CANONICAL_MAHAPARVA_POOJA_VIDHIS,
   DayWorshipData,
 } from '../data/canonicalTreasuryExpansion';
+import {
+  CANONICAL_KATHAS,
+  CanonicalKatha,
+} from '../data/canonicalKathas';
 
 const DAY_WORSHIP_CACHE_PREFIX = 'CACHE_DAY_WORSHIP_';
 const POOJA_VIDHIS_CACHE_KEY = 'CACHE_ALL_POOJA_VIDHIS';
+const KATHAS_CACHE_KEY = 'CACHE_ALL_KATHAS';
 
 // In-memory instant L1 cache
 const memoryCache = new Map<string, any>();
@@ -119,12 +124,57 @@ export const liturgicalCache = {
   },
 
   /**
-   * Preload all 7 days of worship into local device cache for 0ms access
+   * Get all Sacred Kathas cached locally on the device
+   */
+  getAllKathasCached: async (): Promise<CanonicalKatha[]> => {
+    // 1. Try In-Memory L1 Cache
+    if (memoryCache.has(KATHAS_CACHE_KEY)) {
+      return memoryCache.get(KATHAS_CACHE_KEY);
+    }
+
+    // 2. Try SQLite L2 Cache
+    try {
+      const db = await getDB();
+      const row = await db.getFirstAsync<{ value: string }>(
+        'SELECT value FROM meta_store WHERE key = ?',
+        [KATHAS_CACHE_KEY]
+      );
+      if (row?.value) {
+        const parsed = JSON.parse(row.value) as CanonicalKatha[];
+        memoryCache.set(KATHAS_CACHE_KEY, parsed);
+        return parsed;
+      }
+    } catch {}
+
+    // 3. Fall back to embedded canonical dataset & persist to SQLite
+    memoryCache.set(KATHAS_CACHE_KEY, CANONICAL_KATHAS);
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        'INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)',
+        [KATHAS_CACHE_KEY, JSON.stringify(CANONICAL_KATHAS)]
+      );
+    } catch {}
+
+    return CANONICAL_KATHAS;
+  },
+
+  /**
+   * Get single Katha details from on-device cache
+   */
+  getKathaDetailsCached: async (id: string): Promise<CanonicalKatha | null> => {
+    const all = await liturgicalCache.getAllKathasCached();
+    return all.find((k) => k.id === id || String(k.id) === String(id)) || null;
+  },
+
+  /**
+   * Preload all 7 days of worship & Kathas into local device cache for 0ms access
    */
   preloadAllLiturgicalDeviceCache: async (): Promise<void> => {
     for (let i = 0; i < 7; i++) {
       await liturgicalCache.saveDaySpecificWorship(i, CANONICAL_7_DAYS_WORSHIP[i]);
     }
     await liturgicalCache.getAllPoojaVidhisCached();
+    await liturgicalCache.getAllKathasCached();
   },
 };

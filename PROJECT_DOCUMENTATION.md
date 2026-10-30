@@ -200,7 +200,8 @@ d:\MobileApps\mantra/
 | `/chalisas/read.php` | `GET` | `t={timestamp}` | Returns Hanuman/Durga Chalisas | `{ "records": [...] }` |
 | `/pooja_vidhis/read.php` | `GET` | `t={timestamp}` | Returns step-by-step ritual guides | `{ "records": [...] }` |
 | `/stotras/read.php` | `GET` | `t={timestamp}` | Returns sacred Stotras | `{ "records": [...] }` |
-| `/vrat_kathas/read.php` | `GET` | `t={timestamp}` | Returns fasting stories (Kathas) | `{ "records": [...] }` |
+| `/vrat_kathas/read.php` | `GET` | `t={timestamp}`, `category` | Returns fasting stories & sacred narratives (Kathas) | `{ "records": [...] }` |
+| `/vrat_kathas/read_single.php` | `GET` | `id={katha_id}` | Returns single Katha with chapters, translations & rituals | `{ "id": "katha_satyanarayan", ... }` |
 
 ### 4.2 Auth APIs
 

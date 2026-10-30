@@ -71,7 +71,7 @@ export default function HomeScreen() {
   const [stotras, setStotras] = useState<any[]>([]);
   const [vratKathas, setVratKathas] = useState<any[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
-  const [activeLiturgicalTab, setActiveLiturgicalTab] = useState<'mantras' | 'stotras' | 'chalisas' | 'pooja_vidhi'>('mantras');
+  const [activeLiturgicalTab, setActiveLiturgicalTab] = useState<'mantras' | 'stotras' | 'chalisas' | 'pooja_vidhi' | 'katha'>('mantras');
 
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -118,11 +118,20 @@ export default function HomeScreen() {
         if (bootstrap.chalisas) setChalisas(bootstrap.chalisas);
         if (bootstrap.pooja_vidhis) setPoojaVidhis(bootstrap.pooja_vidhis);
         if (bootstrap.stotras) setStotras(bootstrap.stotras);
-        if (bootstrap.vrat_kathas) setVratKathas(bootstrap.vrat_kathas);
+        if (bootstrap.vrat_kathas && bootstrap.vrat_kathas.length > 0) {
+          setVratKathas(bootstrap.vrat_kathas);
+        } else {
+          const fallbackKathas = await api.getKathas();
+          setVratKathas(fallbackKathas);
+        }
       }
       setRecentlyPlayed(played);
     } catch (e) {
       console.warn('Failed fetching data from API', e);
+      try {
+        const fallbackKathas = await api.getKathas();
+        setVratKathas(fallbackKathas);
+      } catch (_) {}
     } finally {
       setLoading(false);
     }
@@ -498,13 +507,18 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Liturgical Stream Tabs (Mantras | Stotras | Chalisas | Pooja Vidhi) ── */}
-        <View style={styles.liturgicalTabsContainer}>
+        {/* ── Liturgical Stream Tabs (Mantras | Stotras | Chalisas | Pooja Vidhi | Katha) ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.liturgicalTabsContainer}
+        >
           {[
             { key: 'mantras', label: 'Mantras', sub: 'मंत्र', icon: 'flame' },
             { key: 'stotras', label: 'Stotras', sub: 'स्तोत्र व सूक्त', icon: 'star' },
             { key: 'chalisas', label: 'Chalisas', sub: 'चालीसा', icon: 'book' },
             { key: 'pooja_vidhi', label: 'Pooja Vidhi', sub: 'पूजा विधि', icon: 'leaf' },
+            { key: 'katha', label: 'Katha', sub: 'पावन कथा', icon: 'library' },
           ].map((tab) => {
             const isActive = activeLiturgicalTab === tab.key;
             return (
@@ -547,7 +561,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* ── Dynamic Liturgical Shelf ── */}
         {activeLiturgicalTab === 'mantras' && (
@@ -636,6 +650,30 @@ export default function HomeScreen() {
                 data={poojaVidhis}
                 renderItem={renderFeaturedCard('/pooja_vidhi/')}
                 keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {activeLiturgicalTab === 'katha' && (
+          <>
+            {renderSectionHeader('Katha Sangrah (पावन कथा एवं व्रत)', () => router.push('/katha' as any))}
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+                {[1, 2].map((i) => (
+                  <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={vratKathas}
+                renderItem={renderFeaturedCard('/katha/')}
+                keyExtractor={(item) => (item.id || item.title).toString()}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.hScroll}
@@ -1059,9 +1097,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.compact,
   },
   liturgicalTabBtn: {
-    flex: 1,
+    minWidth: 84,
     paddingVertical: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     borderRadius: Radius.md,
     borderWidth: 1.2,
     alignItems: 'center',

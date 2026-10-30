@@ -2,6 +2,49 @@
 
 All notable changes, security enhancements, and structural refactorings implemented across the Mantra app ecosystem are documented below.
 
+## 🚀 [2.9.0] - 2026-10-30
+
+### 📖 Katha Section (कथा), Canonical Fasting Narratives Treasury & 0ms Offline Client Cache
+
+#### 1. Katha Section (कथा) Liturgical Stream Tab & Home Screen Shelf
+- **5th Liturgical Tab:** Added "Katha (पावन कथा)" alongside Mantras, Stotras, Chalisas, and Pooja Vidhi in the liturgical navigation stream of `app/(tabs)/index.tsx`.
+- **Responsive Horizontal Tab Strip:** Scrollable layout ensuring all 5 tab buttons remain legible on all phone screen widths.
+- **Dedicated Katha Home Shelf:** Renders featured sacred narratives with deity badges, category pills, and 1-tap navigation directly into the scripture reader.
+
+#### 2. Dedicated Katha Directory & Scripture Reader Screens
+- **Katha Sangrah Directory (`app/katha/index.tsx`):**
+  - Instant live search by title, deity, and narrative keywords.
+  - Category filter pills: *All (सम्पूर्ण कथाएं)*, *Vrat Kathas (व्रत कथा)*, and *Pauranik Leela (पौराणिक लीला)*.
+  - Direct integration with user favorites and cosmic glassmorphic design system.
+- **Enhanced Katha Reader (`app/katha/[id].tsx` & `app/vrat_katha/[id].tsx`):**
+  - Chapter-by-chapter and narrative parsing via `parseScriptureContent`.
+  - Multi-language translation tabs (`हिन्दी`, `English`, `ગુજરાતી`, `मराठी`) resolving via `LanguageContext`.
+  - Text-to-Speech (TTS) voice narration, font scaling, audio player bar, and social sharing.
+
+#### 3. Canonical Katha Library (`canonicalKathas.ts`)
+- **10 Complete Canonical Kathas:**
+  1. *Shri Satyanarayan Vrat Katha (सम्पूर्ण ५ अध्याय)*
+  2. *Somvar Vrat Katha (भगवान शिव कृपा)*
+  3. *Mangalvar Vrat Katha (श्री हनुमान जी)*
+  4. *Brihaspativar Vrat Katha (देवगुरु बृहस्पति एवं श्री हरि विष्णु)*
+  5. *Shukravar Vaibhav Lakshmi Vrat Katha (माता वैभव लक्ष्मी)*
+  6. *Shanivar Vrat Katha (कर्मफलदाता शनि देव एवं नवग्रह)*
+  7. *Samudra Manthan एवं अमृत प्राकट्य (श्रीमद्भागवत एवं विष्णु पुराण)*
+  8. *शिव-पार्वती पावन विवाह कथा (महाशिवरात्रि महोत्सव)*
+  9. *गजेन्द्र मोक्ष पावन उद्धार कथा (श्रीमद्भागवत अष्टम स्कन्ध)*
+  10. *गंगा अवतरण एवं भागीरथ तपस्या (रामायण एवं महाभारत प्रसंग)*
+
+#### 4. High-Performance Client Device Cache Engine (`liturgicalCache.ts`)
+- **SQLite `meta_store` L2 & In-Memory L1:** Cached locally on devotee devices with automatic background preloading on app launch for 0ms offline availability.
+- **Graceful Fallbacks:** Guaranteed content availability even when completely offline or during server maintenance.
+
+#### 5. Backend MySQL Schema Migration & Cloud Endpoints
+- **Database Migration Script (`migrate_katha_treasury.php`):** Creates/updates `vrat_katha` and `vrat_kathas` with all canonical columns and multi-language fields, seeding the 10 canonical narratives.
+- **Dedicated API Endpoints:** Added `/vrat_kathas/read.php` and `/vrat_kathas/read_single.php` with app-only guard and sliding window rate limiting.
+- **Resilient Home Bootstrap (`bootstrap.php`):** Isolated `vrat_kathas` query block with try/catch to protect single-request bootstrap delivery.
+
+---
+
 ## 🚀 [2.8.0] - 2026-10-30
 
 ### 🌐 9-Language Translation Engine, 7-Day Liturgical Sacred Worship & High-Performance Device Caching

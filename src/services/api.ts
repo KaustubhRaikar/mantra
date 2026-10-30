@@ -7,6 +7,7 @@ import {
   CANONICAL_7_DAYS_WORSHIP,
   CANONICAL_MAHAPARVA_POOJA_VIDHIS,
 } from '../data/canonicalTreasuryExpansion';
+import { CANONICAL_KATHAS } from '../data/canonicalKathas';
 
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
@@ -472,6 +473,80 @@ export const api = {
   },
 
   getVratKathaDetails: async (id: string | number) => {
+    try {
+      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
+      if (response.data) {
+        await saveLocalCache(`CACHE_vrat_katha_${id}`, response.data);
+        return response.data;
+      }
+    } catch (error) {
+      const cached = await getLocalCache(`CACHE_vrat_katha_${id}`);
+      if (cached) return cached;
+    }
+    return null;
+  },
+
+  getKathas: async () => {
+    try {
+      const response = await apiClient.get('/vrat_kathas/read.php');
+      const records = response.data.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_vrat_kathas', records);
+        return records;
+      }
+    } catch {}
+
+    const cached = await getLocalCache<any[]>('CACHE_vrat_kathas');
+    if (cached && cached.length > 0) return cached;
+
+    // Fall back to canonical Kathas
+    const canonicalList = CANONICAL_KATHAS.map((k) => ({
+      id: k.id,
+      title: k.title,
+      katha_name: k.title,
+      deity: k.deity,
+      deity_name: k.deity,
+      category: k.category,
+      category_label: k.categoryLabel,
+      duration: k.duration,
+      synopsis: k.synopsis,
+      katha_text: k.kathaText,
+      translation_hi: k.translation_hi,
+      translation_en: k.translation_en,
+      translation_gu: k.translation_gu,
+      translation_mr: k.translation_mr,
+    }));
+    await saveLocalCache('CACHE_vrat_kathas', canonicalList);
+    return canonicalList;
+  },
+
+  getKathaDetails: async (id: string | number) => {
+    // 1. Check canonical Kathas
+    const canonicalMatch = CANONICAL_KATHAS.find((k) => k.id === String(id));
+    if (canonicalMatch) {
+      return {
+        id: canonicalMatch.id,
+        title: canonicalMatch.title,
+        katha_name: canonicalMatch.title,
+        deity: canonicalMatch.deity,
+        deity_name: canonicalMatch.deity,
+        category: canonicalMatch.category,
+        category_label: canonicalMatch.categoryLabel,
+        duration: canonicalMatch.duration,
+        synopsis: canonicalMatch.synopsis,
+        katha_text: canonicalMatch.kathaText,
+        sanskrit: canonicalMatch.sanskritTitle,
+        translation_hi: canonicalMatch.translation_hi,
+        translation_hindi: canonicalMatch.translation_hi,
+        translation_en: canonicalMatch.translation_en,
+        translation_english: canonicalMatch.translation_en,
+        translation_gu: canonicalMatch.translation_gu,
+        translation_mr: canonicalMatch.translation_mr,
+        chapters: canonicalMatch.chapters,
+      };
+    }
+
+    // 2. Try remote API
     try {
       const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
       if (response.data) {

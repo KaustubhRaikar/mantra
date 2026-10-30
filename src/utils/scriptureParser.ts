@@ -133,27 +133,44 @@ export function parseScriptureContent(data: any): ParsedScripture {
     };
   }
 
-  // 2. Vrat Katha Chapters
-  if (data.katha_chapters) {
-    const rawChapters = safeParseJson(data.katha_chapters) || (Array.isArray(data.katha_chapters) ? data.katha_chapters : null);
+  // 2. Vrat Katha Chapters & Narratives
+  if (data.katha_chapters || data.chapters || data.katha_text) {
+    const rawChapters = safeParseJson(data.katha_chapters || data.chapters) || 
+      (Array.isArray(data.katha_chapters) ? data.katha_chapters : null) ||
+      (Array.isArray(data.chapters) ? data.chapters : null);
+
+    let formattedContent = '';
     if (Array.isArray(rawChapters) && rawChapters.length > 0) {
-      const formattedChapters = rawChapters
+      formattedContent = rawChapters
         .map((c: any, idx: number) => {
-          const title = c.title ? `अध्याय ${c.chapter || idx + 1} — ${c.title}` : `अध्याय ${c.chapter || idx + 1}`;
-          return `${title}\n\n${c.story || c.text || ''}`;
+          const chapNum = c.chapterNumber || c.chapter || idx + 1;
+          const title = c.title ? `अध्याय ${chapNum} — ${c.title}` : `अध्याय ${chapNum}`;
+          const body = c.story || c.text || '';
+          return `${title}\n\n${body}`;
         })
         .join('\n\n═══════════════════════\n\n');
+    } else if (typeof data.katha_text === 'string' && data.katha_text.trim()) {
+      formattedContent = data.katha_text.trim();
+    }
 
+    if (formattedContent) {
       const hindiParts: string[] = [];
       if (data.opening_verse) hindiParts.push(`आरंभिक श्लोक:\n${data.opening_verse}`);
       if (data.vidhi) hindiParts.push(`\nव्रत विधि:\n${data.vidhi}`);
       if (data.rules) hindiParts.push(`\nनियम:\n${data.rules}`);
+      if (data.vratSignificance || data.vrat_significance) {
+        hindiParts.push(`\nव्रत महात्म्य:\n${data.vratSignificance || data.vrat_significance}`);
+      }
+      if (data.translation_hi) {
+        hindiParts.push(`\nकथा सार (भावार्थ):\n${data.translation_hi}`);
+      }
       if (data.closing_verse) hindiParts.push(`\nसमापन श्लोक:\n${data.closing_verse}`);
 
       return {
-        sanskritText: formattedChapters,
-        hindiText: hindiParts.length > 0 ? hindiParts.join('\n\n') : undefined,
-        englishMeaning: data.benefits || data.significance || data.description,
+        sanskritText: formattedContent,
+        hindiText: hindiParts.length > 0 ? hindiParts.join('\n\n') : data.translation_hi || undefined,
+        englishMeaning: data.translation_en || data.benefits || data.significance || data.description || undefined,
+        transliteration: data.transliteration || undefined,
       };
     }
   }

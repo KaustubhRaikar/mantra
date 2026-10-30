@@ -60,6 +60,8 @@ function RootLayoutNav() {
         <Stack.Screen name="stotra/[id]" options={{ title: "Stotra Details" }} />
         <Stack.Screen name="pooja_vidhi/[id]" options={{ title: "Pooja Vidhi Details" }} />
         <Stack.Screen name="vrat_katha/[id]" options={{ title: "Vrat Katha Details" }} />
+        <Stack.Screen name="katha/index" options={{ title: "Katha Sangrah" }} />
+        <Stack.Screen name="katha/[id]" options={{ title: "Katha Details" }} />
         <Stack.Screen name="festival_aarti/index" options={{ title: "Festival Aartis" }} />
         <Stack.Screen name="festival_aarti/[id]" options={{ title: "Festival Aarti Details" }} />
         <Stack.Screen name="search/index" options={{ title: "Search" }} />

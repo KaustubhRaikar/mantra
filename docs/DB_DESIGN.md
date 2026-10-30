@@ -189,6 +189,43 @@ CREATE TABLE mantras (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
+```sql
+-- Sacred Vrat Kathas & Pauranik Narratives Table
+CREATE TABLE vrat_katha (
+    id VARCHAR(64) NOT NULL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    katha_name VARCHAR(255) DEFAULT NULL,
+    sanskrit VARCHAR(255) DEFAULT NULL,
+    sanskrit_title VARCHAR(255) DEFAULT NULL,
+    category VARCHAR(64) DEFAULT 'vrat_katha',
+    category_label VARCHAR(100) DEFAULT 'व्रत कथा',
+    deity VARCHAR(100) DEFAULT NULL,
+    deity_name VARCHAR(100) DEFAULT NULL,
+    duration VARCHAR(50) DEFAULT NULL,
+    synopsis TEXT DEFAULT NULL,
+    vrat_significance TEXT DEFAULT NULL,
+    katha_text LONGTEXT DEFAULT NULL,
+    katha_chapters JSON DEFAULT NULL,
+    chapters JSON DEFAULT NULL,
+    translation_hi TEXT DEFAULT NULL,
+    translation_en TEXT DEFAULT NULL,
+    translation_gu TEXT DEFAULT NULL,
+    translation_mr TEXT DEFAULT NULL,
+    translation_bn TEXT DEFAULT NULL,
+    translation_te TEXT DEFAULT NULL,
+    translation_ta TEXT DEFAULT NULL,
+    translation_kn TEXT DEFAULT NULL,
+    audio_url VARCHAR(500) DEFAULT NULL,
+    views_count INT UNSIGNED DEFAULT 0,
+    likes_count INT UNSIGNED DEFAULT 0,
+    is_featured BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_category (category),
+    INDEX idx_deity (deity),
+    INDEX idx_featured (is_featured)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 *(Identical normalized multi-language structures exist for `aartis`, `festival_aartis`, `chalisas`, `pooja_vidhis`, `stotras`, `vrat_kathas`, and `upanishads`.)*
 
 ### 3.2.1 On-Device SQLite High-Performance Cache (Client Tier)
@@ -196,6 +233,8 @@ To ensure zero-latency devotional access and offline immunity, the mobile client
 * `CACHE_user_preferred_language`: Current language selection (`sa`, `hi`, `en`, `gu`, `mr`, `bn`, `te`, `ta`, `kn`).
 * `CACHE_DAY_WORSHIP_{0..6}`: Pre-cached 7-day liturgical worship plans, presiding deities, mantras, and aartis.
 * `CACHE_ALL_POOJA_VIDHIS`: Pre-cached canonical Nitya and Mahaparva Pooja Vidhi procedures with step checklists and samagri requirements.
+* `CACHE_ALL_KATHAS`: Pre-cached canonical 10-Katha library (7-Day Vrat Kathas & Pauranik Leelas) with chapter parsing and translations.
+* `CACHE_KATHA_{id}`: Granular per-narrative details cache for instant opening in `ScriptureReader`.
 * `CACHE_home_bootstrap`: Stale-while-revalidate liturgical home feed cache.
 
 ### 3.3 User Devotional State & Sync Tables

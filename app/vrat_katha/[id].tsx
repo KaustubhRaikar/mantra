@@ -11,17 +11,21 @@ export default function VratKathaDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
+    let isMounted = true;
     (async () => {
       setLoading(true);
       try {
-        const res = await api.getVratKathaDetails(id as string);
-        setData(res);
+        const res = await api.getKathaDetails(id as string);
+        if (isMounted) setData(res);
       } catch (e) {
         console.warn('Failed loading vrat katha details:', e);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     })();
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const parsed = parseScriptureContent(data);
@@ -29,15 +33,17 @@ export default function VratKathaDetailScreen() {
   return (
     <ScriptureReader
       id={id as string}
-      title={data?.katha_name || data?.title || 'Vrat Katha Mahatmya'}
+      title={data?.title || data?.katha_name || 'Vrat Katha Mahatmya'}
       sanskritText={parsed.sanskritText}
       hindiText={parsed.hindiText}
       englishMeaning={parsed.englishMeaning}
       transliteration={parsed.transliteration}
-      deityName={data?.deity_name || data?.god || 'Vrat Katha'}
+      deityName={data?.deity || data?.deity_name || 'Vrat Katha'}
       audioUrl={data?.audio_url}
-      categoryPath="vrat_katha"
+      categoryPath="katha"
       loading={loading}
+      translationGu={data?.translation_gu}
+      translationMr={data?.translation_mr}
     />
   );
 }

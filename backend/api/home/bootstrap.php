@@ -122,9 +122,13 @@ try {
     }
 
     // 9. Vrat Kathas
-    $stmtVrat = $db->query("SELECT * FROM vrat_katha ORDER BY id ASC");
-    if ($stmtVrat) {
-        $payload["vrat_kathas"] = $stmtVrat->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    try {
+        $stmtVrat = $db->query("SELECT * FROM vrat_katha ORDER BY id ASC");
+        if ($stmtVrat) {
+            $payload["vrat_kathas"] = $stmtVrat->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        }
+    } catch (Exception $ve) {
+        $payload["vrat_kathas"] = [];
     }
 
     http_response_code(200);
