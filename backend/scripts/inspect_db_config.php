@@ -20,7 +20,7 @@ foreach ($candidates as $c) {
         $safeContent = preg_replace('/([\'"]?(?:pass|password)[\'"]?\s*=>\s*[\'"])(.+?)([\'"])/i', '$1****$3', $content);
         $found[$c] = [
             "size" => strlen($content),
-            "snippet" => substr($safeContent, 0, 500)
+            "snippet" => $safeContent
         ];
     } else {
         $found[$c] = false;
