@@ -82,9 +82,9 @@ Authentication endpoints strictly implement **true sliding window rate limiting*
 
 | Endpoint | Target Key | Limit Quota | Sliding Window | Response Code | Breach Payload & Header |
 |---|---|---|---|:---:|---|
-| `/auth/send_otp.php` | Devotee Email | **2 requests** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
-| `/auth/send_otp.php` | Originating IP | **5 requests** | 1 Hour (3600s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
-| `/auth/verify_otp.php` | Originating IP | **5 attempts** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
+| `/auth/send_otp.php` | Devotee Email | **5 requests** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many OTP requests for this email. Please check your inbox or try again after 15 minutes."* |
+| `/auth/send_otp.php` | Originating IP | **30 requests** | 1 Hour (3600s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests from this network. Please try again after some time."* |
+| `/auth/verify_otp.php` | Originating IP | **15 attempts** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
 | `/auth/verify_otp.php` | OTP Token Code | **3 attempts** | Per OTP lifecycle | HTTP 401 | Immediate database token erasure • Code Invalidated |
 
 ### 2.2 Production-Ready Zero Bypass Baseline

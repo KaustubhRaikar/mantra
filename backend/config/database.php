@@ -96,6 +96,15 @@ class Database {
                     created_at INT UNSIGNED NOT NULL,
                     INDEX idx_client_sliding (client_key, created_at)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+                // One-time unblock reset for legacy proxy-locked rate limit records
+                $unblockMarker = sys_get_temp_dir() . '/mantra_rate_limit_reset_v292.lock';
+                if (!file_exists($unblockMarker)) {
+                    try {
+                        $this->conn->exec("DELETE FROM api_sliding_rate_limits;");
+                        @touch($unblockMarker);
+                    } catch (Throwable $t) {}
+                }
             }
         } catch (Throwable $e) {}
     }

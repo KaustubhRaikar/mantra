@@ -25,15 +25,23 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   config.headers['X-App-Key'] = MANTRA_APP_KEY;
   try {
-    const deviceId = await SecureStore.getItemAsync('device_id');
-    if (deviceId) {
-      config.headers['X-Device-ID'] = deviceId;
+    let deviceId = await SecureStore.getItemAsync('device_id');
+    if (!deviceId) {
+      deviceId = 'dev_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+      await SecureStore.setItemAsync('device_id', deviceId);
     }
-    const token = await SecureStore.getItemAsync('session_token');
+    config.headers['X-Device-ID'] = deviceId;
+
+    const token =
+      (await SecureStore.getItemAsync('session_token')) ||
+      (await SecureStore.getItemAsync('token'));
     if (token) {
       config.headers['X-Login-Token'] = token;
     }
-    const userStr = await SecureStore.getItemAsync('user_data');
+
+    const userStr =
+      (await SecureStore.getItemAsync('user_data')) ||
+      (await SecureStore.getItemAsync('user'));
     if (userStr) {
       const user = JSON.parse(userStr);
       if (user?.id) {

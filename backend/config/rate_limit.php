@@ -13,21 +13,38 @@
 define('MANTRA_AUTHORIZED_APP_KEY', 'm_app_c0sm1c_7f9b2d4e81a3e5c7');
 
 function getTrustedClientIp(): string {
-    $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    
-    // Only parse X-Forwarded-For if explicitly configured via environment or trusted reverse proxy subnet
-    $trustedProxies = defined('TRUSTED_PROXIES') ? TRUSTED_PROXIES : ['127.0.0.1', '::1'];
-    $isTrustedProxy = in_array($remoteIp, $trustedProxies, true);
-
-    if ($isTrustedProxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        $clientIp = trim($ips[0]);
-        if (filter_var($clientIp, FILTER_VALIDATE_IP)) {
-            return $clientIp;
+    // 1. Cloudflare / Hostinger CDN standard connecting IP
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $cfIp = trim($_SERVER['HTTP_CF_CONNECTING_IP']);
+        if (filter_var($cfIp, FILTER_VALIDATE_IP)) {
+            return $cfIp;
         }
     }
 
-    return $remoteIp;
+    // 2. Direct Reverse Proxy Real-IP header
+    if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+        $realIp = trim($_SERVER['HTTP_X_REAL_IP']);
+        if (filter_var($realIp, FILTER_VALIDATE_IP)) {
+            return $realIp;
+        }
+    }
+
+    // 3. X-Forwarded-For header (first public client IP)
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        foreach ($ips as $ip) {
+            $candidate = trim($ip);
+            if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $candidate;
+            }
+        }
+        $first = trim($ips[0]);
+        if (filter_var($first, FILTER_VALIDATE_IP)) {
+            return $first;
+        }
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 }
 
 /**
@@ -45,6 +62,12 @@ function enforceAppOnlyAndSlidingRateLimit(PDO $db): void {
             "message" => "Web API access is disabled. Content access is exclusively reserved for the official Mantra mobile application."
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit();
+    }
+
+    // Dedicated auth endpoints have their own specialized per-action rate limiters
+    $script = basename($_SERVER['SCRIPT_FILENAME'] ?? '');
+    if (in_array($script, ['send_otp.php', 'verify_otp.php'], true)) {
+        return;
     }
 
     // 2. Resolve 1 App, 1 Mobile, 1 User, 1 Unique Key
@@ -81,9 +104,9 @@ function enforceAppOnlyAndSlidingRateLimit(PDO $db): void {
     $countHour   = 0;
     $countDay    = count($timestamps);
 
-    $limitMinute = 5;
-    $limitHour   = 15;
-    $limitDay    = 100;
+    $limitMinute = 60;   // 60 calls / min (smooth multi-tab devotional navigation)
+    $limitHour   = 300;  // 300 calls / hour
+    $limitDay    = 2500; // 2500 calls / day
 
     foreach ($timestamps as $ts) {
         $ts = (int)$ts;

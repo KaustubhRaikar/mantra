@@ -13,8 +13,8 @@ $db = $database->getConnection();
 
 $clientIp = getTrustedClientIp();
 
-// 1. Rate-limit per IP: max 5 per hour (3600s) sliding window
-checkRateLimit($db, 'send_otp_ip', $clientIp, 5, 3600, "Too many requests. Please try after sometime.");
+// 1. Rate-limit per IP: max 30 per hour (3600s) sliding window (NAT & cellular carrier safe)
+checkRateLimit($db, 'send_otp_ip', $clientIp, 30, 3600, "Too many requests from this network. Please try again after some time.");
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -32,8 +32,8 @@ if (!$email) {
     exit();
 }
 
-// 2. Rate-limit per Email: max 2 per 15 min (900s) sliding window
-checkRateLimit($db, 'send_otp_email', $email, 2, 900, "Too many requests. Please try after sometime.");
+// 2. Rate-limit per Email: max 5 per 15 min (900s) sliding window (allows legitimate resends)
+checkRateLimit($db, 'send_otp_email', $email, 5, 900, "Too many OTP requests for this email. Please check your inbox or try again after 15 minutes.");
 
 $full_name = !empty($data->full_name) ? htmlspecialchars(strip_tags(trim($data->full_name)), ENT_QUOTES, 'UTF-8') : 'User';
 $full_name = substr($full_name, 0, 100);

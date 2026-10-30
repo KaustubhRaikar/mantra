@@ -2,6 +2,22 @@
 
 All notable changes, security enhancements, and structural refactorings implemented across the Mantra app ecosystem are documented below.
 
+## 🚀 [2.9.2] - 2026-10-31
+
+### 🛡️ Production Rate Limiting Fix & Real Client IP Resolution
+
+#### 1. Real Client IP Resolution behind Reverse Proxies & CDN
+- **Resolved Shared Proxy IP Collisions:** Fixed `getTrustedClientIp()` in `backend/config/rate_limit.php` to properly read `HTTP_CF_CONNECTING_IP`, `HTTP_X_REAL_IP`, and the first public IP in `HTTP_X_FORWARDED_FOR`. Previously, Hostinger CDN edge IPs caused all global users to share a single IP quota.
+- **NAT & Cellular Carrier Resilience:** Increased OTP send IP sliding window limit to 30 requests/hour and email limit to 5 requests/15 minutes, preventing accidental lockout on Carrier-Grade NAT (Jio, Airtel) and shared temple/home Wi-Fi networks.
+- **Dedicated Auth Endpoint Isolation:** Isolated authentication endpoints (`send_otp.php`, `verify_otp.php`) from content-browsing sliding limits, allowing devotees to sign in without hitting false positive minute/hourly rate limit blocks.
+
+#### 2. Self-Healing Unblock Flush & Client Device ID Guarantee
+- **Automated Deploy Unblock:** Added a one-time automated flush of `api_sliding_rate_limits` in `ensureTables()` triggered on deploy to immediately liberate any devotee IPs that were locked out by the shared proxy bug.
+- **Mobile Device ID Initialization:** Updated `src/services/api.ts` to automatically generate and persist a unique hardware-independent fallback device ID into `SecureStore` upon first API call, guaranteeing that `X-Device-ID` is never omitted.
+- **Session & User Key Alignment:** Ensured `api.ts` checks fallback storage keys (`token`/`session_token`, `user`/`user_data`).
+
+---
+
 ## 🚀 [2.9.1] - 2026-10-31
 
 ### 📧 Official Subdomain OTP Dispatch & Keyboard-Aware Auto-Scrolling UX
