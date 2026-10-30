@@ -121,15 +121,26 @@ if ($user_query->rowCount() > 0) {
 $token = bin2hex(random_bytes(32));
 
 // Register / update device session
-$session_query = $db->prepare(
-    "INSERT INTO user_device_info (user_id, device_id, device_name, login_token) 
-     VALUES (:user_id, :device_id, :device_name, :token) 
-     ON DUPLICATE KEY UPDATE 
-       device_id    = :device_id, 
-       device_name  = :device_name, 
-       login_token  = :token,
-       last_active  = CURRENT_TIMESTAMP"
-);
+$driver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+if ($driver === 'sqlite') {
+    $session_query = $db->prepare(
+        "INSERT INTO user_device_info (user_id, device_id, device_name, login_token, last_active) 
+         VALUES (:user_id, :device_id, :device_name, :token, CURRENT_TIMESTAMP) 
+         ON CONFLICT(user_id, device_id) DO UPDATE SET 
+           device_name  = excluded.device_name, 
+           login_token  = excluded.login_token,
+           last_active  = CURRENT_TIMESTAMP"
+    );
+} else {
+    $session_query = $db->prepare(
+        "INSERT INTO user_device_info (user_id, device_id, device_name, login_token) 
+         VALUES (:user_id, :device_id, :device_name, :token) 
+         ON DUPLICATE KEY UPDATE 
+           device_name  = :device_name, 
+           login_token  = :token,
+           last_active  = CURRENT_TIMESTAMP"
+    );
+}
 $session_query->execute([
     ':user_id'     => $user_id,
     ':device_id'   => $device_id,
