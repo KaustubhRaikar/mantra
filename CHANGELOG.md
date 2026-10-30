@@ -2,6 +2,40 @@
 
 All notable changes, security enhancements, and structural refactorings implemented across the Mantra app ecosystem are documented below.
 
+## 🚀 [2.8.0] - 2026-10-30
+
+### 🌐 9-Language Translation Engine, 7-Day Liturgical Sacred Worship & High-Performance Device Caching
+
+#### 1. Multi-Language Translation Engine & Language Context
+- **9 Supported Regional Indian Languages:** Implemented `LanguageContext` supporting Sanskrit (`sa`), Hindi (`hi`), English (`en`), Gujarati (`gu`), Marathi (`mr`), Bengali (`bn`), Telugu (`te`), Tamil (`ta`), and Kannada (`kn`).
+- **Resilient Fallback Resolver (`translationEngine.ts`):** Hierarchical resolution checks regional language translation &rarr; Hindi (`hi`) &rarr; English (`en`), preventing blank views while displaying subtle informative fallback badges (`✨ Gujarati (हिन्दी भावार्थ)`).
+- **Persistent Device Caching:** User language preference is stored directly in SQLite `meta_store` and memory for 0ms startup retrieval.
+- **Dynamic Translation Tabs (`ScriptureReader.tsx`):** The Scripture Reader tab dynamically displays the devotee's active regional language (`ગુજરાતી`, `मराठी`, `తెలుగు`, etc.) and renders accurate translations.
+- **9-Language Profile Modal (`app/(tabs)/profile.tsx`):** Devotees can switch their preferred language with 1 tap through a modal displaying native scripts and transliterated titles.
+
+#### 2. Day-Specific Sacred Worship (दैनिक वार पूजा व मंत्र)
+- **Home Screen Sacred Calendar (`DaySpecificWorshipCard.tsx`):** Added a dynamic day-of-week component located below the Panchang card, highlighting today's presiding deity (Surya, Shiva, Hanuman, Ganesha, Vishnu, Mahalakshmi, Shani), ruling celestial planet, sacred flower offerings, naivedya/bhog, primary mantra, and step-by-step daily pooja vidhi.
+- **Interactive 7-Day Browsing Strip:** Allows devotees to browse worship guidance, rules, and procedures for any day of the week (Sunday through Saturday).
+- **Direct 1-Tap Navigation:** Quick action buttons to chant the day's mantra or start the day's pooja vidhi reader.
+
+#### 3. Canonical Treasury Expansions & Mahaparva Pooja Vidhis
+- **Expanded Liturgical Repository (`canonicalTreasuryExpansion.ts`):** Complete canonical datasets for 7-Day cyclical worship, 7-Day Aartis, Day-Specific & Navagraha Mantras, and 5 Mahaparva Pooja Vidhis:
+  - *Shri Satyanarayan Vrat Katha & Shodashopachara Vidhi*
+  - *Navratri Shailputri-to-Siddhidatri Navadurga Kalash Sthapana & Pooja Vidhi*
+  - *Mahashivratri Char Pahar Rudrabhisheka Vidhi*
+  - *Deepawali Shubh Muhurat Lakshmi-Ganesha-Kuber Pooja Vidhi*
+  - *Ganesh Chaturthi Sthapana & Visarjan Shodashopachara Vidhi*
+
+#### 4. High-Performance Client Device Caching Engine (`liturgicalCache.ts`)
+- **Double-Tier Device Caching:** L1 in-memory cache + L2 SQLite `meta_store` persistence. All 7 days of worship, Mahaparva vidhis, and canonical translations load in 0ms with zero network dependency.
+- **Background Preloading:** Preloads all liturgical datasets asynchronously on app launch.
+
+#### 5. Backend Database Schema & Hostinger Deployment
+- **Multi-Language Migration Script (`migrate_multilang_treasury.php`):** Added `translation_gu`, `translation_mr`, `translation_bn`, `translation_te`, `translation_ta`, `translation_kn` columns to `mantras`, `aartis`, and `pooja_vidhi`.
+- **Enhanced Unified Bootstrap Feed (`bootstrap.php`):** Added `day_specific_worship` to the single-request bootstrap response.
+
+---
+
 ## 🚀 [2.7.0] - 2026-10-25
 
 ### 🪔 Liturgical Streams Architecture, Sweet Shanti Rate Limiting & Active-Tab TTS Engine

@@ -27,6 +27,8 @@ import { safeCreateSound, safeSetAudioMode } from '../../src/utils/audioPlayer';
 import { PanchangCard } from '../../src/components/PanchangCard';
 import { SankalpaProgressCard } from '../../src/components/SankalpaProgressCard';
 import { sankalpaStorage } from '../../src/services/sankalpaStorage';
+import { DaySpecificWorshipCard } from '../../src/components/DaySpecificWorshipCard';
+import { liturgicalCache } from '../../src/services/liturgicalCache';
 
 const { width } = Dimensions.get('window');
 const CARD_W = width * 0.72;
@@ -128,6 +130,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData();
+    liturgicalCache.preloadAllLiturgicalDeviceCache().catch(() => {});
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -353,6 +356,9 @@ export default function HomeScreen() {
 
         {/* ── Sacred Daily Panchang & Muhurta Card ──────────── */}
         <PanchangCard />
+
+        {/* ── Day Specific Pooja Vidhi & Mantras (7-Day Sacred Calendar) ──────── */}
+        <DaySpecificWorshipCard />
 
         {/* ── Daily Mantra Card ─────────────────────────────────── */}
         {loading ? (

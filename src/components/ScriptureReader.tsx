@@ -17,6 +17,8 @@ import { AudioPlayerBar } from './AudioPlayerBar';
 import { GlassCard } from './GlassCard';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { resolveScriptureTranslation, getScriptureReaderTranslationTabName } from '../utils/translationEngine';
 import {
   safeSetAudioMode,
   safeCreateSound,
@@ -46,6 +48,12 @@ interface ScriptureReaderProps {
   vidhiMeta?: ParsedVidhiMeta;
   namavaliItems?: ParsedNamavaliItem[];
   isNamavali?: boolean;
+  translationGu?: string;
+  translationMr?: string;
+  translationBn?: string;
+  translationTe?: string;
+  translationTa?: string;
+  translationKn?: string;
 }
 
 export function ScriptureReader({
@@ -64,17 +72,24 @@ export function ScriptureReader({
   vidhiMeta,
   namavaliItems,
   isNamavali,
+  translationGu,
+  translationMr,
+  translationBn,
+  translationTe,
+  translationTa,
+  translationKn,
 }: ScriptureReaderProps) {
   const insets = useSafeAreaInsets();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
   const { isDark, colors } = useTheme();
+  const { language } = useLanguage();
   const isFav = checkFavorite(id);
 
   const isPoojaVidhi =
     categoryPath === 'pooja_vidhi' || (poojaSteps && poojaSteps.length > 0);
 
   // Tab Definitions
-  type TabType = 'sanskrit' | 'hindi' | 'meaning' | 'translit' | 'steps' | 'samagri' | 'details' | 'archana';
+  type TabType = 'sanskrit' | 'hindi' | 'meaning' | 'translit' | 'regional' | 'steps' | 'samagri' | 'details' | 'archana';
   const availableTabs: { key: TabType; label: string }[] = [];
 
   if (isPoojaVidhi) {
@@ -96,6 +111,10 @@ export function ScriptureReader({
       }
     } else {
       if (sanskritText) availableTabs.push({ key: 'sanskrit', label: 'Sanskrit' });
+    }
+    // Dynamic regional tab when user preference is gu, mr, bn, te, ta, kn
+    if (language !== 'sa' && language !== 'hi' && language !== 'en') {
+      availableTabs.push({ key: 'regional', label: getScriptureReaderTranslationTabName(language) });
     }
     if (hindiText) availableTabs.push({ key: 'hindi', label: 'Hindi' });
     if (englishMeaning) availableTabs.push({ key: 'meaning', label: 'Meaning' });
@@ -288,12 +307,29 @@ export function ScriptureReader({
         return englishMeaning || 'Meaning not available.';
       case 'translit':
         return transliteration || 'Transliteration not available.';
+      case 'regional': {
+        const resolved = resolveScriptureTranslation(
+          {
+            sanskrit: sanskritText,
+            translation_hi: hindiText,
+            translation_en: englishMeaning,
+            translation_gu: translationGu,
+            translation_mr: translationMr,
+            translation_bn: translationBn,
+            translation_te: translationTe,
+            translation_ta: translationTa,
+            translation_kn: translationKn,
+          },
+          language
+        );
+        return resolved.text || hindiText || englishMeaning || '';
+      }
       default:
         return sanskritText || '';
     }
   };
 
-  const isDevanagari = activeTab === 'sanskrit' || activeTab === 'hindi';
+  const isDevanagari = activeTab === 'sanskrit' || activeTab === 'hindi' || (activeTab === 'regional' && language === 'mr');
 
   return (
     <View style={styles.root}>
@@ -1014,6 +1050,38 @@ export function ScriptureReader({
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              {activeTab === 'regional' && (
+                <View
+                  style={{
+                    alignSelf: 'flex-start',
+                    marginBottom: 12,
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
+                    backgroundColor: isDark ? 'rgba(255, 153, 51, 0.12)' : 'rgba(230, 126, 34, 0.08)',
+                    borderWidth: 1,
+                    borderColor: colors.borderGlow,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
+                    ✨ {resolveScriptureTranslation(
+                      {
+                        sanskrit: sanskritText,
+                        translation_hi: hindiText,
+                        translation_en: englishMeaning,
+                        translation_gu: translationGu,
+                        translation_mr: translationMr,
+                        translation_bn: translationBn,
+                        translation_te: translationTe,
+                        translation_ta: translationTa,
+                        translation_kn: translationKn,
+                      },
+                      language
+                    ).label}
+                  </Text>
+                </View>
+              )}
 
               <Text
                 style={[

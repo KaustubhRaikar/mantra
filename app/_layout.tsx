@@ -68,6 +68,8 @@ function RootLayoutNav() {
   );
 }
 
+import { LanguageProvider } from '../src/contexts/LanguageContext';
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     TiroDevanagariHindi_400Regular,
@@ -95,7 +97,9 @@ export default function RootLayout() {
       <CosmicThemeProvider>
         <AuthProvider>
           <FavoritesProvider>
-            <RootLayoutNav />
+            <LanguageProvider>
+              <RootLayoutNav />
+            </LanguageProvider>
           </FavoritesProvider>
         </AuthProvider>
       </CosmicThemeProvider>

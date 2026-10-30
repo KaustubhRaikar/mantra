@@ -18,6 +18,7 @@ import { GlassCard } from '../../src/components/GlassCard';
 import { SpiritualButton } from '../../src/components/SpiritualButton';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import { useLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../src/contexts/LanguageContext';
 import { useRouter } from 'expo-router';
 import { storage } from '../../src/services/storage';
 
@@ -31,12 +32,13 @@ interface JaapLogItem {
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { themeMode, setThemeMode, isDark, toggleTheme, colors } = useTheme();
+  const { language, languageInfo, setLanguage } = useLanguage();
   const router = useRouter();
 
   // Settings State
   const [dailyReminder, setDailyReminder] = useState(true);
   const [autoPlayAudio, setAutoPlayAudio] = useState(true);
-  const [preferredLang, setPreferredLang] = useState<'Hindi' | 'English' | 'Sanskrit'>('Hindi');
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
 
   // Modals State
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
@@ -219,18 +221,16 @@ export default function ProfileScreen() {
             {/* Language Selection */}
             <TouchableOpacity
               style={styles.settingRow}
-              onPress={() => {
-                const langs: ('Hindi' | 'English' | 'Sanskrit')[] = ['Hindi', 'English', 'Sanskrit'];
-                const nextIdx = (langs.indexOf(preferredLang) + 1) % langs.length;
-                setPreferredLang(langs[nextIdx]);
-              }}
+              onPress={() => setLanguageModalVisible(true)}
             >
               <View style={styles.settingInfo}>
                 <Ionicons name="language-outline" size={22} color={colors.accent} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>Preferred Language</Text>
               </View>
               <View style={styles.valueBadge}>
-                <Text style={[styles.valueBadgeText, { color: isDark ? colors.secondary : colors.primary }]}>{preferredLang}</Text>
+                <Text style={[styles.valueBadgeText, { color: isDark ? colors.secondary : colors.primary }]}>
+                  {languageInfo.nativeName} ({languageInfo.name})
+                </Text>
               </View>
             </TouchableOpacity>
           </GlassCard>
@@ -397,6 +397,77 @@ export default function ProfileScreen() {
             <SpiritualButton
               title="Close"
               onPress={() => setAboutModalVisible(false)}
+              variant="primary"
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Language Selection Modal ── */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={languageModalVisible}
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { maxHeight: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Choose Preferred Language</Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+                  पवित्र भाषा चयन • Translations adapt across the app
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
+                <Ionicons name="close" size={22} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginVertical: 12 }}>
+              {SUPPORTED_LANGUAGES.map((item) => {
+                const isSelected = language === item.code;
+                return (
+                  <TouchableOpacity
+                    key={item.code}
+                    onPress={async () => {
+                      await setLanguage(item.code);
+                      setLanguageModalVisible(false);
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      borderRadius: 12,
+                      backgroundColor: isSelected
+                        ? (isDark ? 'rgba(255, 153, 51, 0.16)' : 'rgba(255, 153, 51, 0.12)')
+                        : 'transparent',
+                      borderWidth: isSelected ? 1 : 0,
+                      borderColor: colors.accent,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <View>
+                      <Text style={{ fontSize: 17, fontWeight: '700', color: colors.text }}>
+                        {item.nativeName}
+                      </Text>
+                      <Text style={{ fontSize: 13, color: colors.textSecondary, marginTop: 2 }}>
+                        {item.name} • {item.script} Script
+                      </Text>
+                    </View>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={24} color={colors.accent} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <SpiritualButton
+              title="Done"
+              onPress={() => setLanguageModalVisible(false)}
               variant="primary"
             />
           </View>

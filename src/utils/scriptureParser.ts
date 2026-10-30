@@ -66,7 +66,9 @@ export function parseScriptureContent(data: any): ParsedScripture {
   // 1. Pooja Vidhi structured steps and samagri list
   if (data.steps || data.required_items || data.vidhi_name) {
     const rawSteps = safeParseJson(data.steps) || (Array.isArray(data.steps) ? data.steps : null);
-    const rawItems = safeParseJson(data.required_items) || (Array.isArray(data.required_items) ? data.required_items : null);
+    const rawItems = safeParseJson(data.required_items) || 
+      (Array.isArray(data.required_items) ? data.required_items : null) ||
+      (Array.isArray(data.samagri) ? data.samagri : null);
 
     const poojaSteps: ParsedPoojaStep[] = Array.isArray(rawSteps)
       ? rawSteps.map((s: any, idx: number) => ({
@@ -78,8 +80,8 @@ export function parseScriptureContent(data: any): ParsedScripture {
 
     const samagriItems: ParsedSamagriItem[] = Array.isArray(rawItems)
       ? rawItems.map((i: any) => ({
-          item: i.item || i.name || String(i),
-          quantity: i.quantity || '',
+          item: typeof i === 'string' ? i : (i.item || i.name || String(i)),
+          quantity: typeof i === 'object' && i.quantity ? i.quantity : '',
         }))
       : data.samagri_list
       ? String(data.samagri_list)
@@ -90,8 +92,8 @@ export function parseScriptureContent(data: any): ParsedScripture {
       : [];
 
     const vidhiMeta: ParsedVidhiMeta = {
-      duration: data.vidhi_duration,
-      bestTime: data.best_time,
+      duration: data.duration || data.vidhi_duration,
+      bestTime: data.best_time || data.bestTime,
       day: data.day,
       benefits: data.benefits,
       precautions: data.precautions,

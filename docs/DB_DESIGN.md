@@ -157,7 +157,7 @@ CREATE TABLE categories (
     display_order INT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Mantras Table (Conforms to SCHEMA.md)
+-- Mantras Table (Conforms to Multi-Language Schema & 9-Language Engine)
 CREATE TABLE mantras (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id INT UNSIGNED NULL,
@@ -167,6 +167,12 @@ CREATE TABLE mantras (
     transliteration TEXT NOT NULL,
     translation_en TEXT NOT NULL,
     translation_hi TEXT NOT NULL,
+    translation_gu TEXT DEFAULT NULL,   -- Gujarati (ગુજરાતી)
+    translation_mr TEXT DEFAULT NULL,   -- Marathi (मराठी)
+    translation_bn TEXT DEFAULT NULL,   -- Bengali (বাংলা)
+    translation_te TEXT DEFAULT NULL,   -- Telugu (తెలుగు)
+    translation_ta TEXT DEFAULT NULL,   -- Tamil (தமிழ்)
+    translation_kn TEXT DEFAULT NULL,   -- Kannada (ಕನ್ನಡ)
     meaning JSON NOT NULL,              -- Array of strings or word mappings
     benefits JSON NOT NULL,             -- Array of { icon, text }
     audio_url VARCHAR(500) DEFAULT NULL,
@@ -183,7 +189,14 @@ CREATE TABLE mantras (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-*(Identical normalized structures exist for `aartis`, `festival_aartis`, `chalisas`, `pooja_vidhis`, `stotras`, `vrat_kathas`, and `upanishads`.)*
+*(Identical normalized multi-language structures exist for `aartis`, `festival_aartis`, `chalisas`, `pooja_vidhis`, `stotras`, `vrat_kathas`, and `upanishads`.)*
+
+### 3.2.1 On-Device SQLite High-Performance Cache (Client Tier)
+To ensure zero-latency devotional access and offline immunity, the mobile client maintains an embedded SQLite `meta_store` cache on the device:
+* `CACHE_user_preferred_language`: Current language selection (`sa`, `hi`, `en`, `gu`, `mr`, `bn`, `te`, `ta`, `kn`).
+* `CACHE_DAY_WORSHIP_{0..6}`: Pre-cached 7-day liturgical worship plans, presiding deities, mantras, and aartis.
+* `CACHE_ALL_POOJA_VIDHIS`: Pre-cached canonical Nitya and Mahaparva Pooja Vidhi procedures with step checklists and samagri requirements.
+* `CACHE_home_bootstrap`: Stale-while-revalidate liturgical home feed cache.
 
 ### 3.3 User Devotional State & Sync Tables
 

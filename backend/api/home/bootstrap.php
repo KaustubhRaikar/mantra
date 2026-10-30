@@ -20,7 +20,26 @@ $payload = [
     "chalisas"         => [],
     "pooja_vidhis"     => [],
     "stotras"          => [],
-    "vrat_kathas"      => []
+    "vrat_kathas"      => [],
+    "day_specific_worship" => null
+];
+
+$dayIndex = (int)date('w');
+$dayNames = [
+    0 => ["day" => "Sunday", "vedic" => "आदित्यवासरः", "deity" => "भगवान सूर्य नारायण व गायत्री माता", "planet" => "सूर्य (Sun)"],
+    1 => ["day" => "Monday", "vedic" => "सोमवासरः", "deity" => "भगवान देवाधिदेव महादेव शिव", "planet" => "चन्द्रमा (Moon)"],
+    2 => ["day" => "Tuesday", "vedic" => "भौमवासरः", "deity" => "श्री संकटमोचन हनुमान जी व मंगल देव", "planet" => "मंगल (Mars)"],
+    3 => ["day" => "Wednesday", "vedic" => "सौम्यवासरः", "deity" => "भगवान श्री गणेश व बुध देव", "planet" => "बुध (Mercury)"],
+    4 => ["day" => "Thursday", "vedic" => "गुरुवासरः", "deity" => "भगवान श्री हरि विष्णु व देवगुरु बृहस्पति", "planet" => "बृहस्पति (Jupiter)"],
+    5 => ["day" => "Friday", "vedic" => "भृगुवासरः", "deity" => "भगवती महालक्ष्मी व श्री दुर्गा माता", "planet" => "शुक्र (Venus)"],
+    6 => ["day" => "Saturday", "vedic" => "स्थिरवासरः", "deity" => "भगवान श्री शनिदेव व कालभैरव", "planet" => "शनि (Saturn)"],
+];
+$payload["day_specific_worship"] = [
+    "day_index" => $dayIndex,
+    "day_name" => $dayNames[$dayIndex]["day"],
+    "vedic_name" => $dayNames[$dayIndex]["vedic"],
+    "presiding_deity" => $dayNames[$dayIndex]["deity"],
+    "ruling_planet" => $dayNames[$dayIndex]["planet"]
 ];
 
 try {

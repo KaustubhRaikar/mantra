@@ -3,6 +3,10 @@ import { Mantra } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 import { getDB } from './db';
 import { triggerShantiBanner } from '../components/ShantiBanner';
+import {
+  CANONICAL_7_DAYS_WORSHIP,
+  CANONICAL_MAHAPARVA_POOJA_VIDHIS,
+} from '../data/canonicalTreasuryExpansion';
 
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
@@ -112,6 +116,35 @@ export const api = {
 
   // Mantras
   getMantra: async (id: string | number) => {
+    // 1. Check if ID matches a Day-Specific Mantra
+    if (typeof id === 'string' && id.startsWith('day_mantra_')) {
+      const match = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
+        (d) => d.primaryMantra.id === id
+      );
+      if (match) {
+        return {
+          id: match.primaryMantra.id,
+          mantra_name: match.primaryMantra.name,
+          title: match.primaryMantra.name,
+          sanskrit_text: match.primaryMantra.sanskrit,
+          sanskrit: match.primaryMantra.sanskrit,
+          transliteration: match.primaryMantra.transliteration,
+          translation_hi: match.primaryMantra.translation_hi,
+          translation_hindi: match.primaryMantra.translation_hi,
+          translation_en: match.primaryMantra.translation_en,
+          translation_english: match.primaryMantra.translation_en,
+          translation_gu: match.primaryMantra.translation_gu,
+          translation_mr: match.primaryMantra.translation_mr,
+          translation_bn: match.primaryMantra.translation_bn,
+          translation_te: match.primaryMantra.translation_te,
+          translation_ta: match.primaryMantra.translation_ta,
+          translation_kn: match.primaryMantra.translation_kn,
+          deity: match.presidingDeity,
+          deity_name: match.presidingDeity,
+        };
+      }
+    }
+
     try {
       const response = await apiClient.get(`/mantras/read_single.php?id=${id}`);
       if (response.data) {
@@ -247,6 +280,28 @@ export const api = {
   },
 
   getAartiDetails: async (id: string | number) => {
+    // 1. Check if ID matches a Day-Specific Aarti
+    if (typeof id === 'string' && id.startsWith('day_aarti_')) {
+      const match = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
+        (d) => d.primaryAarti.id === id
+      );
+      if (match) {
+        return {
+          id: match.primaryAarti.id,
+          title: match.primaryAarti.title,
+          aarti_name: match.primaryAarti.title,
+          lyrics: match.primaryAarti.firstLine,
+          first_line: match.primaryAarti.firstLine,
+          translation_hi: match.primaryAarti.translation_hi,
+          translation_en: match.primaryAarti.translation_en,
+          translation_gu: match.primaryAarti.translation_gu,
+          translation_mr: match.primaryAarti.translation_mr,
+          deity: match.presidingDeity,
+          deity_name: match.presidingDeity,
+        };
+      }
+    }
+
     try {
       const response = await apiClient.get(`/aartis/read_single.php?id=${id}`);
       if (response.data) {
@@ -281,13 +336,81 @@ export const api = {
       const records = response.data.records || [];
       if (records.length > 0) {
         await saveLocalCache('CACHE_pooja_vidhis', records);
+        return records;
       }
-      return records;
     } catch (error) {
       const cached = await getLocalCache<any[]>('CACHE_pooja_vidhis');
       if (cached && cached.length > 0) return cached;
-      return [];
     }
+
+    // Fall back to canonical Mahaparva & 7-Day Pooja Vidhis from device cache
+    const canonicalList = [
+      ...CANONICAL_MAHAPARVA_POOJA_VIDHIS.map((v) => ({
+        id: v.id,
+        vidhi_name: v.title,
+        deity_name: v.deity,
+        duration: v.duration,
+        significance: v.significance,
+      })),
+      ...Object.values(CANONICAL_7_DAYS_WORSHIP).map((d) => ({
+        id: d.poojaVidhi.id,
+        vidhi_name: d.poojaVidhi.title,
+        deity_name: d.presidingDeity,
+        duration: d.poojaVidhi.duration,
+        significance: d.vratSignificance,
+      })),
+    ];
+    await saveLocalCache('CACHE_pooja_vidhis', canonicalList);
+    return canonicalList;
+  },
+
+  getPoojaVidhiDetails: async (id: string | number) => {
+    // 1. Check Day-Specific Pooja Vidhi match
+    const dayMatch = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
+      (d) => d.poojaVidhi.id === String(id)
+    );
+    if (dayMatch) {
+      return {
+        id: dayMatch.poojaVidhi.id,
+        vidhi_name: dayMatch.poojaVidhi.title,
+        title: dayMatch.poojaVidhi.title,
+        deity_name: dayMatch.presidingDeity,
+        duration: dayMatch.poojaVidhi.duration,
+        significance: dayMatch.vratSignificance,
+        samagri: dayMatch.poojaVidhi.samagri,
+        steps: dayMatch.poojaVidhi.steps,
+      };
+    }
+
+    // 2. Check Mahaparva Pooja Vidhi match
+    const parvaMatch = CANONICAL_MAHAPARVA_POOJA_VIDHIS.find(
+      (v) => v.id === String(id)
+    );
+    if (parvaMatch) {
+      return {
+        id: parvaMatch.id,
+        vidhi_name: parvaMatch.title,
+        title: parvaMatch.title,
+        deity_name: parvaMatch.deity,
+        duration: parvaMatch.duration,
+        significance: parvaMatch.significance,
+        samagri: parvaMatch.samagri,
+        steps: parvaMatch.steps,
+      };
+    }
+
+    // 3. Try Remote API
+    try {
+      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}`);
+      if (response.data) {
+        await saveLocalCache(`CACHE_pooja_vidhi_${id}`, response.data);
+        return response.data;
+      }
+    } catch (error) {
+      const cached = await getLocalCache(`CACHE_pooja_vidhi_${id}`);
+      if (cached) return cached;
+    }
+    return null;
   },
 
   getStotras: async () => {
@@ -329,20 +452,6 @@ export const api = {
       }
     } catch (error) {
       const cached = await getLocalCache(`CACHE_chalisa_${id}`);
-      if (cached) return cached;
-    }
-    return null;
-  },
-
-  getPoojaVidhiDetails: async (id: string | number) => {
-    try {
-      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}`);
-      if (response.data) {
-        await saveLocalCache(`CACHE_pooja_vidhi_${id}`, response.data);
-        return response.data;
-      }
-    } catch (error) {
-      const cached = await getLocalCache(`CACHE_pooja_vidhi_${id}`);
       if (cached) return cached;
     }
     return null;
