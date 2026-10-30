@@ -136,8 +136,8 @@ if ($driver === 'sqlite') {
         "INSERT INTO user_device_info (user_id, device_id, device_name, login_token) 
          VALUES (:user_id, :device_id, :device_name, :token) 
          ON DUPLICATE KEY UPDATE 
-           device_name  = :device_name, 
-           login_token  = :token,
+           device_name  = VALUES(device_name), 
+           login_token  = VALUES(login_token), 
            last_active  = CURRENT_TIMESTAMP"
     );
 }

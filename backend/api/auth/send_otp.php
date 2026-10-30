@@ -62,9 +62,9 @@ try {
             "INSERT INTO pending_otps (email, full_name, otp_hash, expires_at, attempts) 
              VALUES (:email, :full_name, :otp_hash, :expires_at, 0)
              ON DUPLICATE KEY UPDATE 
-               full_name = :full_name, 
-               otp_hash = :otp_hash, 
-               expires_at = :expires_at, 
+               full_name = VALUES(full_name), 
+               otp_hash = VALUES(otp_hash), 
+               expires_at = VALUES(expires_at), 
                attempts = 0"
         );
     }
@@ -77,7 +77,7 @@ try {
 } catch (Throwable $dbErr) {
     error_log("OTP DB Error: " . $dbErr->getMessage());
     http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Unable to store verification record: " . $dbErr->getMessage()]);
+    echo json_encode(["status" => "error", "message" => "Unable to store verification record. Please try again."]);
     exit();
 }
 
