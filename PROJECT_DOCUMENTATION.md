@@ -63,28 +63,40 @@ d:\MobileApps\mantra/
     ├── app/                       # Expo Router File-Based Routing System
     │   ├── (tabs)/                # Main Bottom Tab Navigator Screens
     │   │   ├── _layout.tsx        # Custom tab bar layout & icon routing
-    │   │   ├── categories.tsx     # Category exploration screen (GlassCard & search)
+    │   │   ├── categories.tsx     # Category exploration screen (Curated deities & 11 sub-sections)
     │   │   ├── favorites.tsx      # Saved items tab (ScriptureCard & EmptyState)
-    │   │   ├── index.tsx          # Home Screen (JapaOrb, Daily Mantra, Audio player)
+    │   │   ├── index.tsx          # Home Screen (JapaOrb, Liturgical Tabs, Curated Deities, Panchang)
     │   │   └── profile.tsx        # Devotee Profile, DPDP Consent toggles, Jaap logs
-    │   ├── aarti/[id].tsx         # Sacred Aarti detail view (ScriptureReader)
+    │   ├── aarti/                 # Sacred Aarti Sangrah & Hymns
+    │   │   ├── index.tsx          # Dedicated Aarti directory screen with deity filtering & search
+    │   │   └── [id].tsx           # Sacred Aarti detail view (ScriptureReader)
     │   ├── category/[id].tsx      # Category-filtered content list screen
-    │   ├── chalisa/[id].tsx       # Chalisa detail view (ScriptureReader)
-    │   ├── festival_aarti/[id].tsx# Festival Aarti detail view (ScriptureReader)
-    │   ├── mantra/[id].tsx        # Mantra detail view (ScriptureReader)
-    │   ├── pooja_vidhi/[id].tsx   # Step-by-step Pooja Vidhi (ScriptureReader)
+    │   ├── chalisa/               # Complete Devotional Chalisas
+    │   │   ├── index.tsx          # Chalisa Sangrah directory
+    │   │   └── [id].tsx           # Chalisa detail view (ScriptureReader)
+    │   ├── festival_aarti/        # Festive Season Special Aartis
+    │   │   ├── index.tsx          # Dedicated Festival Aarti directory with festival filters
+    │   │   └── [id].tsx           # Festival Aarti detail view (ScriptureReader)
+    │   ├── mantra/[id].tsx        # Mantra detail view (Active Tab TTS & ScriptureReader)
+    │   ├── pooja_vidhi/           # Step-by-step Pooja Vidhi & Samagri
+    │   │   ├── index.tsx          # Pooja Vidhi directory
+    │   │   └── [id].tsx           # Step-by-step Pooja Vidhi (ScriptureReader)
     │   ├── search/index.tsx       # Global multi-entity real-time search engine
-    │   ├── stotra/[id].tsx        # Sacred Stotra detail view (ScriptureReader)
-    │   ├── vrat_katha/[id].tsx    # Vrat Katha fasting story (ScriptureReader)
-    │   ├── _layout.tsx            # Global Tiro Devanagari font preloader & theme
+    │   ├── stotra/                # Sacred Stotras, Suktas & Sahasranama
+    │   │   ├── index.tsx          # Stotra directory with Suktas & Hymns
+    │   │   └── [id].tsx           # Sacred Stotra detail view (ScriptureReader)
+    │   ├── vrat_katha/            # Vrat Kathas fasting stories
+    │   │   ├── index.tsx          # Vrat Katha directory
+    │   │   └── [id].tsx           # Vrat Katha fasting story (ScriptureReader)
+    │   ├── _layout.tsx            # Global Tiro Devanagari font preloader, ShantiBanner & theme
     │   ├── index.tsx              # Root router redirect to tabs
-    │   ├── login.tsx              # 2-Step OTP Authentication Screen
+    │   ├── login.tsx              # 2-Step OTP Authentication Screen (with sweet Shanti rate limit)
     │   ├── consent.tsx            # Granular DPDP Consent Manager
     │   ├── privacy.tsx            # In-app DPDP Data Rights Policy
     │   └── upanishad.tsx          # Ancient Upanishads library screen
     ├── assets/images/             # App icons, splash, and logos
     ├── src/
-    │   ├── components/            # Unified Cosmic Vedic Component Library (12 components)
+    │   ├── components/            # Unified Cosmic Vedic Component Library (14 components)
     │   │   ├── AudioPlayerBar.tsx # Docked audio playback scrubber
     │   │   ├── CosmicBackground.tsx # Celestial dark canvas with radiant nebulae
     │   │   ├── CustomTabBar.tsx   # Celestial glass bottom navigation dock
@@ -92,9 +104,12 @@ d:\MobileApps\mantra/
     │   │   ├── GlassCard.tsx      # Frosted glass card with glow variants
     │   │   ├── GlassHeader.tsx    # Unified header with 48x48dp touch targets
     │   │   ├── JapaOrb.tsx        # Pulsing Golden Chanting Orb with goal tracking
+    │   │   ├── PanchangCard.tsx   # Real-time Hindu calendar & Muhurta widget
+    │   │   ├── SankalpaProgressCard.tsx # Active Anushthan & Sankalpa tracker
     │   │   ├── ScriptureCard.tsx  # Devanagari verse item with favorite toggle
-    │   │   ├── ScriptureReader.tsx# Unified scripture engine for all 7 detail routes
+    │   │   ├── ScriptureReader.tsx# Unified scripture engine with active-tab TTS chanting
     │   │   ├── SearchBar.tsx      # Dark glass search bar with clear button
+    │   │   ├── ShantiBanner.tsx   # Ambient Shanti Sanctuary floating rate-limit toast
     │   │   ├── SkeletonLoader.tsx # Shimmering dark glass skeleton loader
     │   │   └── SpiritualButton.tsx# Radiant saffron gradient & glass buttons
     │   ├── constants/theme.ts     # Cosmic Vedic Glassmorphism tokens & Typography

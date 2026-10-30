@@ -154,36 +154,72 @@ function enforceAppOnlyAndSlidingRateLimit(PDO $db): void {
 }
 
 /**
- * Legacy support for action-specific checks (e.g. OTP sending)
+ * Action-specific Sliding Window Rate Limiter (Dual-Key for OTP & Authentication)
+ * Enforces true sliding window limits, dynamic retry_after, and informative headers.
  */
 function checkRateLimit(PDO $db, string $action, string $identifier, int $maxAttempts = 5, int $windowSeconds = 600, string $customMessage = ''): void {
     if (empty($identifier)) {
         return;
     }
 
-    $check = $db->prepare(
-        "SELECT COUNT(*) AS cnt FROM api_sliding_rate_limits 
-         WHERE client_key = :identifier 
-         AND created_at > (:now - :window)"
-    );
-    $check->execute([
-        ':identifier' => hash('sha256', $action . '|' . $identifier),
-        ':now'        => time(),
-        ':window'     => $windowSeconds
-    ]);
-    $row = $check->fetch(PDO::FETCH_ASSOC);
+    // Ensure sliding rate limit table exists
+    try {
+        $db->exec("CREATE TABLE IF NOT EXISTS api_sliding_rate_limits (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            client_key VARCHAR(64) NOT NULL,
+            created_at INT UNSIGNED NOT NULL,
+            INDEX idx_client_sliding (client_key, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    } catch (Throwable $e) {}
 
-    if ($row && (int)$row['cnt'] >= $maxAttempts) {
+    $key = hash('sha256', $action . '|' . $identifier);
+    $now = time();
+    $windowStart = $now - $windowSeconds;
+
+    // Retrieve timestamps within the active sliding window (sorted oldest first)
+    $stmt = $db->prepare(
+        "SELECT created_at FROM api_sliding_rate_limits 
+         WHERE client_key = :key AND created_at > :windowStart 
+         ORDER BY created_at ASC"
+    );
+    $stmt->execute([':key' => $key, ':windowStart' => $windowStart]);
+    $timestamps = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $count = count($timestamps);
+
+    if ($count >= $maxAttempts) {
+        $oldest = (int)$timestamps[0];
+        $retryAfter = max(1, ($oldest + $windowSeconds) - $now);
+
         http_response_code(429);
+        if (!headers_sent()) {
+            header("Retry-After: {$retryAfter}");
+            header("X-RateLimit-Limit: {$maxAttempts}");
+            header("X-RateLimit-Remaining: 0");
+            header("X-RateLimit-Reset: {$retryAfter}");
+        }
+
         $message = !empty($customMessage) 
             ? $customMessage 
-            : "Too many attempts. Please wait " . ceil($windowSeconds / 60) . " minutes and try again.";
+            : "Too many requests. Please try after sometime.";
+
         echo json_encode([
-            "status" => "error",
-            "message" => $message,
-            "retry_after" => $windowSeconds
-        ]);
+            "status"      => "error",
+            "code"        => "RATE_LIMIT_EXCEEDED",
+            "message"     => $message,
+            "retry_after" => $retryAfter
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit();
+    }
+
+    // Record the current hit in the sliding window
+    $insert = $db->prepare("INSERT INTO api_sliding_rate_limits (client_key, created_at) VALUES (:key, :now)");
+    $insert->execute([':key' => $key, ':now' => $now]);
+
+    if (!headers_sent()) {
+        $remaining = max(0, $maxAttempts - ($count + 1));
+        header("X-RateLimit-Limit: {$maxAttempts}");
+        header("X-RateLimit-Remaining: {$remaining}");
     }
 }
 ?>

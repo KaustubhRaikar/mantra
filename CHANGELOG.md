@@ -2,6 +2,37 @@
 
 All notable changes, security enhancements, and structural refactorings implemented across the Mantra app ecosystem are documented below.
 
+## 🚀 [2.7.0] - 2026-10-25
+
+### 🪔 Liturgical Streams Architecture, Sweet Shanti Rate Limiting & Active-Tab TTS Engine
+
+#### 1. Curated Sacred Deities & Home Screen Liturgical Tabs
+- **Curated Top 6 Deities Grid:** Replaced cluttered generic categories on the Home Screen with the Top 6 Sacred Deities (Lord Ganesha, Lord Shiva, Lord Hanuman, Maa Durga/Devi, Lord Vishnu & Krishna, Maa Lakshmi), featuring high-contrast icon badges, subtitle descriptions, and verse counts.
+- **View All Portal Card:** Added an elevated portal card taking devotees directly to the complete 18+ category catalog (`/(tabs)/categories`).
+- **Liturgical Tabs Selector:** Integrated a dedicated 4-stream switcher (`Mantras (मंत्र)` | `Stotras & Suktas (स्तोत्र)` | `Chalisas (चालीसा)` | `Pooja Vidhi (पूजा विधि)`) on the Home Screen to dynamically display the corresponding liturgical shelf without visual clutter.
+
+#### 2. Strict Partitioning of Liturgical Streams
+- **Clean Devotional Boundaries:** Mantras (Japa Mala focus), Stotras/Suktas (Archana & 1008 Namavalis), Chalisas (40-chaupai stanzas), and Pooja Vidhis (step-by-step ritual checklists) now maintain strictly segregated hubs, shelves, and detail reader models.
+
+#### 3. Ambient Shanti Sanctuary Rate-Limit Wrapping
+- **Sweet Devotional Notification (`ShantiBanner.tsx`):** Eliminated raw network error popups and technical warnings. HTTP 429 and rate-limited queries trigger a serene saffron/gold floating Shanti toast:
+  `"शांतिः • Offline Sanctuary Active — Prayers continue seamlessly while network rests."`
+- **Transparent Local SQLite Fallback:** The Axios response interceptor in `src/services/api.ts` transparently serves cached records from the device's SQLite `meta_store` without breaking user navigation.
+- **Sweet OTP Limiting:** Wrapped OTP send and resend errors in `login.tsx` with tranquil, devotional mindful breathing messages.
+
+#### 4. Dedicated Aarti & Festival Aarti Hubs & Hymn Routes
+- **Dedicated Aarti Directory (`app/aarti/index.tsx`):** Created a dedicated Aarti Sangrah directory with instant search, deity filtering (Ganesh, Shiva, Hanuman, Durga, Krishna, Rama, Lakshmi), and direct navigation to `/aarti/[id]`.
+- **Dedicated Festival Aarti Directory (`app/festival_aarti/index.tsx`):** Created a dedicated festival screen with festival chips (Navaratri, Diwali, Shivaratri, Ganesh Chaturthi, Janmashtami) linking to `/festival_aarti/[id]`.
+- **Vedic Hymns Routing:** Linked "Sacred Stotras & Hymns" (`sub_stotras`) directly to `/stotra`, cleanly uniting Vedic Suktas, Sahasranamas, and sacred hymns.
+
+#### 5. Active-Tab-Focused TTS Chanting Engine
+- **Context-Aware Chanting (`ScriptureReader.tsx`):** Chanting automatically vocalizes the text of whichever tab is active:
+  - **Sanskrit Tab:** Chants authentic Sanskrit / Devanagari verse.
+  - **Hindi Tab:** Reads the Hindi meaning / translation.
+  - **Translit Tab:** Pronounces the IAST transliteration.
+- **Tab Switch Reset:** Switching tabs gracefully resets the audio player so devotees immediately hear the text in the newly selected language.
+- **Generic Label Elimination (`audioPlayer.ts`):** `sanitizeDevotionalText()` blacklists generic UI placeholders (`"Mantra Details"`, `"Aarti Sangrah"`, `"Details"`, `"Untitled"`), falling back to sacred Devanagari invocations (`"ॐ नमः शिवाय"`) and ensuring TTS never utters English screen labels.
+
 ---
 
 ## 🚀 [2.6.0] - 2026-10-25

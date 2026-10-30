@@ -30,13 +30,14 @@ sequenceDiagram
     %% STEP 1: SEND OTP
     Devotee->>MobileApp: Enters email ("devotee@mandir.org")
     MobileApp->>API: POST /auth/send_otp.php { email, full_name }
-    API->>DB: Check rate_limits (IP & Email)
-    alt Rate Limit Exceeded
-        API-->>MobileApp: HTTP 429 Too Many Requests
+    API->>DB: Check sliding window rate limits (Dual-Key: Email & IP)
+    alt Rate Limit Exceeded (Email > 2 / 15m OR IP > 5 / 1h)
+        API-->>MobileApp: HTTP 429 { status: "error", code: "RATE_LIMIT_EXCEEDED", message: "Too many requests. Please try after sometime.", retry_after: 720 }
     else Limit OK
         API->>API: Generate 6-digit CSPRNG OTP
         API->>API: Compute HMAC-SHA256(otp, PEPPER_SECRET)
-        API->>DB: UPSERT pending_otps (email, hash, expires_in_10m)
+        API->>DB: UPSERT pending_otps (email, hash, expires_in_10m, attempts = 0)
+        API->>DB: Record hit in api_sliding_rate_limits
         API->>Mail: Dispatch sacred OTP email
         API-->>MobileApp: HTTP 200 { status: "success", message: "OTP sent" }
     end
@@ -45,18 +46,26 @@ sequenceDiagram
     Devotee->>MobileApp: Enters 6-digit OTP ("549102")
     MobileApp->>MobileApp: Resolve Hardware Device ID & Device Name
     MobileApp->>API: POST /auth/verify_otp.php { email, otp, device_id, device_name }
-    API->>DB: SELECT * FROM pending_otps WHERE email = :email
-    API->>API: Constant-time hash_equals(db_hash, hmac(otp, secret))
-    alt OTP Invalid or Expired
-        API->>DB: Increment attempts counter (+1)
-        API-->>MobileApp: HTTP 401 Invalid Code
-    else OTP Valid
-        API->>DB: DELETE FROM pending_otps WHERE email = :email (Single-use)
-        API->>DB: Find or Create User Record
-        API->>API: Generate 64-char Cryptographic Login Token
-        API->>DB: INSERT INTO user_sessions (user_id, login_token, device_id, expires_at)
-        API-->>MobileApp: HTTP 200 { token, user_id, email, full_name }
-        MobileApp->>MobileApp: Write token & device_id to expo-secure-store
+    API->>DB: Check sliding window rate limits (IP > 5 / 15m)
+    alt IP Rate Limit Exceeded
+        API-->>MobileApp: HTTP 429 { message: "Too many requests. Please try after sometime." }
+    else IP OK
+        API->>DB: SELECT * FROM pending_otps WHERE email = :email
+        API->>API: Constant-time hash_equals(db_hash, hmac(otp, secret))
+        alt OTP Invalid (Attempts < 3)
+            API->>DB: Increment attempts counter (+1)
+            API-->>MobileApp: HTTP 401 { message: "Incorrect verification code. You have X attempts remaining." }
+        else Attempts >= 3 OR Code Expired
+            API->>DB: DELETE FROM pending_otps WHERE email = :email (Invalidated)
+            API-->>MobileApp: HTTP 401 { message: "Too many incorrect attempts. Verification code invalidated." }
+        else OTP Valid
+            API->>DB: DELETE FROM pending_otps WHERE email = :email (Single-use)
+            API->>DB: Find or Create User Record
+            API->>API: Generate 64-char Cryptographic Login Token
+            API->>DB: INSERT INTO user_sessions (user_id, login_token, device_id, expires_at)
+            API-->>MobileApp: HTTP 200 { token, user_id, email, full_name }
+            MobileApp->>MobileApp: Write token & device_id to expo-secure-store
+        end
     end
 
     %% STEP 3: SILENT BACKGROUND SESSION VERIFICATION
@@ -66,6 +75,22 @@ sequenceDiagram
     API->>DB: Validate user_sessions WHERE token, user_id, device_id
     API-->>MobileApp: HTTP 200 { valid: true }
 ```
+
+### 2.1 Sliding Window Dual-Key Rate Limiting Specification
+
+Authentication endpoints strictly implement **true sliding window rate limiting** with sub-second accuracy calculated against the `api_sliding_rate_limits` table:
+
+| Endpoint | Target Key | Limit Quota | Sliding Window | Response Code | Breach Payload & Header |
+|---|---|---|---|:---:|---|
+| `/auth/send_otp.php` | Devotee Email | **2 requests** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
+| `/auth/send_otp.php` | Originating IP | **5 requests** | 1 Hour (3600s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
+| `/auth/verify_otp.php` | Originating IP | **5 attempts** | 15 Minutes (900s) | HTTP 429 | `Retry-After: <sec>` • *"Too many requests. Please try after sometime."* |
+| `/auth/verify_otp.php` | OTP Token Code | **3 attempts** | Per OTP lifecycle | HTTP 401 | Immediate database token erasure • Code Invalidated |
+
+### 2.2 Production-Ready Zero Bypass Baseline
+* **Removal of Offline Sandbox Codes:** Hardcoded bypass test codes (`108108`, `123456`) and offline mock session generation have been completely eliminated from the client application and server verification pipeline.
+* **Mandatory Devotee Email Verification:** Every devotee session must be issued by the production backend with a verified cryptographic 64-character token bound to hardware Keystore/Keychain identifiers.
+* **Light Theme UI Polish:** The authentication interface (`app/login.tsx`) dynamically adapts to both "Sacred Dawn Light Theme" and "Cosmic Dark Night Theme" without hardcoded dark container overlaps, ensuring pristine Devanagari typography, radiant saffron highlights, and high-contrast readability.
 
 ---
 

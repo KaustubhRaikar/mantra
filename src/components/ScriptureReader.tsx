@@ -195,6 +195,23 @@ export function ScriptureReader({
     }
   }, []);
 
+  const getActiveTabTextToChant = (): string => {
+    if (activeTab === 'sanskrit') {
+      return sanskritText || transliteration || hindiText || '';
+    } else if (activeTab === 'hindi') {
+      return hindiText || englishMeaning || sanskritText || '';
+    } else if (activeTab === 'translit') {
+      return transliteration || sanskritText || '';
+    } else if (activeTab === 'meaning') {
+      return englishMeaning || hindiText || '';
+    } else if (activeTab === 'steps' && poojaSteps && poojaSteps.length > 0) {
+      return poojaSteps.map((s) => `${s.name}: ${s.description}`).join('. ');
+    } else if (activeTab === 'archana' && namavaliItems && namavaliItems.length > 0) {
+      return namavaliItems.map((n) => n.name).join(', ');
+    }
+    return sanskritText || hindiText || '';
+  };
+
   const togglePlay = async () => {
     try {
       if (soundRef.current) {
@@ -204,10 +221,13 @@ export function ScriptureReader({
           await soundRef.current.playAsync();
         }
       } else {
+        const textToChant = getActiveTabTextToChant();
         const payload = {
           audio_url: audioUrl,
+          textToSpeak: textToChant,
           sanskrit: sanskritText,
-          title,
+          deityName: deityName || 'ॐ नमः शिवाय',
+          title: deityName || 'ॐ नमः शिवाय',
         };
         const { sound } = await safeCreateSound(payload, onPlaybackStatusUpdate, {
           repeatCount,
@@ -358,7 +378,16 @@ export function ScriptureReader({
                         borderColor: isActive ? colors.primary : colors.border,
                       },
                     ]}
-                    onPress={() => setActiveTab(tab.key)}
+                    onPress={() => {
+                      setActiveTab(tab.key);
+                      if (soundRef.current && !hasRemoteAudio) {
+                        soundRef.current.unloadAsync().catch(() => {});
+                        soundRef.current = null;
+                        setIsPlaying(false);
+                        setProgress(0);
+                        setPositionMillis(0);
+                      }
+                    }}
                     activeOpacity={0.7}
                   >
                     <Text

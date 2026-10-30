@@ -89,36 +89,66 @@ export const resolveAudioUrl = (url?: string): string | null => {
   return null;
 };
 
+const GENERIC_LABELS = [
+  'mantra details',
+  'mantra detail',
+  'aarti details',
+  'aarti sangrah',
+  'stotra details',
+  'stotra recitation',
+  'pooja vidhi',
+  'vrat katha',
+  'details',
+  'untitled',
+  'undefined',
+  'null',
+];
+
 /**
- * Sanitizes input text so TTS NEVER reads out URLs, paths, or JSON brackets.
+ * Sanitizes input text so TTS NEVER reads out URLs, paths, JSON brackets, or generic UI labels.
  */
 export const sanitizeDevotionalText = (rawText: string, fallbackTitle?: string): string => {
-  if (!rawText || typeof rawText !== 'string') {
-    return fallbackTitle || 'ॐ नमः शिवाय';
+  const isGeneric = (str?: string) => {
+    if (!str || typeof str !== 'string') return true;
+    const lower = str.trim().toLowerCase();
+    return GENERIC_LABELS.some((lbl) => lower === lbl || lower.includes('details'));
+  };
+
+  let candidate = (rawText && typeof rawText === 'string') ? rawText.trim() : '';
+
+  // Discard generic candidate
+  if (isGeneric(candidate)) {
+    candidate = '';
   }
 
-  const trimmed = rawText.trim();
-
-  // If text looks like a URL, file path, or audio extension, discard it
+  // Discard URL, file path, or audio extension candidates
   if (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('file://') ||
-    trimmed.startsWith('/') ||
-    /\.(mp3|wav|m4a|aac|ogg|json)$/i.test(trimmed)
+    candidate.startsWith('http://') ||
+    candidate.startsWith('https://') ||
+    candidate.startsWith('file://') ||
+    candidate.startsWith('/') ||
+    /\.(mp3|wav|m4a|aac|ogg|json)$/i.test(candidate)
   ) {
-    return fallbackTitle || 'ॐ नमः शिवाय';
+    candidate = '';
+  }
+
+  if (!candidate) {
+    if (fallbackTitle && !isGeneric(fallbackTitle)) {
+      candidate = fallbackTitle.trim();
+    } else {
+      return 'ॐ नमः शिवाय';
+    }
   }
 
   // Clean brackets, code snippets, or excessive punctuation
-  const clean = trimmed
+  const clean = candidate
     .replace(/\[.*?\]/g, ' ')
     .replace(/\{.*?\}/g, ' ')
     .replace(/[\n\r]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-  return clean || fallbackTitle || 'ॐ नमः शिवाय';
+  return clean && !isGeneric(clean) ? clean : 'ॐ नमः शिवाय';
 };
 
 /**
@@ -298,13 +328,15 @@ export const safeCreateSound = async (
   } else if (input && typeof input === 'object') {
     rawUrl = resolveAudioUrl(input.audio_url || input.audioUrl || input.audio);
     textToSpeak =
+      input.textToSpeak ||
+      input.activeTabText ||
       input.sanskrit ||
       input.sanskrit_text ||
       input.sanskrit_title ||
       input.lyrics ||
       input.verse ||
       '';
-    titleFallback = input.title || input.name || input.vidhi_name || '';
+    titleFallback = input.deityName || input.title || input.name || input.vidhi_name || '';
   }
 
   const repeatCount = options?.repeatCount ?? 1;

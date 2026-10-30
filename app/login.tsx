@@ -25,7 +25,7 @@ type LoginStep = 'email' | 'otp';
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { sendOtp, verifyOtp, guestSignIn, signIn, sessionError } = useAuth();
+  const { sendOtp, verifyOtp, sessionError } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
 
   const [step, setStep] = useState<LoginStep>('email');
@@ -116,7 +116,11 @@ export default function LoginScreen() {
       setResendCooldown(45);
       transitionToStep('otp');
     } catch (error: any) {
-      setErrorMessage(error?.response?.data?.message || error?.message || 'Unable to dispatch code. Please try again.');
+      if (error?.response?.status === 429) {
+        setErrorMessage('🕊️ शांतिः — Mindful pause: Please take a gentle breath for a few moments before requesting another sacred verification code.');
+      } else {
+        setErrorMessage(error?.response?.data?.message || error?.message || 'Unable to dispatch code. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -150,51 +154,18 @@ export default function LoginScreen() {
       await sendOtp(email.trim(), fullName.trim());
       setResendCooldown(60);
     } catch (error: any) {
-      setErrorMessage(error?.response?.data?.message || error?.message || 'Failed to resend code. Please wait a moment.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGuestEntry = async () => {
-    setLoading(true);
-    try {
-      await guestSignIn();
-      router.replace('/(tabs)');
-    } catch {
-      setErrorMessage('Could not initialize guest session. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDirectEntry = async () => {
-    setErrorMessage(null);
-    const trimmedEmail = email.trim();
-    const trimmedName = fullName.trim();
-
-    if (!trimmedName) {
-      setErrorMessage('Please enter your sacred name to begin.');
-      return;
-    }
-    if (!trimmedEmail) {
-      setErrorMessage('Please provide an email address.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await signIn(trimmedEmail, trimmedName);
-      router.replace('/(tabs)');
-    } catch (error: any) {
-      setErrorMessage(error?.message || 'Direct sign-in unavailable.');
+      if (error?.response?.status === 429) {
+        setErrorMessage('🕊️ शांतिः — Please rest for a few moments before requesting another sacred code.');
+      } else {
+        setErrorMessage(error?.response?.data?.message || error?.message || 'Failed to resend code. Please wait a moment.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <CosmicBackground />
 
       <KeyboardAvoidingView
@@ -252,7 +223,17 @@ export default function LoginScreen() {
 
             {/* Auth Glass Card */}
             <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }], width: '100%' }}>
-              <GlassCard style={styles.authCard} glow>
+              <GlassCard
+                style={[
+                  styles.authCard,
+                  {
+                    backgroundColor: isDark ? 'rgba(22, 19, 43, 0.88)' : 'rgba(255, 255, 255, 0.94)',
+                    borderColor: isDark ? 'rgba(255, 153, 51, 0.22)' : 'rgba(255, 153, 51, 0.35)',
+                    shadowColor: isDark ? colors.primary : 'rgba(0, 0, 0, 0.1)',
+                  }
+                ]}
+                glow={isDark}
+              >
                 {errorMessage && (
                   <View style={styles.errorBanner}>
                     <Ionicons name="alert-circle" size={16} color={Colors.error} style={{ marginRight: 6 }} />
@@ -326,32 +307,6 @@ export default function LoginScreen() {
                       />
                     </View>
 
-                    <View style={styles.dividerRow}>
-                      <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                      <Text style={[styles.dividerText, { color: colors.textSecondary }]}>OR</Text>
-                      <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                    </View>
-
-                    <SpiritualButton
-                      title="Explore as Guest"
-                      onPress={handleGuestEntry}
-                      loading={loading}
-                      variant="glass"
-                      style={styles.buttonHeight}
-                    />
-
-                    {email.trim().length > 0 && fullName.trim().length > 0 && (
-                      <TouchableOpacity
-                        style={styles.quickEntryButton}
-                        onPress={handleDirectEntry}
-                        disabled={loading}
-                        accessibilityRole="button"
-                      >
-                        <Ionicons name="flash-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-                        <Text style={[styles.quickEntryText, { color: colors.primary }]}>Direct Devotee Access (Instant)</Text>
-                      </TouchableOpacity>
-                    )}
-
                     <TouchableOpacity
                       style={styles.policyLink}
                       onPress={() => router.push('/privacy')}
@@ -421,13 +376,6 @@ export default function LoginScreen() {
                       />
                     </View>
 
-                    <View style={styles.testNoteBox}>
-                      <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} style={{ marginRight: 4 }} />
-                      <Text style={[styles.testNoteText, { color: colors.textMuted }]}>
-                        Offline / Sandbox code: <Text style={[styles.testNoteCode, { color: colors.primary }]}>108108</Text>
-                      </Text>
-                    </View>
-
                     <TouchableOpacity
                       style={styles.resendButton}
                       onPress={handleResend}
@@ -456,7 +404,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   keyboardContainer: {
     flex: 1,
@@ -529,9 +476,11 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: Radius.xl,
     width: '100%',
-    backgroundColor: 'rgba(22, 19, 43, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 153, 51, 0.22)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 4,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -611,34 +560,6 @@ const styles = StyleSheet.create({
     height: 52,
     width: '100%',
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-  dividerText: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    paddingHorizontal: 10,
-    fontWeight: '700',
-  },
-  quickEntryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    paddingVertical: 8,
-  },
-  quickEntryText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
   policyLink: {
     marginTop: 16,
     alignItems: 'center',
@@ -670,21 +591,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   emailHighlight: {
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  testNoteBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-    marginBottom: 12,
-  },
-  testNoteText: {
-    fontSize: 11,
-    color: Colors.textMuted,
-  },
-  testNoteCode: {
     color: Colors.primary,
     fontWeight: '700',
   },

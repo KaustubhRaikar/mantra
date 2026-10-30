@@ -120,10 +120,33 @@ if (is_dir($queueDir)) {
     <?php endif; ?>
 </div>
 
-<!-- Active Devotee Sample Sessions -->
+<!-- Active Devotee Live Sessions -->
+<?php
+require_once __DIR__ . '/../includes/db.php';
+$db = DatabaseManager::getConnection();
+$liveSessions = [];
+
+try {
+    $stmt = $db->query(
+        "SELECT u.email, u.full_name, s.device_id, s.os, s.last_active_at,
+                COALESCE((SELECT SUM(completed_malas) FROM user_jaap_daily_logs WHERE user_id = u.id), 0) as malas
+         FROM user_sessions s
+         JOIN users u ON u.id = s.user_id
+         WHERE u.status != 'deleted'
+         ORDER BY s.last_active_at DESC
+         LIMIT 20"
+    );
+    if ($stmt) {
+        $liveSessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Throwable $e) {
+    $liveSessions = [];
+}
+?>
+
 <div class="glass-card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 1.15rem; color: #fff; font-family: var(--font-heading);">Active Devotee Sessions (Privacy-Preserved View)</h3>
+        <h3 style="font-size: 1.15rem; color: #fff; font-family: var(--font-heading);">Active Devotee Sessions (Privacy-Preserved Live View)</h3>
         <span style="font-size: 0.8rem; color: var(--accent-gold);">Zero PII Exposure Baseline</span>
     </div>
 
@@ -138,27 +161,31 @@ if (is_dir($queueDir)) {
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td><strong>devotee_42@mandir.***</strong></td>
-                <td>Pixel 7 (Android 14) &bull; Bound KeyStore Token</td>
-                <td><span style="color: #2ecc71;">✓ Functional &bull; Analytics &bull; AI</span></td>
-                <td style="color: var(--accent-gold); font-weight: bold;">324 Malas</td>
-                <td><span style="color: #2ecc71; font-weight: 600;">Active</span></td>
-            </tr>
-            <tr>
-                <td><strong>sadhak_88@ashram.***</strong></td>
-                <td>iPhone 15 Pro (iOS 17.5) &bull; Bound Keychain Token</td>
-                <td><span style="color: #2ecc71;">✓ Functional &bull; AI</span></td>
-                <td style="color: var(--accent-gold); font-weight: bold;">108 Malas</td>
-                <td><span style="color: #2ecc71; font-weight: 600;">Active</span></td>
-            </tr>
-            <tr>
-                <td><strong>devotee_104@gmail.***</strong></td>
-                <td>Galaxy S23 (Android 14) &bull; Bound KeyStore Token</td>
-                <td><span style="color: #2ecc71;">✓ Functional</span></td>
-                <td style="color: var(--accent-gold); font-weight: bold;">54 Malas</td>
-                <td><span style="color: #2ecc71; font-weight: 600;">Active</span></td>
-            </tr>
+            <?php if (empty($liveSessions)): ?>
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 36px; color: var(--text-mid);">
+                        No active devotee sessions currently recorded in database. Sessions will stream in real-time as devotees authenticate.
+                    </td>
+                </tr>
+            <?php else: ?>
+                <?php foreach ($liveSessions as $s): ?>
+                    <?php
+                        $rawEmail = $s['email'] ?? 'unknown';
+                        $parts = explode('@', $rawEmail);
+                        $namePart = $parts[0] ?? 'devotee';
+                        $domainPart = $parts[1] ?? 'sanctuary';
+                        $masked = substr($namePart, 0, 2) . str_repeat('*', max(1, strlen($namePart) - 2)) . '@' . $domainPart;
+                        $deviceDesc = (!empty($s['os']) ? htmlspecialchars($s['os'], ENT_QUOTES, 'UTF-8') : 'Device') . ' &bull; Hardware Key ' . substr(htmlspecialchars($s['device_id'] ?? '', ENT_QUOTES, 'UTF-8'), 0, 8) . '...';
+                    ?>
+                    <tr>
+                        <td><strong><?= htmlspecialchars($masked, ENT_QUOTES, 'UTF-8') ?></strong></td>
+                        <td><?= $deviceDesc ?></td>
+                        <td><span style="color: #2ecc71;">✓ Functional &bull; Analytics</span></td>
+                        <td style="color: var(--accent-gold); font-weight: bold;"><?= number_format((int)($s['malas'] ?? 0)) ?> Malas</td>
+                        <td><span style="color: #2ecc71; font-weight: 600;">Active</span></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>

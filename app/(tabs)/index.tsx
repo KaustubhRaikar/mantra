@@ -69,6 +69,7 @@ export default function HomeScreen() {
   const [stotras, setStotras] = useState<any[]>([]);
   const [vratKathas, setVratKathas] = useState<any[]>([]);
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
+  const [activeLiturgicalTab, setActiveLiturgicalTab] = useState<'mantras' | 'stotras' | 'chalisas' | 'pooja_vidhi'>('mantras');
 
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -491,28 +492,249 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Featured Mantras ─────────────────────────────────── */}
-        {renderSectionHeader('Featured Mantras', () => router.push('/(tabs)/categories'))}
-        {loading ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
-            {[1, 2].map((i) => (
-              <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
-            ))}
-          </ScrollView>
-        ) : (
-          <FlatList
-            data={listFeatured}
-            renderItem={renderFeaturedCard('/mantra/')}
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.hScroll}
-            snapToInterval={CARD_W + 14}
-            decelerationRate="fast"
-          />
+        {/* ── Liturgical Stream Tabs (Mantras | Stotras | Chalisas | Pooja Vidhi) ── */}
+        <View style={styles.liturgicalTabsContainer}>
+          {[
+            { key: 'mantras', label: 'Mantras', sub: 'मंत्र', icon: 'flame' },
+            { key: 'stotras', label: 'Stotras', sub: 'स्तोत्र व सूक्त', icon: 'star' },
+            { key: 'chalisas', label: 'Chalisas', sub: 'चालीसा', icon: 'book' },
+            { key: 'pooja_vidhi', label: 'Pooja Vidhi', sub: 'पूजा विधि', icon: 'leaf' },
+          ].map((tab) => {
+            const isActive = activeLiturgicalTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[
+                  styles.liturgicalTabBtn,
+                  {
+                    backgroundColor: isActive
+                      ? isDark
+                        ? 'rgba(255, 153, 51, 0.22)'
+                        : 'rgba(230, 126, 34, 0.18)'
+                      : isDark
+                      ? 'rgba(255, 255, 255, 0.04)'
+                      : 'rgba(0, 0, 0, 0.03)',
+                    borderColor: isActive ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setActiveLiturgicalTab(tab.key as any)}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={tab.icon as any}
+                  size={16}
+                  color={isActive ? colors.primary : colors.textMuted}
+                  style={{ marginBottom: 2 }}
+                />
+                <Text
+                  style={[
+                    styles.liturgicalTabLabel,
+                    { color: isActive ? colors.primary : colors.text },
+                    isActive && { fontWeight: '700' },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                <Text style={[styles.liturgicalTabSub, { color: colors.textSecondary }]}>
+                  {tab.sub}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* ── Dynamic Liturgical Shelf ── */}
+        {activeLiturgicalTab === 'mantras' && (
+          <>
+            {renderSectionHeader('Featured Mantras (मंत्र संग्रह)', () => router.push('/(tabs)/categories'))}
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+                {[1, 2].map((i) => (
+                  <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={listFeatured}
+                renderItem={renderFeaturedCard('/mantra/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
         )}
 
-        {/* ── Upanishads Quick Banner ──────────────────────────── */}
+        {activeLiturgicalTab === 'stotras' && (
+          <>
+            {renderSectionHeader('Sacred Stotras & Hymns (स्तोत्र एवं सूक्त)', () => router.push('/stotra' as any))}
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+                {[1, 2].map((i) => (
+                  <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={stotras}
+                renderItem={renderFeaturedCard('/stotra/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {activeLiturgicalTab === 'chalisas' && (
+          <>
+            {renderSectionHeader('Chalisa Sangrah (चालीसा संग्रह)', () => router.push('/chalisa' as any))}
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+                {[1, 2].map((i) => (
+                  <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={chalisas}
+                renderItem={renderFeaturedCard('/chalisa/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {activeLiturgicalTab === 'pooja_vidhi' && (
+          <>
+            {renderSectionHeader('Pooja Vidhis & Rituals (पूजा विधि)', () => router.push('/pooja_vidhi' as any))}
+            {loading ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+                {[1, 2].map((i) => (
+                  <SkeletonLoader key={i} width={CARD_W} height={190} radius={16} style={{ marginRight: 14 }} />
+                ))}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={poojaVidhis}
+                renderItem={renderFeaturedCard('/pooja_vidhi/')}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.hScroll}
+                snapToInterval={CARD_W + 14}
+                decelerationRate="fast"
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Curated Top 6 Sacred Deities Grid ──────────────────── */}
+        {renderSectionHeader('Sacred Deities (प्रमुख देवी-देवता)', () => router.push('/(tabs)/categories'))}
+        <View style={styles.grid}>
+          {(() => {
+            const TOP_DEITIES = [
+              { key: 'ganesh', name: 'Lord Ganesha', sub: 'विघ्नहर्ता', defaultId: 1, defaultCount: 12 },
+              { key: 'shiva', name: 'Lord Shiva', sub: 'महादेव', defaultId: 2, defaultCount: 18 },
+              { key: 'hanuman', name: 'Lord Hanuman', sub: 'संकटमोचन', defaultId: 7, defaultCount: 14 },
+              { key: 'devi', name: 'Maa Durga & Devi', sub: 'शक्ति स्वरूपा', defaultId: 4, defaultCount: 21 },
+              { key: 'vishnu', name: 'Lord Vishnu & Krishna', sub: 'जगतपालक', defaultId: 3, defaultCount: 16 },
+              { key: 'lakshmi', name: 'Maa Lakshmi', sub: 'समृद्धि एवं ऐश्वर्य', defaultId: 9, defaultCount: 10 },
+            ];
+
+            return TOP_DEITIES.map((deity, idx) => {
+              const matched = categories.find((c) => {
+                if (!c?.name) return false;
+                return c.name.toLowerCase().includes(deity.key);
+              });
+              const catId = matched?.id || deity.defaultId;
+              const catName = matched?.name || deity.name;
+              const count = matched?.count || deity.defaultCount;
+              const { icon, color } = getCategoryDisplayProps(deity.key);
+
+              return (
+                <GlassCard
+                  key={idx}
+                  style={styles.categoryCard}
+                  onPress={() => router.push({ pathname: '/category/[id]', params: { id: catId, name: catName } } as any)}
+                >
+                  <View style={[styles.categoryIconWrap, { backgroundColor: color + '20' }]}>
+                    <Ionicons name={icon} size={24} color={color} />
+                  </View>
+                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>{deity.name}</Text>
+                  <Text style={[styles.categoryDeitySub, { color: colors.primary }]} numberOfLines={1}>{deity.sub}</Text>
+                  <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>{count} Sacred Verses</Text>
+                </GlassCard>
+              );
+            });
+          })()}
+        </View>
+
+        {/* ── View All Categories Portal Card ──────────────────── */}
+        <GlassCard
+          style={styles.viewAllPortalCard}
+          onPress={() => router.push('/(tabs)/categories')}
+        >
+          <View style={styles.viewAllPortalRow}>
+            <View style={[styles.viewAllIconCircle, { backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)' }]}>
+              <Ionicons name="grid-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1, paddingHorizontal: 10 }}>
+              <Text style={[styles.viewAllPortalTitle, { color: colors.text }]}>
+                Explore All Deities & Traditions
+              </Text>
+              <Text style={[styles.viewAllPortalSub, { color: colors.textSecondary }]}>
+                Browse 18+ divine traditions, Vedic Suktas, Navagraha & Bhakti
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+          </View>
+        </GlassCard>
+
+        {/* ── Aartis & Devotional Hymns Direct Hub ─────────────── */}
+        <GlassCard
+          style={styles.aartiHubBanner}
+          onPress={() => router.push('/aarti' as any)}
+        >
+          <View style={[styles.aartiIconCircle, { backgroundColor: isDark ? 'rgba(255, 153, 51, 0.15)' : 'rgba(230, 126, 34, 0.12)' }]}>
+            <Ionicons name="flame" size={24} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1, paddingHorizontal: 12 }}>
+            <Text style={[styles.upanishadTitle, { color: colors.text }]}>Aarti Sangrah & Hymns</Text>
+            <Text style={[styles.upanishadSub, { color: colors.textSecondary }]}>Complete collection of daily worship aartis</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={isDark ? colors.secondary : colors.primary} />
+        </GlassCard>
+
+        {/* ── Festival Aartis ──────────────────────────────────── */}
+        {festivalAartis.length > 0 ? (
+          <>
+            {renderSectionHeader('Festival Aartis (त्योहार आरती)', () => router.push('/festival_aarti' as any))}
+            <FlatList
+              data={festivalAartis}
+              renderItem={renderFeaturedCard('/festival_aarti/')}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hScroll}
+              snapToInterval={CARD_W + 14}
+              decelerationRate="fast"
+            />
+          </>
+        ) : null}
+
+        {/* ── Sacred Upanishads Quick Banner ───────────────────── */}
         <GlassCard
           style={styles.upanishadBanner}
           onPress={() => router.push('/upanishad' as any)}
@@ -532,123 +754,6 @@ export default function HomeScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={isDark ? colors.secondary : colors.primary} />
         </GlassCard>
-
-        {/* ── Categories Grid ──────────────────────────────────── */}
-        {renderSectionHeader('Categories', () => router.push('/(tabs)/categories'))}
-        <View style={styles.grid}>
-          {(() => {
-            const seen = new Set<string>();
-            const uniqueCats = categories.filter((cat) => {
-              if (!cat?.name) return false;
-              const n = cat.name.trim().toLowerCase();
-              if (seen.has(n) || n === 'aartis') return false;
-              seen.add(n);
-              return true;
-            }).slice(0, 6);
-
-            return uniqueCats.map((cat, idx) => {
-              const { icon, color } = getCategoryDisplayProps(cat.name);
-              return (
-                <GlassCard
-                  key={idx}
-                  style={styles.categoryCard}
-                  onPress={() => router.push({ pathname: '/category/[id]', params: { id: cat.id, name: cat.name } } as any)}
-                >
-                  <View style={[styles.categoryIconWrap, { backgroundColor: color + '20' }]}>
-                    <Ionicons name={icon} size={26} color={color} />
-                  </View>
-                  <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>{cat.name}</Text>
-                  {cat.count ? <Text style={[styles.categoryCount, { color: colors.textSecondary }]}>{cat.count} verses</Text> : null}
-                </GlassCard>
-              );
-            });
-          })()}
-        </View>
-
-        {/* ── Festival Aartis ──────────────────────────────────── */}
-        {festivalAartis.length > 0 ? (
-          <>
-            {renderSectionHeader('Festival Aartis')}
-            <FlatList
-              data={festivalAartis}
-              renderItem={renderFeaturedCard('/festival_aarti/')}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hScroll}
-              snapToInterval={CARD_W + 14}
-              decelerationRate="fast"
-            />
-          </>
-        ) : null}
-
-        {/* ── Chalisas ─────────────────────────────────────────── */}
-        {chalisas.length > 0 ? (
-          <>
-            {renderSectionHeader('Chalisas', () => router.push('/chalisa' as any))}
-            <FlatList
-              data={chalisas}
-              renderItem={renderFeaturedCard('/chalisa/')}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hScroll}
-              snapToInterval={CARD_W + 14}
-              decelerationRate="fast"
-            />
-          </>
-        ) : null}
-
-        {/* ── Stotras ──────────────────────────────────────────── */}
-        {stotras.length > 0 ? (
-          <>
-            {renderSectionHeader('Stotras', () => router.push('/stotra' as any))}
-            <FlatList
-              data={stotras}
-              renderItem={renderFeaturedCard('/stotra/')}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hScroll}
-              snapToInterval={CARD_W + 14}
-              decelerationRate="fast"
-            />
-          </>
-        ) : null}
-
-        {/* ── Pooja Vidhi ──────────────────────────────────────── */}
-        {poojaVidhis.length > 0 ? (
-          <>
-            {renderSectionHeader('Pooja Vidhis', () => router.push('/pooja_vidhi' as any))}
-            <FlatList
-              data={poojaVidhis}
-              renderItem={renderFeaturedCard('/pooja_vidhi/')}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hScroll}
-              snapToInterval={CARD_W + 14}
-              decelerationRate="fast"
-            />
-          </>
-        ) : null}
-
-        {/* ── Vrat Kathas ──────────────────────────────────────── */}
-        {vratKathas.length > 0 ? (
-          <>
-            {renderSectionHeader('Vrat Kathas', () => router.push('/vrat_katha' as any))}
-            <FlatList
-              data={vratKathas}
-              renderItem={renderFeaturedCard('/vrat_katha/')}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hScroll}
-              snapToInterval={CARD_W + 14}
-              decelerationRate="fast"
-            />
-          </>
-        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -939,5 +1044,80 @@ const styles = StyleSheet.create({
     fontFamily: Typography.families.body,
     fontSize: 11,
     fontWeight: '700',
+  },
+  liturgicalTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.standard,
+    gap: 8,
+    marginTop: Spacing.compact,
+    marginBottom: Spacing.compact,
+  },
+  liturgicalTabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: Radius.md,
+    borderWidth: 1.2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liturgicalTabLabel: {
+    fontFamily: Typography.families.heading,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  liturgicalTabSub: {
+    fontFamily: Typography.families.body,
+    fontSize: 10,
+    marginTop: 1,
+  },
+  categoryDeitySub: {
+    fontFamily: Typography.families.devanagari,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  viewAllPortalCard: {
+    marginHorizontal: Spacing.standard,
+    marginBottom: Spacing.large,
+    padding: Spacing.standard,
+  },
+  viewAllPortalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewAllIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  viewAllPortalTitle: {
+    fontFamily: Typography.families.heading,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  viewAllPortalSub: {
+    fontFamily: Typography.families.body,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  aartiHubBanner: {
+    marginHorizontal: Spacing.standard,
+    marginBottom: Spacing.large,
+    padding: Spacing.standard,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aartiIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

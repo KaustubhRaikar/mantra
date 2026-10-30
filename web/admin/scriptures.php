@@ -6,79 +6,22 @@
 $pageTitle = "Scriptural Content Management (CMS)";
 require_once __DIR__ . '/includes/header.php';
 
-// Canonical Scripture sample data (Simulating database/API records conforming to SCHEMA.md)
-$scriptures = [
-    [
-        'id' => 1,
-        'name' => 'Gayatri Mantra',
-        'deity' => 'Surya / Savitur',
-        'category' => 'Mantra',
-        'sanskrit' => 'ॐ भूर्भुवः स्वः तत्सवितुर्वरेण्यं भर्गो देवस्य धीमहि धियो यो नः प्रचोदयात्॥',
-        'transliteration' => 'Om Bhur Bhuvah Swah Tat Savitur Varenyam...',
-        'audio_status' => 'ACTIVE',
-        'views' => 24890
-    ],
-    [
-        'id' => 2,
-        'name' => 'Maha Mrityunjaya Mantra',
-        'deity' => 'Lord Shiva',
-        'category' => 'Mantra',
-        'sanskrit' => 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्। उर्वारुकमिव बन्धनान् मृत्योर्मुक्षीय माऽमृतात्॥',
-        'transliteration' => 'Om Tryambakam Yajamahe Sugandhim...',
-        'audio_status' => 'ACTIVE',
-        'views' => 31400
-    ],
-    [
-        'id' => 3,
-        'name' => 'Shri Hanuman Chalisa',
-        'deity' => 'Lord Hanuman',
-        'category' => 'Chalisa',
-        'sanskrit' => 'श्रीगुरु चरन सरोज रज निज मनु मुकुरु सुधारि। बरनउँ रघुबर बिमल जसु जो दायकु फल चारि॥',
-        'transliteration' => 'Shri Guru Charana Saroja Raja...',
-        'audio_status' => 'ACTIVE',
-        'views' => 45200
-    ],
-    [
-        'id' => 4,
-        'name' => 'Shri Shiv Aarti (Om Jai Shiv Omkara)',
-        'deity' => 'Lord Shiva',
-        'category' => 'Aarti',
-        'sanskrit' => 'ॐ जय शिव ओंकारा, स्वामी जय शिव ओंकारा। ब्रह्मा, विष्णु, सदाशिव, अर्द्धांगी धारा॥',
-        'transliteration' => 'Om Jai Shiva Omkara, Swami Jai...',
-        'audio_status' => 'ACTIVE',
-        'views' => 18900
-    ],
-    [
-        'id' => 5,
-        'name' => 'Shiva Tandava Stotram',
-        'deity' => 'Lord Shiva',
-        'category' => 'Stotra',
-        'sanskrit' => 'जटाटवीगलज्जलप्रवाहपावितस्थले गलेऽवलम्ब्य लम्बितां भुजङ्गतुङ्गमालिकाम्॥',
-        'transliteration' => 'Jatatavigalajjala Pravahapavitasthale...',
-        'audio_status' => 'ACTIVE',
-        'views' => 28100
-    ],
-    [
-        'id' => 6,
-        'name' => 'Isha Upanishad (Verse 1)',
-        'deity' => 'Brahman',
-        'category' => 'Upanishad',
-        'sanskrit' => 'ईशा वास्यमिदं सर्वं यत्किञ्च जगत्यां जगत्। तेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम्॥',
-        'transliteration' => 'Isha Vasyam Idam Sarvam...',
-        'audio_status' => 'PENDING',
-        'views' => 9400
-    ],
-    [
-        'id' => 7,
-        'name' => 'Ganesh Chaturthi Pooja Vidhi',
-        'deity' => 'Lord Ganesha',
-        'category' => 'Pooja Vidhi',
-        'sanskrit' => 'वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ। निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा॥',
-        'transliteration' => 'Vakratunda Mahakaya Suryakoti...',
-        'audio_status' => 'ACTIVE',
-        'views' => 14200
-    ]
-];
+require_once __DIR__ . '/../includes/db.php';
+
+$db = DatabaseManager::getConnection();
+$scriptures = [];
+
+try {
+    $stmt = $db->query("SELECT id, title as name, deity, 'Mantra' as category, sanskrit, transliteration, audio_url, views FROM mantras ORDER BY id ASC LIMIT 50");
+    if ($stmt) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $row['audio_status'] = !empty($row['audio_url']) ? 'ACTIVE' : 'PENDING';
+            $scriptures[] = $row;
+        }
+    }
+} catch (Throwable $e) {
+    $scriptures = [];
+}
 
 $message = null;
 
@@ -91,9 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $deity = WebSecurity::sanitizeString($_POST['deity'] ?? '', 100);
         $category = WebSecurity::sanitizeString($_POST['category'] ?? '', 50);
         $sanskrit = WebSecurity::normalizeDevanagari($_POST['sanskrit'] ?? '');
+        $transliteration = WebSecurity::sanitizeString($_POST['transliteration'] ?? '', 500);
 
         if (!empty($name) && !empty($sanskrit)) {
-            $message = ['type' => 'success', 'text' => "Scripture '{$name}' normalized and scheduled for scholarship review & vector ingestion."];
+            try {
+                $ins = $db->prepare("INSERT INTO mantras (title, deity, category_id, sanskrit, transliteration, created_at) VALUES (:title, :deity, 1, :sanskrit, :transliteration, NOW())");
+                $ins->execute([
+                    ':title' => $name,
+                    ':deity' => $deity,
+                    ':sanskrit' => $sanskrit,
+                    ':transliteration' => $transliteration
+                ]);
+                $message = ['type' => 'success', 'text' => "Scripture '{$name}' successfully stored in database and scheduled for vector ingestion."];
+            } catch (Throwable $e) {
+                $message = ['type' => 'danger', 'text' => "Database write notice: " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')];
+            }
         } else {
             $message = ['type' => 'danger', 'text' => 'Title and Devanagari text are mandatory.'];
         }
@@ -103,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <div>
-        <h2 style="font-size: 1.3rem; color: #fff; font-family: var(--font-heading); margin-bottom: 4px;">Sacred Texts Catalog (v1 &amp; v2 Data)</h2>
+        <h2 style="font-size: 1.3rem; color: #fff; font-family: var(--font-heading); margin-bottom: 4px;">Sacred Texts Catalog (Live Data)</h2>
         <p style="font-size: 0.85rem; color: var(--text-mid);">Manage Mantras, Aartis, Chalisas, Stotras, and Ritual Guides</p>
     </div>
     <button class="btn-action btn-gold" onclick="document.getElementById('addModal').style.display = 'flex'">
@@ -145,33 +100,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($scriptures as $item): ?>
+            <?php if (empty($scriptures)): ?>
                 <tr>
-                    <td style="color: var(--text-low); font-weight: 600;">#<?= $item['id'] ?></td>
-                    <td>
-                        <strong style="color: #ffffff;"><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-mid);">
+                        No scriptures currently found in the database. Click <strong>+ Add Sacred Scripture</strong> above to create your first authentic text entry.
                     </td>
-                    <td>
-                        <span style="color: var(--accent-gold); font-weight: 500;"><?= htmlspecialchars($item['deity'], ENT_QUOTES, 'UTF-8') ?></span>
-                    </td>
-                    <td>
-                        <span style="padding: 3px 8px; border-radius: 4px; background: rgba(108, 92, 231, 0.2); color: #a29bfe; font-size: 0.78rem; font-weight: 600;">
-                            <?= htmlspecialchars($item['category'], ENT_QUOTES, 'UTF-8') ?>
-                        </span>
-                    </td>
-                    <td style="font-family: var(--font-sanskrit); font-size: 1.05rem; color: #fff; line-height: 1.5;">
-                        <?= htmlspecialchars($item['sanskrit'], ENT_QUOTES, 'UTF-8') ?>
-                    </td>
-                    <td>
-                        <?php if ($item['audio_status'] === 'ACTIVE'): ?>
-                            <span style="color: #2ecc71; font-size: 0.8rem; font-weight: 600;">● MP3 Hosted</span>
-                        <?php else: ?>
-                            <span style="color: #f39c12; font-size: 0.8rem; font-weight: 600;">○ In Queue</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="color: var(--text-mid);"><?= number_format($item['views']) ?></td>
                 </tr>
-            <?php endforeach; ?>
+            <?php else: ?>
+                <?php foreach ($scriptures as $item): ?>
+                    <tr>
+                        <td style="color: var(--text-low); font-weight: 600;">#<?= $item['id'] ?></td>
+                        <td>
+                            <strong style="color: #ffffff;"><?= htmlspecialchars($item['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></strong>
+                        </td>
+                        <td>
+                            <span style="color: var(--accent-gold); font-weight: 500;"><?= htmlspecialchars($item['deity'] ?? 'Universal', ENT_QUOTES, 'UTF-8') ?></span>
+                        </td>
+                        <td>
+                            <span style="padding: 3px 8px; border-radius: 4px; background: rgba(108, 92, 231, 0.2); color: #a29bfe; font-size: 0.78rem; font-weight: 600;">
+                                <?= htmlspecialchars($item['category'] ?? 'Mantra', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </td>
+                        <td style="font-family: var(--font-sanskrit); font-size: 1.05rem; color: #fff; line-height: 1.5;">
+                            <?= htmlspecialchars($item['sanskrit'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                        </td>
+                        <td>
+                            <?php if ($item['audio_status'] === 'ACTIVE'): ?>
+                                <span style="color: #2ecc71; font-size: 0.8rem; font-weight: 600;">● MP3 Hosted</span>
+                            <?php else: ?>
+                                <span style="color: #f39c12; font-size: 0.8rem; font-weight: 600;">○ In Queue</span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="color: var(--text-mid);"><?= number_format($item['views'] ?? 0) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>

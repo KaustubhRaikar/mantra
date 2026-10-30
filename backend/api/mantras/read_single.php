@@ -29,8 +29,11 @@ if($num > 0){
         // Canonical Fields (Task 6)
         "id" => $id,
         "name" => $title,
+        "title" => $title,
         "deity" => $category_name,
         "sanskrit" => $sanskrit_title,
+        "sanskrit_text" => $sanskrit_title,
+        "sanskrit_title" => $sanskrit_title,
         "transliteration" => $transliteration ?? '',
         "translation_en" => $translation_english ?? '',
         "translation_hi" => $translation_hindi ?? '',

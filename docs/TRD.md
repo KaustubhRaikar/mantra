@@ -139,9 +139,9 @@ When user authenticates, synchronization occurs via authenticated POST endpoints
 
 ### 2.5 Security, Crypto & Rate Limiting Requirements (REQ-T1)
 
-1. **Rate Limiting:**
-   * `/auth/send_otp.php`: Max 3 requests per 10 minutes per email address; Max 10 requests per hour per IP. HTTP 429 returned upon breach.
-   * `/auth/verify_otp.php`: Max 5 failed attempts per OTP token; Max 10 attempts per 10 minutes per IP.
+1. **Sliding Window Rate Limiting:**
+   * `/auth/send_otp.php`: Max 2 requests per 15 minutes per email address; Max 5 requests per hour per IP. HTTP 429 returned upon breach with Retry-After header and "Too many requests. Please try after sometime." notice.
+   * `/auth/verify_otp.php`: Max 3 failed attempts per OTP token; Max 5 attempts per 15 minutes per IP.
 2. **HMAC-SHA256 Secret Hashing:**
    * Stored OTPs are hashed using a cryptographically random pepper secret: `hash_hmac('sha256', $otp, $server_secret)`.
    * Timing-attack-resistant comparison: `hash_equals($db_hash, $calculated_hash)`.
@@ -155,8 +155,8 @@ When user authenticates, synchronization occurs via authenticated POST endpoints
 
 | Req ID | Module | Implementation File | Verification Test |
 |---|---|---|---|
-| **REQ-T1-01** | Security | `backend/api/auth/send_otp.php` | `TC-SEC-001` (Dual rate limit) |
-| **REQ-T1-02** | Security | `backend/api/auth/verify_otp.php` | `TC-SEC-003` (Max 5 attempts) |
+| **REQ-T1-01** | Security | `backend/api/auth/send_otp.php` | `TC-SEC-001` (Dual rate limit: 2/15m email, 5/1h IP) |
+| **REQ-T1-02** | Security | `backend/api/auth/verify_otp.php` | `TC-SEC-003` (Max 3 attempts per code, 5/15m IP) |
 | **REQ-T1-03** | Security | `backend/api/auth/verify_otp.php` | `TC-SEC-005` (HMAC constant time) |
 | **REQ-T2-01** | Audio | `src/utils/audioPlayer.ts` | `TC-AUD-001` (Purge Google TTS) |
 | **REQ-T3-01** | Audio | `src/utils/audioPlayer.ts` | `TC-AUD-004` (Migrate to expo-audio)|

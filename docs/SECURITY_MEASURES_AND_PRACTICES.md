@@ -52,34 +52,21 @@
   }
   ```
 
-### 2.2 Rate Limiting Policies (REQ-T1-01, REQ-T1-02)
+### 2.2 True Sliding Window Rate Limiting (REQ-T1-01, REQ-T1-02)
 
 ```
-+-----------------------------------------------------------------------------------------------+
-|                      SLIDING WINDOW RATE LIMIT POLICY (1 APP, 1 MOBILE, 1 USER)                |
-+---------------------------+-----------------------------------+-------------------------------+
-| Scope / Window            | Limit Constraint                  | Action on Exceed              |
-+---------------------------+-----------------------------------+-------------------------------+
-| **Web Browser Origin**    | 0 calls (Web API disabled)        | HTTP 403 Forbidden            |
-| **Sliding 1-Minute**      | Max 5 calls / min / Unique Key    | HTTP 429 (Retry-After: 60)    |
-| **Sliding 1-Hour**        | Max 15 calls / hr / Unique Key    | HTTP 429 (Retry-After: 3600)  |
-| **Sliding 1-Day (24h)**   | Max 100 calls / day / Unique Key  | HTTP 429 (Retry-After: 86400) |
-| `/auth/send_otp.php`      | Max 3 OTP sends / 10 min / Email  | HTTP 429                      |
-| `/auth/verify_otp.php`    | Max 5 failed attempts / OTP code  | Invalidate OTP                |
-+---------------------------+-----------------------------------+-------------------------------+
++---------------------------------------------------------------------------------------------------------+
+|                                    SLIDING WINDOW RATE LIMIT POLICY                                     |
++---------------------------+-----------------------------------+---------------+-------------------------+
+| Endpoint                  | Limit Constraint                  | Action on Hit | Error Message & Headers |
++---------------------------+-----------------------------------+---------------+-------------------------+
+| `/auth/send_otp.php`      | Max 2 OTP sends / 15 min / Email  | HTTP 429      | "Please try after sometime" + Retry-After |
+| `/auth/send_otp.php`      | Max 5 OTP sends / 1 hour / IP     | HTTP 429      | "Please try after sometime" + Retry-After |
+| `/auth/verify_otp.php`    | Max 3 failed attempts / OTP code  | Invalidate OTP| Code deleted from pending_otps table     |
+| `/auth/verify_otp.php`    | Max 5 attempts / 15 min / IP      | HTTP 429      | "Please try after sometime" + Retry-After |
+| `/jaap/sync.php`          | Max 30 sync calls / 1 minute / IP  | HTTP 429      | Devotional content safely cached offline|
++---------------------------+-----------------------------------+---------------+-------------------------+
 ```
-
-### 2.2.1 Unique Client Identification Matrix
-Every API invocation from the client computes a 256-bit sliding window identification key:
-$$\text{UniqueKey} = \text{SHA256}(\text{AppKey} \parallel \text{DeviceID} \parallel \text{UserID} \parallel \text{ClientIP})$$
-* **1 App:** Cryptographic verification key (`X-App-Key: m_app_c0sm1c_...`). Web browsers without this key receive instant HTTP 403.
-* **1 Mobile:** Hardware installation UUID (`X-Device-ID`).
-* **1 User:** Authenticated user identity (`X-User-ID` or `X-Login-Token`), with anonymous guest fallback.
-* **1 Unique Key:** Enforces sliding window tracking in `api_sliding_rate_limits`.
-
-### 2.2.2 High-Performance Server Cache Engine
-* GET responses for canonical reading endpoints (`categories`, `mantras`, `stotras`, `chalisas`, `aartis`, `pooja_vidhis`, `vrat_kathas`, `upanishads`) are cached on NVMe storage.
-* Includes HTTP `ETag` and `304 Not Modified` conditional validation, eliminating redundant data transfer and responding in $<1\text{ms}$.
 
 ### 2.3 Hardware Device Fingerprinting
 Every session is cryptographically bound to the physical device:

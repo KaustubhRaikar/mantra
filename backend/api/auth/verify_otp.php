@@ -13,8 +13,8 @@ $db = $database->getConnection();
 
 $clientIp = getTrustedClientIp();
 
-// Rate limit: max 10 OTP verification attempts per IP per 10 minutes
-checkRateLimit($db, 'verify_otp_ip', $clientIp, 10, 600, "Too many verification attempts from this IP. Please wait 10 minutes.");
+// Rate limit: max 5 OTP verification attempts per IP per 15 minutes (900s) sliding window
+checkRateLimit($db, 'verify_otp_ip', $clientIp, 5, 900, "Too many requests. Please try after sometime.");
 
 $data = json_decode(file_get_contents("php://input"));
 
@@ -68,8 +68,8 @@ if (strtotime($pending['expires_at']) < time()) {
     exit();
 }
 
-// Check attempt count (max 5 per OTP)
-if ((int)$pending['attempts'] >= 5) {
+// Check attempt count (max 3 per OTP)
+if ((int)$pending['attempts'] >= 3) {
     $db->prepare("DELETE FROM pending_otps WHERE email = :email")->execute([':email' => $email]);
     http_response_code(401);
     echo json_encode(["status" => "error", "message" => "Too many incorrect attempts. Verification code invalidated. Please request a new one."]);
@@ -85,11 +85,14 @@ if (!hash_equals($expectedHash, $computedHash)) {
     $db->prepare("UPDATE pending_otps SET attempts = attempts + 1 WHERE email = :email")
        ->execute([':email' => $email]);
     
-    $remainingAttempts = 4 - (int)$pending['attempts'];
+    $remainingAttempts = 2 - (int)$pending['attempts'];
+    if ($remainingAttempts <= 0) {
+        $db->prepare("DELETE FROM pending_otps WHERE email = :email")->execute([':email' => $email]);
+    }
     http_response_code(401);
     echo json_encode([
         "status" => "error",
-        "message" => "Incorrect verification code." . ($remainingAttempts > 0 ? " You have {$remainingAttempts} attempt(s) remaining." : " Code invalidated.")
+        "message" => "Incorrect verification code." . ($remainingAttempts > 0 ? " You have {$remainingAttempts} attempt(s) remaining." : " Code invalidated. Please request a new code.")
     ]);
     exit();
 }

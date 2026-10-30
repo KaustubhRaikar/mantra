@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Mantra } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 import { getDB } from './db';
+import { triggerShantiBanner } from '../components/ShantiBanner';
 
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
@@ -39,6 +40,18 @@ apiClient.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 429) {
+      triggerShantiBanner(
+        'शांतिः • Offline Sanctuary Active — Prayers continue seamlessly while network rests.'
+      );
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Local SQLite cache helpers for resilience & rate-limit immunity
 const saveLocalCache = async (key: string, data: any) => {

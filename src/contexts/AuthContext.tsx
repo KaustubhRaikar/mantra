@@ -25,9 +25,7 @@ interface AuthContextData {
   loading: boolean;
   pendingEmail: string | null;
   sendOtp: (email: string, fullName: string) => Promise<boolean>;
-  signIn: (email: string, fullName: string) => Promise<void>;
   verifyOtp: (otp: string, fullName?: string) => Promise<void>;
-  guestSignIn: () => Promise<void>;
   signOut: () => Promise<void>;
   checkSession: () => Promise<void>;
   sessionError: string | null;
@@ -135,10 +133,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
    * Step 2: Verify 6-digit OTP code & establish session
    */
   const verifyOtp = async (otp: string, fullName?: string): Promise<void> => {
-    const targetEmail = pendingEmail || 'devotee@sanctuary.in';
+    const targetEmail = pendingEmail;
+    if (!targetEmail) {
+      throw new Error('Email verification context missing. Please enter your email again.');
+    }
     const deviceId = await getDeviceId();
     const deviceName = Device.modelName || 'Mobile Devotee Device';
-    const isDevCode = otp === '108108' || otp === '123456';
 
     try {
       const res = await api.auth.verifyOtp(targetEmail, otp, deviceId, deviceName);
@@ -149,73 +149,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await SecureStore.setItemAsync('token', token);
         setPendingEmail(null);
         setUser(verifiedUser);
+
+        try {
+          const { syncManager } = require('../services/syncManager');
+          syncManager.syncJaapLogs();
+        } catch (_) {}
         return;
       }
+      throw new Error(res?.message || 'Verification failed. Please check the code.');
     } catch (err: any) {
       log('Server OTP verification notice:', err);
-      if (!isDevCode) {
-        const errorMsg = err?.response?.data?.message || err?.message || 'Verification failed. Please check the code.';
-        throw new Error(errorMsg);
-      }
+      const errorMsg = err?.response?.data?.message || err?.message || 'Verification failed. Please check the code.';
+      throw new Error(errorMsg);
     }
-
-    // Client session fallback for offline, testing, or sacred dev code (108108 / 123456)
-    const sessionUser = {
-      id: 1,
-      email: targetEmail,
-      full_name: fullName || targetEmail.split('@')[0] || 'Devotee',
-      is_guest: false,
-    };
-    const sessionToken = 'dev_session_' + cryptoRandomUUID();
-
-    await SecureStore.setItemAsync('user', JSON.stringify(sessionUser));
-    await SecureStore.setItemAsync('token', sessionToken);
-    setPendingEmail(null);
-    setUser(sessionUser);
-
-    try {
-      const { syncManager } = require('../services/syncManager');
-      syncManager.syncJaapLogs();
-    } catch (_) {}
-  };
-
-  /**
-   * Direct Sign In (One-tap authentication)
-   */
-  const signIn = async (email: string, fullName: string): Promise<void> => {
-    setSessionError(null);
-    api.auth.sendOtp(email, fullName).catch(() => {});
-
-    const sessionUser = { id: 1, email: email.trim(), full_name: fullName.trim() || 'Devotee', is_guest: false };
-    const sessionToken = 'dev_session_' + cryptoRandomUUID();
-
-    await SecureStore.setItemAsync('user', JSON.stringify(sessionUser));
-    await SecureStore.setItemAsync('token', sessionToken);
-    setPendingEmail(null);
-    setUser(sessionUser);
-
-    try {
-      const { syncManager } = require('../services/syncManager');
-      syncManager.syncJaapLogs();
-    } catch (_) {}
-  };
-
-  /**
-   * Guest Sign In (Explore without email barriers)
-   */
-  const guestSignIn = async (): Promise<void> => {
-    const guestUser = {
-      id: 0,
-      email: 'guest@sanctuary.local',
-      full_name: 'Sacred Guest',
-      is_guest: true,
-    };
-    const guestToken = 'guest_' + cryptoRandomUUID();
-
-    await SecureStore.setItemAsync('user', JSON.stringify(guestUser));
-    await SecureStore.setItemAsync('token', guestToken);
-    setPendingEmail(null);
-    setUser(guestUser);
   };
 
   return (
@@ -224,9 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       loading,
       pendingEmail,
       sendOtp,
-      signIn,
       verifyOtp,
-      guestSignIn,
       signOut,
       checkSession,
       sessionError,

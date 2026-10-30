@@ -10,6 +10,7 @@ import { CosmicThemeProvider, useTheme } from "../src/contexts/ThemeContext";
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { queryClient, sqlitePersister } from '../src/services/queryClient';
 import { LogBox } from 'react-native';
+import { ShantiBanner } from '../src/components/ShantiBanner';
 
 LogBox.ignoreLogs([
   'setPositionAsync is not supported',
@@ -48,15 +49,18 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? "light" : "dark"} />
+      <ShantiBanner />
       <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
         <Stack.Screen name="login" options={{ animationTypeForReplace: user ? 'push' : 'pop' }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="mantra/[id]" options={{ title: "Mantra Details" }} />
+        <Stack.Screen name="aarti/index" options={{ title: "Aarti Sangrah" }} />
         <Stack.Screen name="aarti/[id]" options={{ title: "Aarti Details" }} />
         <Stack.Screen name="chalisa/[id]" options={{ title: "Chalisa Details" }} />
         <Stack.Screen name="stotra/[id]" options={{ title: "Stotra Details" }} />
         <Stack.Screen name="pooja_vidhi/[id]" options={{ title: "Pooja Vidhi Details" }} />
         <Stack.Screen name="vrat_katha/[id]" options={{ title: "Vrat Katha Details" }} />
+        <Stack.Screen name="festival_aarti/index" options={{ title: "Festival Aartis" }} />
         <Stack.Screen name="festival_aarti/[id]" options={{ title: "Festival Aarti Details" }} />
         <Stack.Screen name="search/index" options={{ title: "Search" }} />
       </Stack>
