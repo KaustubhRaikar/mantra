@@ -99,6 +99,7 @@ export default function LoginScreen() {
       }),
     ]).start(() => {
       setStep(newStep);
+      setErrorMessage(null);
       slideAnim.setValue(newStep === 'otp' ? 24 : -24);
       Animated.parallel([
         Animated.timing(fadeAnim, {
