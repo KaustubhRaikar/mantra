@@ -1,0 +1,6 @@
+# Route requests to backend/api if not physically present in web/api
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ ../backend/api/$1 [L,QSA]
+</IfModule>

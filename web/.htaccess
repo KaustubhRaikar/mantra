@@ -61,4 +61,9 @@ AddDefaultCharset UTF-8
     RewriteCond %{HTTPS} !=on
     RewriteCond %{HTTP_HOST} ^mantra\.aarambhtech\.in$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Route /api requests to backend/api if not physically in web/api
+    RewriteCond %{DOCUMENT_ROOT}/web/api/$1 !-f
+    RewriteRule ^api/(.*)$ backend/api/$1 [L,QSA]
 </IfModule>
+
