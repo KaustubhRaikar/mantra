@@ -131,7 +131,8 @@ try {
             "driver" => $dbDriver,
             "database_name" => $currentDbName,
             "bak_file_exists" => file_exists($configDir . '/database.php.original_bak'),
-            "bak_snippet" => file_exists($configDir . '/database.php.original_bak') ? substr(file_get_contents($configDir . '/database.php.original_bak'), 0, 500) : null
+            "bak_snippet" => file_exists($configDir . '/database.php.original_bak') ? substr(file_get_contents($configDir . '/database.php.original_bak'), 0, 500) : null,
+            "env_content" => file_exists($publicHtml . '/.env') ? file_get_contents($publicHtml . '/.env') : null
         ];
 
         // Schema diagnostics for all tables in the MySQL database
