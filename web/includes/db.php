@@ -14,13 +14,39 @@ class DatabaseManager {
             return self::$pdo;
         }
 
+        // Parse environment variables from .env if present
+        $envPaths = [
+            dirname(__DIR__, 2) . '/.env',
+            dirname(__DIR__, 1) . '/.env',
+            __DIR__ . '/.env',
+            '/home/u885706413/domains/mantra.aarambhtech.in/public_html/.env'
+        ];
+        foreach ($envPaths as $envFile) {
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos(trim($line), '#') === 0) continue;
+                    $parts = explode('=', $line, 2);
+                    if (count($parts) === 2) {
+                        $varName = trim($parts[0]);
+                        $varVal  = trim($parts[1]);
+                        if (!getenv($varName)) {
+                            putenv("{$varName}={$varVal}");
+                            $_ENV[$varName] = $varVal;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+
         $host = getenv('DB_HOST') ?: '127.0.0.1';
         $db   = getenv('DB_NAME') ?: 'mantra_db';
         $user = getenv('DB_USER') ?: 'root';
         $pass = getenv('DB_PASS') ?: '';
         $port = getenv('DB_PORT') ?: '3306';
 
-        // Try MySQL first
+        // Connect strictly to MySQL
         try {
             $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
             self::$pdo = new PDO($dsn, $user, $pass, [
@@ -30,17 +56,8 @@ class DatabaseManager {
             ]);
             self::$driver = 'mysql';
         } catch (Throwable $e) {
-            // Self-healing fallback: Embedded local SQLite database
-            $sqliteDir = sys_get_temp_dir() . '/mantra_security';
-            if (!is_dir($sqliteDir)) {
-                @mkdir($sqliteDir, 0750, true);
-            }
-            $sqliteFile = $sqliteDir . '/mantra_analytics.sqlite';
-            self::$pdo = new PDO("sqlite:" . $sqliteFile, null, null, [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-            self::$driver = 'sqlite';
+            error_log("Website Pure MySQL Connection Failed: " . $e->getMessage());
+            throw new RuntimeException("MySQL Database Connection Failed: " . $e->getMessage());
         }
 
         self::initializeSchema();
@@ -56,11 +73,9 @@ class DatabaseManager {
      */
     private static function initializeSchema(): void {
         $db = self::$pdo;
-        $isSqlite = (self::$driver === 'sqlite');
-
-        $autoInc = $isSqlite ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
-        $intPk   = $isSqlite ? 'INTEGER PRIMARY KEY AUTOINCREMENT' : 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
-        $nowDef  = $isSqlite ? "DATETIME DEFAULT CURRENT_TIMESTAMP" : "TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
+        $autoInc = 'BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
+        $intPk   = 'INT UNSIGNED AUTO_INCREMENT PRIMARY KEY';
+        $nowDef  = 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP';
 
         // 1. Users Table
         $db->exec("CREATE TABLE IF NOT EXISTS users (

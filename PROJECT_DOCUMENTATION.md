@@ -27,11 +27,14 @@
 
 ```
 d:\MobileApps\mantra/
+├── database/                      # Standalone MySQL Database Dumps for phpMyAdmin
+│   └── mantra_db.sql              # Complete 32-table production dump (2,311 records, 1.89 MB)
 ├── docs/                          # Comprehensive Architectural & System Specifications
 │   ├── ADMIN_AND_STATS.md         # 150 Real-data metrics & 8 sub-dashboards
 │   ├── AGENTS.md                  # Multi-agent Vedic swarm architecture
 │   ├── AUTHENTICATION.md          # 2-step OTP & device binding lifecycle
 │   ├── BRD.md                     # Business requirements & OKRs
+│   ├── DATABASE_AND_PHPMYADMIN.md # Pure MySQL architecture, phpMyAdmin access & SQL dump guide
 │   ├── DB_DESIGN.md               # SQLite client & MySQL server schemas
 │   ├── DEPLOYMENT.md              # EAS pipelines, Hostinger cloud & web portal
 │   ├── MEMORY.md                  # 4-tier AI memory hierarchy & DPDP purge
