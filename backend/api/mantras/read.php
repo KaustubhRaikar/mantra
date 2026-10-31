@@ -55,8 +55,9 @@ try {
         $params[':search4'] = $searchVal;
     }
 
+    $orderBy = "m.id ASC";
     if ($featured !== null) {
-        $whereClauses[] = "m.is_featured = 1";
+        $orderBy = "m.likes_count DESC";
     }
 
     $sql = "SELECT m.id, 
@@ -75,8 +76,8 @@ try {
                    c.name as category_name,
                    c.name as deity,
                    c.name as god,
-                   COALESCE(m.duration, 0) as duration,
-                   COALESCE(m.is_featured, 1) as is_featured
+                   0 as duration,
+                   1 as is_featured
             FROM mantras m
             LEFT JOIN categories c ON m.category_id = c.id";
 
@@ -84,7 +85,7 @@ try {
         $sql .= " WHERE " . implode(" AND ", $whereClauses);
     }
 
-    $sql .= " ORDER BY m.id ASC";
+    $sql .= " ORDER BY " . $orderBy;
 
     $stmt = $db->prepare($sql);
     foreach ($params as $key => $val) {
