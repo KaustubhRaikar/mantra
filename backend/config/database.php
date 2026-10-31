@@ -4,6 +4,7 @@
  * Provides secure PDO MySQL connection with self-healing fallback for local development.
  */
 
+if (!class_exists('Database')) {
 class Database {
     private ?PDO $conn = null;
 
@@ -164,4 +165,5 @@ class Database {
             }
         } catch (Throwable $e) {}
     }
+}
 }
