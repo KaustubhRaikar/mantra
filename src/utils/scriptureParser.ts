@@ -134,14 +134,16 @@ export function parseScriptureContent(data: any): ParsedScripture {
   }
 
   // 2. Vrat Katha Chapters & Narratives
-  if (data.katha_chapters || data.chapters || data.katha_text) {
+  if (data.katha_chapters || data.chapters || data.katha_text || data.katha_name) {
     const rawChapters = safeParseJson(data.katha_chapters || data.chapters) || 
       (Array.isArray(data.katha_chapters) ? data.katha_chapters : null) ||
       (Array.isArray(data.chapters) ? data.chapters : null);
 
     let formattedContent = '';
+    const rawKathaText = typeof data.katha_text === 'string' ? data.katha_text.trim() : '';
+
     if (Array.isArray(rawChapters) && rawChapters.length > 0) {
-      formattedContent = rawChapters
+      const chaptersText = rawChapters
         .map((c: any, idx: number) => {
           const chapNum = c.chapterNumber || c.chapter || idx + 1;
           const title = c.title ? `अध्याय ${chapNum} — ${c.title}` : `अध्याय ${chapNum}`;
@@ -149,14 +151,35 @@ export function parseScriptureContent(data: any): ParsedScripture {
           return `${title}\n\n${body}`;
         })
         .join('\n\n═══════════════════════\n\n');
-    } else if (typeof data.katha_text === 'string' && data.katha_text.trim()) {
-      formattedContent = data.katha_text.trim();
+
+      if (rawKathaText.length > chaptersText.length + 50) {
+        formattedContent = rawKathaText;
+      } else {
+        formattedContent = chaptersText;
+      }
+    } else if (rawKathaText) {
+      formattedContent = rawKathaText;
+    } else if (data.description || data.synopsis) {
+      formattedContent = (data.description || data.synopsis).trim();
     }
 
     if (formattedContent) {
       const hindiParts: string[] = [];
       if (data.opening_verse) hindiParts.push(`आरंभिक श्लोक:\n${data.opening_verse}`);
-      if (data.vidhi) hindiParts.push(`\nव्रत विधि:\n${data.vidhi}`);
+      if (data.vidhi) {
+        const parsedVidhi = safeParseJson(data.vidhi);
+        if (Array.isArray(parsedVidhi) && parsedVidhi.length > 0) {
+          const formattedVidhi = parsedVidhi
+            .map((s: any, idx: number) => `चरण ${s.step || idx + 1}: ${s.name || ''}\n${s.description || ''}`)
+            .join('\n\n');
+          hindiParts.push(`\nव्रत विधि:\n${formattedVidhi}`);
+        } else if (typeof data.vidhi === 'string' && !data.vidhi.trim().startsWith('[')) {
+          hindiParts.push(`\nव्रत विधि:\n${data.vidhi}`);
+        }
+      }
+      if (data.samagri_list) {
+        hindiParts.push(`\nपूजा सामग्री:\n${data.samagri_list}`);
+      }
       if (data.rules) hindiParts.push(`\nनियम:\n${data.rules}`);
       if (data.vratSignificance || data.vrat_significance) {
         hindiParts.push(`\nव्रत महात्म्य:\n${data.vratSignificance || data.vrat_significance}`);

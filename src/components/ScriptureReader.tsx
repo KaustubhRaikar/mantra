@@ -110,14 +110,23 @@ export function ScriptureReader({
         availableTabs.push({ key: 'archana', label: `🌸 नामार्चन (${namavaliItems.length})` });
       }
     } else {
-      if (sanskritText) availableTabs.push({ key: 'sanskrit', label: 'Sanskrit' });
+      if (sanskritText) availableTabs.push({ 
+        key: 'sanskrit', 
+        label: categoryPath === 'katha' ? 'सम्पूर्ण कथा' : 'Sanskrit' 
+      });
     }
     // Dynamic regional tab when user preference is gu, mr, bn, te, ta, kn
     if (language !== 'sa' && language !== 'hi' && language !== 'en') {
       availableTabs.push({ key: 'regional', label: getScriptureReaderTranslationTabName(language) });
     }
-    if (hindiText) availableTabs.push({ key: 'hindi', label: 'Hindi' });
-    if (englishMeaning) availableTabs.push({ key: 'meaning', label: 'Meaning' });
+    if (hindiText) availableTabs.push({ 
+      key: 'hindi', 
+      label: categoryPath === 'katha' ? 'व्रत विधि व नियम' : 'Hindi' 
+    });
+    if (englishMeaning) availableTabs.push({ 
+      key: 'meaning', 
+      label: categoryPath === 'katha' ? 'महत्व व सार' : 'Meaning' 
+    });
     if (transliteration) availableTabs.push({ key: 'translit', label: 'Translit' });
   }
 

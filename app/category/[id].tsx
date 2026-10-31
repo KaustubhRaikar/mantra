@@ -24,7 +24,14 @@ export default function CategoryScreen() {
   const fetchMantras = async () => {
     setLoading(true);
     try {
-      const data = await api.getMantras(Number(id));
+      let identifier: string | number | undefined = id ? String(id) : undefined;
+      if (identifier && identifier.startsWith('deity_')) {
+        identifier = identifier.replace('deity_', '');
+      }
+      if (!identifier && name) {
+        identifier = String(name);
+      }
+      const data = await api.getMantras(identifier);
       setMantras(data || []);
     } catch (e) {
       console.warn('Failed loading category mantras:', e);

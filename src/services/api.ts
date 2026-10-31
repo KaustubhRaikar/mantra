@@ -196,23 +196,35 @@ export const api = {
     return null;
   },
 
-  getMantras: async (categoryId?: number) => {
-    const cacheKey = categoryId ? `CACHE_mantras_cat_${categoryId}` : 'CACHE_mantras_all';
+  getMantras: async (categoryId?: number | string) => {
+    let cleanId: string | number | undefined = categoryId;
+    if (typeof cleanId === 'string') {
+      if (cleanId.startsWith('deity_')) {
+        cleanId = cleanId.replace('deity_', '');
+      }
+      if (/^\d+$/.test(cleanId)) {
+        cleanId = parseInt(cleanId, 10);
+      }
+    }
+
+    const cacheKey = cleanId ? `CACHE_mantras_cat_${cleanId}` : 'CACHE_mantras_all';
     try {
-      const url = categoryId 
-        ? `/mantras/read.php?category_id=${categoryId}` 
+      const url = cleanId 
+        ? `/mantras/read.php?category_id=${encodeURIComponent(cleanId)}` 
         : '/mantras/read.php';
       const response = await apiClient.get(url);
-      const records = response.data.records || [];
+      const records = response.data?.records || [];
       if (records.length > 0) {
         await saveLocalCache(cacheKey, records);
+        return records;
       }
-      return records;
     } catch (error: any) {
-      const cached = await getLocalCache<any[]>(cacheKey);
-      if (cached && cached.length > 0) return cached;
-      return [];
+      // Fall through to cached data
     }
+
+    const cached = await getLocalCache<any[]>(cacheKey);
+    if (cached && cached.length > 0) return cached;
+    return [];
   },
 
   getFeaturedMantras: async () => {
@@ -495,19 +507,12 @@ export const api = {
   },
 
   getKathas: async () => {
+    let remoteRecords: any[] = [];
     try {
       const response = await apiClient.get('/vrat_kathas/read.php');
-      const records = response.data.records || [];
-      if (records.length > 0) {
-        await saveLocalCache('CACHE_vrat_kathas', records);
-        return records;
-      }
+      remoteRecords = response.data?.records || [];
     } catch {}
 
-    const cached = await getLocalCache<any[]>('CACHE_vrat_kathas');
-    if (cached && cached.length > 0) return cached;
-
-    // Fall back to canonical Kathas
     const canonicalList = CANONICAL_KATHAS.map((k) => ({
       id: k.id,
       title: k.title,
@@ -519,18 +524,72 @@ export const api = {
       duration: k.duration,
       synopsis: k.synopsis,
       katha_text: k.kathaText,
+      chapters: k.chapters,
+      sanskrit: k.sanskritTitle,
+      sanskrit_title: k.sanskritTitle,
       translation_hi: k.translation_hi,
       translation_en: k.translation_en,
       translation_gu: k.translation_gu,
       translation_mr: k.translation_mr,
     }));
+
+    if (remoteRecords.length > 0) {
+      // Merge remote records with canonical rich content
+      const enrichedRemote = remoteRecords.map((r: any) => {
+        const canonicalMatch = CANONICAL_KATHAS.find((c) => 
+          c.id === String(r.id) ||
+          c.title.includes(r.title || r.katha_name || '') ||
+          (r.title && c.title.includes(r.title)) ||
+          (r.katha_name && c.title.includes(r.katha_name))
+        );
+
+        if (canonicalMatch) {
+          return {
+            ...r,
+            title: canonicalMatch.title,
+            katha_name: canonicalMatch.title,
+            deity: canonicalMatch.deity,
+            deity_name: canonicalMatch.deity,
+            katha_text: canonicalMatch.kathaText || r.katha_text,
+            chapters: canonicalMatch.chapters || r.chapters,
+            synopsis: canonicalMatch.synopsis || r.synopsis || r.description,
+            vratSignificance: canonicalMatch.vratSignificance || r.vrat_significance || r.significance,
+            sanskrit: canonicalMatch.sanskritTitle || r.sanskrit,
+            translation_hi: canonicalMatch.translation_hi || r.translation_hi,
+            translation_en: canonicalMatch.translation_en || r.translation_en,
+          };
+        }
+        return r;
+      });
+
+      // Add any canonical kathas not already present in remote
+      const existingIds = new Set(enrichedRemote.map((e: any) => String(e.id)));
+      for (const ck of canonicalList) {
+        if (!existingIds.has(String(ck.id))) {
+          enrichedRemote.unshift(ck);
+        }
+      }
+
+      await saveLocalCache('CACHE_vrat_kathas', enrichedRemote);
+      return enrichedRemote;
+    }
+
+    const cached = await getLocalCache<any[]>('CACHE_vrat_kathas');
+    if (cached && cached.length > 0) return cached;
+
     await saveLocalCache('CACHE_vrat_kathas', canonicalList);
     return canonicalList;
   },
 
   getKathaDetails: async (id: string | number) => {
-    // 1. Check canonical Kathas
-    const canonicalMatch = CANONICAL_KATHAS.find((k) => k.id === String(id));
+    const idStr = String(id).toLowerCase();
+
+    // 1. Check canonical Kathas first by id, title, or substring
+    const canonicalMatch = CANONICAL_KATHAS.find((k) => 
+      k.id.toLowerCase() === idStr || 
+      k.title.toLowerCase().includes(idStr) ||
+      idStr.includes(k.id.toLowerCase())
+    );
     if (canonicalMatch) {
       return {
         id: canonicalMatch.id,
@@ -542,8 +601,10 @@ export const api = {
         category_label: canonicalMatch.categoryLabel,
         duration: canonicalMatch.duration,
         synopsis: canonicalMatch.synopsis,
+        vratSignificance: canonicalMatch.vratSignificance,
         katha_text: canonicalMatch.kathaText,
         sanskrit: canonicalMatch.sanskritTitle,
+        sanskrit_title: canonicalMatch.sanskritTitle,
         translation_hi: canonicalMatch.translation_hi,
         translation_hindi: canonicalMatch.translation_hi,
         translation_en: canonicalMatch.translation_en,
@@ -558,8 +619,23 @@ export const api = {
     try {
       const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
       if (response.data) {
-        await saveLocalCache(`CACHE_vrat_katha_${id}`, response.data);
-        return response.data;
+        const item = response.data;
+        // Check if item matches canonical narrative
+        const match = CANONICAL_KATHAS.find(c => 
+          c.title.includes(item.title || item.katha_name || '') ||
+          (item.title && c.title.includes(item.title)) ||
+          (item.katha_name && c.title.includes(item.katha_name))
+        );
+        if (match) {
+          item.title = match.title;
+          item.katha_text = match.kathaText;
+          item.chapters = match.chapters;
+          item.synopsis = match.synopsis;
+          item.vratSignificance = match.vratSignificance;
+        }
+
+        await saveLocalCache(`CACHE_vrat_katha_${id}`, item);
+        return item;
       }
     } catch (error) {
       const cached = await getLocalCache(`CACHE_vrat_katha_${id}`);

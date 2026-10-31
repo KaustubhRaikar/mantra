@@ -69,7 +69,41 @@ foreach ($authEndpoints as $ep) {
     }
 }
 
-// 3. Clear response cache files in public_html/cache and web/backend/cache
+// 3. Sync api/mantras forwarders
+$mantrasDir = $publicHtml . '/api/mantras';
+if (!is_dir($mantrasDir)) {
+    @mkdir($mantrasDir, 0755, true);
+}
+foreach (['read.php', 'read_single.php'] as $mEp) {
+    $mContent = "<?php\n// Auto-forwarder to Git repository web/backend/api/mantras/{$mEp}\nrequire_once __DIR__ . '/../../web/backend/api/mantras/{$mEp}';\n";
+    if (@file_put_contents($mantrasDir . '/' . $mEp, $mContent) !== false) {
+        $results["files_updated"][] = "api/mantras/" . $mEp;
+    }
+}
+
+// 4. Sync api/categories forwarders
+$catsDir = $publicHtml . '/api/categories';
+if (!is_dir($catsDir)) {
+    @mkdir($catsDir, 0755, true);
+}
+$catContent = "<?php\n// Auto-forwarder to Git repository web/backend/api/categories/read.php\nrequire_once __DIR__ . '/../../web/backend/api/categories/read.php';\n";
+if (@file_put_contents($catsDir . '/read.php', $catContent) !== false) {
+    $results["files_updated"][] = "api/categories/read.php";
+}
+
+// 5. Sync api/vrat_kathas forwarders
+$vkDir = $publicHtml . '/api/vrat_kathas';
+if (!is_dir($vkDir)) {
+    @mkdir($vkDir, 0755, true);
+}
+foreach (['read.php', 'read_single.php'] as $vkEp) {
+    $vkContent = "<?php\n// Auto-forwarder to Git repository web/backend/api/vrat_kathas/{$vkEp}\nrequire_once __DIR__ . '/../../web/backend/api/vrat_kathas/{$vkEp}';\n";
+    if (@file_put_contents($vkDir . '/' . $vkEp, $vkContent) !== false) {
+        $results["files_updated"][] = "api/vrat_kathas/" . $vkEp;
+    }
+}
+
+// 6. Clear response cache files in public_html/cache and web/backend/cache
 $cacheFlushed = 0;
 foreach ([$publicHtml . '/cache', $webBackend . '/cache'] as $cd) {
     if (is_dir($cd)) {
@@ -80,7 +114,7 @@ foreach ([$publicHtml . '/cache', $webBackend . '/cache'] as $cd) {
 }
 $results["cache_files_flushed"] = $cacheFlushed;
 
-// 4. Database connection & Rate Limit Table Purge & Schema Inspection
+// 7. Database connection & Rate Limit Table Purge & Schema Inspection
 require_once $webBackend . '/config/database.php';
 try {
     $database = new Database();
@@ -102,14 +136,10 @@ try {
                 $countStmt = $db->query("SELECT COUNT(*) FROM `{$table}`");
                 $count = $countStmt ? (int)$countStmt->fetchColumn() : 0;
 
-                $sampleStmt = $db->query("SELECT * FROM `{$table}` LIMIT 2");
-                $sample = $sampleStmt ? $sampleStmt->fetchAll(PDO::FETCH_ASSOC) : [];
-
                 $schemaDiagnostics[$table] = [
                     "exists" => count($cols) > 0,
                     "row_count" => $count,
-                    "columns" => $cols,
-                    "sample" => $sample
+                    "columns_count" => count($cols),
                 ];
             } catch (Throwable $te) {
                 $schemaDiagnostics[$table] = ["error" => $te->getMessage()];
