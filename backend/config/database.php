@@ -53,20 +53,9 @@ class Database {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
         } catch (Throwable $e) {
-            // Development fallback to embedded SQLite if local MySQL is offline
-            $sqliteDir = sys_get_temp_dir() . '/mantra_security';
-            if (!is_dir($sqliteDir)) {
-                @mkdir($sqliteDir, 0750, true);
-            }
-            $sqliteFile = $sqliteDir . '/mantra_local.sqlite';
-            try {
-                $this->conn = new PDO("sqlite:" . $sqliteFile, null, null, [
-                    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                ]);
-            } catch (Throwable $sqle) {
-                $this->conn = null;
-            }
+            error_log("Pure MySQL Connection Error: " . $e->getMessage());
+            $this->conn = null;
+            return null;
         }
 
         if ($this->conn) {
@@ -78,37 +67,6 @@ class Database {
 
     private function ensureTables(): void {
         try {
-            $driver = $this->conn->getAttribute(PDO::ATTR_DRIVER_NAME);
-            if ($driver === 'sqlite') {
-                $this->conn->exec("CREATE TABLE IF NOT EXISTS pending_otps (
-                    email TEXT PRIMARY KEY,
-                    full_name TEXT NOT NULL,
-                    otp_hash TEXT NOT NULL,
-                    expires_at TEXT NOT NULL,
-                    attempts INTEGER DEFAULT 0
-                );");
-                $this->conn->exec("CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    email TEXT NOT NULL UNIQUE,
-                    full_name TEXT NOT NULL DEFAULT 'Devotee',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );");
-                $this->conn->exec("CREATE TABLE IF NOT EXISTS user_device_info (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER NOT NULL,
-                    device_id TEXT NOT NULL,
-                    device_name TEXT DEFAULT 'Devotee Device',
-                    login_token TEXT NOT NULL,
-                    last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(user_id, device_id)
-                );");
-                $this->conn->exec("CREATE TABLE IF NOT EXISTS api_sliding_rate_limits (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    client_key TEXT NOT NULL,
-                    created_at INTEGER NOT NULL
-                );");
-                $this->conn->exec("CREATE INDEX IF NOT EXISTS idx_client_sliding ON api_sliding_rate_limits(client_key, created_at);");
-            } else {
                 $this->conn->exec("CREATE TABLE IF NOT EXISTS pending_otps (
                     email VARCHAR(255) PRIMARY KEY,
                     full_name VARCHAR(100) NOT NULL,
@@ -162,7 +120,6 @@ class Database {
                         @touch($unblockMarker);
                     } catch (Throwable $t) {}
                 }
-            }
         } catch (Throwable $e) {}
     }
 }

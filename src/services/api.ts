@@ -3,11 +3,7 @@ import { Mantra } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 import { getDB } from './db';
 import { triggerShantiBanner } from '../components/ShantiBanner';
-import {
-  CANONICAL_7_DAYS_WORSHIP,
-  CANONICAL_MAHAPARVA_POOJA_VIDHIS,
-} from '../data/canonicalTreasuryExpansion';
-import { CANONICAL_KATHAS } from '../data/canonicalKathas';
+// Default to cloud backend on Hostinger subdomain
 
 // Default to cloud backend on Hostinger subdomain
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://mantra.aarambhtech.in/api';
@@ -125,37 +121,8 @@ export const api = {
 
   // Mantras
   getMantra: async (id: string | number) => {
-    // 1. Check if ID matches a Day-Specific Mantra
-    if (typeof id === 'string' && id.startsWith('day_mantra_')) {
-      const match = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
-        (d) => d.primaryMantra.id === id
-      );
-      if (match) {
-        return {
-          id: match.primaryMantra.id,
-          mantra_name: match.primaryMantra.name,
-          title: match.primaryMantra.name,
-          sanskrit_text: match.primaryMantra.sanskrit,
-          sanskrit: match.primaryMantra.sanskrit,
-          transliteration: match.primaryMantra.transliteration,
-          translation_hi: match.primaryMantra.translation_hi,
-          translation_hindi: match.primaryMantra.translation_hi,
-          translation_en: match.primaryMantra.translation_en,
-          translation_english: match.primaryMantra.translation_en,
-          translation_gu: match.primaryMantra.translation_gu,
-          translation_mr: match.primaryMantra.translation_mr,
-          translation_bn: match.primaryMantra.translation_bn,
-          translation_te: match.primaryMantra.translation_te,
-          translation_ta: match.primaryMantra.translation_ta,
-          translation_kn: match.primaryMantra.translation_kn,
-          deity: match.presidingDeity,
-          deity_name: match.presidingDeity,
-        };
-      }
-    }
-
     try {
-      const response = await apiClient.get(`/mantras/read_single.php?id=${id}`);
+      const response = await apiClient.get(`/mantras/read_single.php?id=${encodeURIComponent(id)}`);
       if (response.data) {
         await saveLocalCache(`CACHE_mantra_${id}`, response.data);
         return response.data;
@@ -301,30 +268,8 @@ export const api = {
   },
 
   getAartiDetails: async (id: string | number) => {
-    // 1. Check if ID matches a Day-Specific Aarti
-    if (typeof id === 'string' && id.startsWith('day_aarti_')) {
-      const match = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
-        (d) => d.primaryAarti.id === id
-      );
-      if (match) {
-        return {
-          id: match.primaryAarti.id,
-          title: match.primaryAarti.title,
-          aarti_name: match.primaryAarti.title,
-          lyrics: match.primaryAarti.firstLine,
-          first_line: match.primaryAarti.firstLine,
-          translation_hi: match.primaryAarti.translation_hi,
-          translation_en: match.primaryAarti.translation_en,
-          translation_gu: match.primaryAarti.translation_gu,
-          translation_mr: match.primaryAarti.translation_mr,
-          deity: match.presidingDeity,
-          deity_name: match.presidingDeity,
-        };
-      }
-    }
-
     try {
-      const response = await apiClient.get(`/aartis/read_single.php?id=${id}`);
+      const response = await apiClient.get(`/aartis/read_single.php?id=${encodeURIComponent(id)}`);
       if (response.data) {
         await saveLocalCache(`CACHE_aarti_${id}`, response.data);
         return response.data;
@@ -354,7 +299,7 @@ export const api = {
   getPoojaVidhis: async () => {
     try {
       const response = await apiClient.get('/pooja_vidhis/read.php');
-      const records = response.data.records || [];
+      const records = response.data?.records || [];
       if (records.length > 0) {
         await saveLocalCache('CACHE_pooja_vidhis', records);
         return records;
@@ -364,65 +309,14 @@ export const api = {
       if (cached && cached.length > 0) return cached;
     }
 
-    // Fall back to canonical Mahaparva & 7-Day Pooja Vidhis from device cache
-    const canonicalList = [
-      ...CANONICAL_MAHAPARVA_POOJA_VIDHIS.map((v) => ({
-        id: v.id,
-        vidhi_name: v.title,
-        deity_name: v.deity,
-        duration: v.duration,
-        significance: v.significance,
-      })),
-      ...Object.values(CANONICAL_7_DAYS_WORSHIP).map((d) => ({
-        id: d.poojaVidhi.id,
-        vidhi_name: d.poojaVidhi.title,
-        deity_name: d.presidingDeity,
-        duration: d.poojaVidhi.duration,
-        significance: d.vratSignificance,
-      })),
-    ];
-    await saveLocalCache('CACHE_pooja_vidhis', canonicalList);
-    return canonicalList;
+    const cached = await getLocalCache<any[]>('CACHE_pooja_vidhis');
+    if (cached && cached.length > 0) return cached;
+    return [];
   },
 
   getPoojaVidhiDetails: async (id: string | number) => {
-    // 1. Check Day-Specific Pooja Vidhi match
-    const dayMatch = Object.values(CANONICAL_7_DAYS_WORSHIP).find(
-      (d) => d.poojaVidhi.id === String(id)
-    );
-    if (dayMatch) {
-      return {
-        id: dayMatch.poojaVidhi.id,
-        vidhi_name: dayMatch.poojaVidhi.title,
-        title: dayMatch.poojaVidhi.title,
-        deity_name: dayMatch.presidingDeity,
-        duration: dayMatch.poojaVidhi.duration,
-        significance: dayMatch.vratSignificance,
-        samagri: dayMatch.poojaVidhi.samagri,
-        steps: dayMatch.poojaVidhi.steps,
-      };
-    }
-
-    // 2. Check Mahaparva Pooja Vidhi match
-    const parvaMatch = CANONICAL_MAHAPARVA_POOJA_VIDHIS.find(
-      (v) => v.id === String(id)
-    );
-    if (parvaMatch) {
-      return {
-        id: parvaMatch.id,
-        vidhi_name: parvaMatch.title,
-        title: parvaMatch.title,
-        deity_name: parvaMatch.deity,
-        duration: parvaMatch.duration,
-        significance: parvaMatch.significance,
-        samagri: parvaMatch.samagri,
-        steps: parvaMatch.steps,
-      };
-    }
-
-    // 3. Try Remote API
     try {
-      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${id}`);
+      const response = await apiClient.get(`/pooja_vidhis/read_single.php?id=${encodeURIComponent(id)}`);
       if (response.data) {
         await saveLocalCache(`CACHE_pooja_vidhi_${id}`, response.data);
         return response.data;
@@ -507,140 +401,35 @@ export const api = {
   },
 
   getKathas: async () => {
-    let remoteRecords: any[] = [];
     try {
       const response = await apiClient.get('/vrat_kathas/read.php');
-      remoteRecords = response.data?.records || [];
-    } catch {}
-
-    const canonicalList = CANONICAL_KATHAS.map((k) => ({
-      id: k.id,
-      title: k.title,
-      katha_name: k.title,
-      deity: k.deity,
-      deity_name: k.deity,
-      category: k.category,
-      category_label: k.categoryLabel,
-      duration: k.duration,
-      synopsis: k.synopsis,
-      katha_text: k.kathaText,
-      chapters: k.chapters,
-      sanskrit: k.sanskritTitle,
-      sanskrit_title: k.sanskritTitle,
-      translation_hi: k.translation_hi,
-      translation_en: k.translation_en,
-      translation_gu: k.translation_gu,
-      translation_mr: k.translation_mr,
-    }));
-
-    if (remoteRecords.length > 0) {
-      // Merge remote records with canonical rich content
-      const enrichedRemote = remoteRecords.map((r: any) => {
-        const canonicalMatch = CANONICAL_KATHAS.find((c) => 
-          c.id === String(r.id) ||
-          c.title.includes(r.title || r.katha_name || '') ||
-          (r.title && c.title.includes(r.title)) ||
-          (r.katha_name && c.title.includes(r.katha_name))
-        );
-
-        if (canonicalMatch) {
-          return {
-            ...r,
-            title: canonicalMatch.title,
-            katha_name: canonicalMatch.title,
-            deity: canonicalMatch.deity,
-            deity_name: canonicalMatch.deity,
-            katha_text: canonicalMatch.kathaText || r.katha_text,
-            chapters: canonicalMatch.chapters || r.chapters,
-            synopsis: canonicalMatch.synopsis || r.synopsis || r.description,
-            vratSignificance: canonicalMatch.vratSignificance || r.vrat_significance || r.significance,
-            sanskrit: canonicalMatch.sanskritTitle || r.sanskrit,
-            translation_hi: canonicalMatch.translation_hi || r.translation_hi,
-            translation_en: canonicalMatch.translation_en || r.translation_en,
-          };
-        }
-        return r;
-      });
-
-      // Add any canonical kathas not already present in remote
-      const existingIds = new Set(enrichedRemote.map((e: any) => String(e.id)));
-      for (const ck of canonicalList) {
-        if (!existingIds.has(String(ck.id))) {
-          enrichedRemote.unshift(ck);
-        }
+      const records = response.data?.records || [];
+      if (records.length > 0) {
+        await saveLocalCache('CACHE_vrat_kathas', records);
+        return records;
       }
-
-      await saveLocalCache('CACHE_vrat_kathas', enrichedRemote);
-      return enrichedRemote;
+    } catch (error) {
+      console.warn('Network error loading kathas from MySQL:', error);
     }
 
     const cached = await getLocalCache<any[]>('CACHE_vrat_kathas');
     if (cached && cached.length > 0) return cached;
-
-    await saveLocalCache('CACHE_vrat_kathas', canonicalList);
-    return canonicalList;
+    return [];
   },
 
   getKathaDetails: async (id: string | number) => {
-    const idStr = String(id).toLowerCase();
-
-    // 1. Check canonical Kathas first by id, title, or substring
-    const canonicalMatch = CANONICAL_KATHAS.find((k) => 
-      k.id.toLowerCase() === idStr || 
-      k.title.toLowerCase().includes(idStr) ||
-      idStr.includes(k.id.toLowerCase())
-    );
-    if (canonicalMatch) {
-      return {
-        id: canonicalMatch.id,
-        title: canonicalMatch.title,
-        katha_name: canonicalMatch.title,
-        deity: canonicalMatch.deity,
-        deity_name: canonicalMatch.deity,
-        category: canonicalMatch.category,
-        category_label: canonicalMatch.categoryLabel,
-        duration: canonicalMatch.duration,
-        synopsis: canonicalMatch.synopsis,
-        vratSignificance: canonicalMatch.vratSignificance,
-        katha_text: canonicalMatch.kathaText,
-        sanskrit: canonicalMatch.sanskritTitle,
-        sanskrit_title: canonicalMatch.sanskritTitle,
-        translation_hi: canonicalMatch.translation_hi,
-        translation_hindi: canonicalMatch.translation_hi,
-        translation_en: canonicalMatch.translation_en,
-        translation_english: canonicalMatch.translation_en,
-        translation_gu: canonicalMatch.translation_gu,
-        translation_mr: canonicalMatch.translation_mr,
-        chapters: canonicalMatch.chapters,
-      };
-    }
-
-    // 2. Try remote API
     try {
-      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${id}`);
+      const response = await apiClient.get(`/vrat_kathas/read_single.php?id=${encodeURIComponent(id)}`);
       if (response.data) {
-        const item = response.data;
-        // Check if item matches canonical narrative
-        const match = CANONICAL_KATHAS.find(c => 
-          c.title.includes(item.title || item.katha_name || '') ||
-          (item.title && c.title.includes(item.title)) ||
-          (item.katha_name && c.title.includes(item.katha_name))
-        );
-        if (match) {
-          item.title = match.title;
-          item.katha_text = match.kathaText;
-          item.chapters = match.chapters;
-          item.synopsis = match.synopsis;
-          item.vratSignificance = match.vratSignificance;
-        }
-
-        await saveLocalCache(`CACHE_vrat_katha_${id}`, item);
-        return item;
+        await saveLocalCache(`CACHE_vrat_katha_${id}`, response.data);
+        return response.data;
       }
     } catch (error) {
-      const cached = await getLocalCache(`CACHE_vrat_katha_${id}`);
-      if (cached) return cached;
+      console.warn(`Network error loading katha ${id} from MySQL:`, error);
     }
+
+    const cached = await getLocalCache(`CACHE_vrat_katha_${id}`);
+    if (cached) return cached;
     return null;
   },
 

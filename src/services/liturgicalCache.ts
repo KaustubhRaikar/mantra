@@ -1,13 +1,9 @@
 import { getDB } from './db';
+import { api } from './api';
 import {
   CANONICAL_7_DAYS_WORSHIP,
-  CANONICAL_MAHAPARVA_POOJA_VIDHIS,
   DayWorshipData,
 } from '../data/canonicalTreasuryExpansion';
-import {
-  CANONICAL_KATHAS,
-  CanonicalKatha,
-} from '../data/canonicalKathas';
 
 const DAY_WORSHIP_CACHE_PREFIX = 'CACHE_DAY_WORSHIP_';
 const POOJA_VIDHIS_CACHE_KEY = 'CACHE_ALL_POOJA_VIDHIS';
@@ -48,10 +44,9 @@ export const liturgicalCache = {
         return parsed;
       }
     } catch {
-      // Fallback to embedded canonical treasury
+      // Best-effort
     }
 
-    // 3. Fallback to embedded canonical dataset & persist to device cache
     const defaultData = CANONICAL_7_DAYS_WORSHIP[day] || CANONICAL_7_DAYS_WORSHIP[0];
     memoryCache.set(cacheKey, defaultData);
     await liturgicalCache.saveDaySpecificWorship(day, defaultData);
@@ -76,7 +71,7 @@ export const liturgicalCache = {
   },
 
   /**
-   * Get all Pooja Vidhis cached locally on the device
+   * Get all Pooja Vidhis cached locally on the device (backed by MySQL)
    */
   getAllPoojaVidhisCached: async (): Promise<any[]> => {
     try {
@@ -90,43 +85,28 @@ export const liturgicalCache = {
       }
     } catch {}
 
-    // Combine Mahaparva Vidhis with 7-Day Nitya Vidhis
-    const combined = [
-      ...CANONICAL_MAHAPARVA_POOJA_VIDHIS.map((v) => ({
-        id: v.id,
-        vidhi_name: v.title,
-        deity_name: v.deity,
-        duration: v.duration,
-        significance: v.significance,
-        samagri: v.samagri,
-        steps: v.steps,
-      })),
-      ...Object.values(CANONICAL_7_DAYS_WORSHIP).map((d) => ({
-        id: d.poojaVidhi.id,
-        vidhi_name: d.poojaVidhi.title,
-        deity_name: d.presidingDeity,
-        duration: d.poojaVidhi.duration,
-        significance: d.vratSignificance,
-        samagri: d.poojaVidhi.samagri,
-        steps: d.poojaVidhi.steps,
-      })),
-    ];
-
+    // Fetch from MySQL API
     try {
-      const db = await getDB();
-      await db.runAsync(
-        'INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)',
-        [POOJA_VIDHIS_CACHE_KEY, JSON.stringify(combined)]
-      );
+      const remote = await api.getPoojaVidhis();
+      if (remote && remote.length > 0) {
+        try {
+          const db = await getDB();
+          await db.runAsync(
+            'INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)',
+            [POOJA_VIDHIS_CACHE_KEY, JSON.stringify(remote)]
+          );
+        } catch {}
+        return remote;
+      }
     } catch {}
 
-    return combined;
+    return [];
   },
 
   /**
-   * Get all Sacred Kathas cached locally on the device
+   * Get all Sacred Kathas cached locally on the device (backed by MySQL)
    */
-  getAllKathasCached: async (): Promise<CanonicalKatha[]> => {
+  getAllKathasCached: async (): Promise<any[]> => {
     // 1. Try In-Memory L1 Cache
     if (memoryCache.has(KATHAS_CACHE_KEY)) {
       return memoryCache.get(KATHAS_CACHE_KEY);
@@ -140,35 +120,44 @@ export const liturgicalCache = {
         [KATHAS_CACHE_KEY]
       );
       if (row?.value) {
-        const parsed = JSON.parse(row.value) as CanonicalKatha[];
+        const parsed = JSON.parse(row.value);
         memoryCache.set(KATHAS_CACHE_KEY, parsed);
         return parsed;
       }
     } catch {}
 
-    // 3. Fall back to embedded canonical dataset & persist to SQLite
-    memoryCache.set(KATHAS_CACHE_KEY, CANONICAL_KATHAS);
+    // 3. Fetch from MySQL API
     try {
-      const db = await getDB();
-      await db.runAsync(
-        'INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)',
-        [KATHAS_CACHE_KEY, JSON.stringify(CANONICAL_KATHAS)]
-      );
+      const remote = await api.getKathas();
+      if (remote && remote.length > 0) {
+        memoryCache.set(KATHAS_CACHE_KEY, remote);
+        try {
+          const db = await getDB();
+          await db.runAsync(
+            'INSERT OR REPLACE INTO meta_store (key, value) VALUES (?, ?)',
+            [KATHAS_CACHE_KEY, JSON.stringify(remote)]
+          );
+        } catch {}
+        return remote;
+      }
     } catch {}
 
-    return CANONICAL_KATHAS;
+    return [];
   },
 
   /**
-   * Get single Katha details from on-device cache
+   * Get single Katha details from on-device cache or MySQL
    */
-  getKathaDetailsCached: async (id: string): Promise<CanonicalKatha | null> => {
+  getKathaDetailsCached: async (id: string): Promise<any | null> => {
     const all = await liturgicalCache.getAllKathasCached();
-    return all.find((k) => k.id === id || String(k.id) === String(id)) || null;
+    const found = all.find((k: any) => k.id === id || String(k.id) === String(id));
+    if (found) return found;
+
+    return await api.getKathaDetails(id);
   },
 
   /**
-   * Preload all 7 days of worship & Kathas into local device cache for 0ms access
+   * Preload 7 days of worship into local device cache
    */
   preloadAllLiturgicalDeviceCache: async (): Promise<void> => {
     for (let i = 0; i < 7; i++) {
