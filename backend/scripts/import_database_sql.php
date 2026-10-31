@@ -73,12 +73,12 @@ try {
             continue;
         }
         try {
-            $db->exec($trimmed);
+            $db->exec("SET FOREIGN_KEY_CHECKS = 0;\n" . $trimmed);
             $executed++;
         } catch (Throwable $qe) {
             $errors[] = [
                 "error" => $qe->getMessage(),
-                "query" => substr($trimmed, 0, 100)
+                "query" => substr($trimmed, 0, 150)
             ];
         }
     }
@@ -106,6 +106,7 @@ try {
         "database" => $currentDbName,
         "queries_executed" => $executed,
         "errors_count" => count($errors),
+        "sample_errors" => array_slice($errors, 0, 5),
         "total_tables" => count($tables),
         "total_rows" => $totalRows,
         "tables" => $tableCounts
