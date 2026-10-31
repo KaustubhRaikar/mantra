@@ -55,29 +55,84 @@ try {
         throw new RuntimeException("Failed to read SQL dump file.");
     }
 
-    // Read connection parameters from environment
-    $host   = getenv('DB_HOST') ?: 'localhost';
-    $dbName = getenv('DB_NAME') ?: 'u885706413_mantra';
-    $user   = getenv('DB_USER') ?: 'u885706413_mantra';
-    $pass   = getenv('DB_PASS') ?: 'Mantra@2026DBPass';
-
-    $multiPdo = new PDO("mysql:host={$host};dbname={$dbName};charset=utf8mb4", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::MYSQL_ATTR_MULTI_STATEMENTS => true
-    ]);
-
     // 1. Drop all existing tables cleanly with FOREIGN_KEY_CHECKS = 0
-    $existingTables = $multiPdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
-    $multiPdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+    $db->exec("SET FOREIGN_KEY_CHECKS = 0;");
+    $existingTables = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
     foreach ($existingTables as $tbl) {
-        $multiPdo->exec("DROP TABLE IF EXISTS `{$tbl}`;");
+        $db->exec("DROP TABLE IF EXISTS `{$tbl}`;");
     }
 
-    // 2. Execute entire SQL dump atomically
-    $multiPdo->exec($sqlContent);
+    // 2. Stream and execute SQL statements individually
+    $handle = fopen($sqlFile, "r");
+    if (!$handle) {
+        throw new RuntimeException("Could not open SQL file for reading: {$sqlFile}");
+    }
 
-    // Ensure all statement result sets are consumed
-    while ($multiPdo->nextRowset()) {}
+    $statement = '';
+    $inString = false;
+    $stringChar = '';
+    $statementsExecuted = 0;
+    $errors = [];
+
+    while (($line = fgets($handle)) !== false) {
+        $trimmed = trim($line);
+        // Skip comment lines if outside string
+        if (!$inString && (str_starts_with($trimmed, '--') || str_starts_with($trimmed, '/*') || $trimmed === '')) {
+            continue;
+        }
+
+        $statement .= $line;
+
+        // Track quoted strings
+        $len = strlen($line);
+        for ($i = 0; $i < $len; $i++) {
+            $char = $line[$i];
+            $prevChar = ($i > 0) ? $line[$i - 1] : '';
+
+            if (($char === "'" || $char === '"') && $prevChar !== '\\') {
+                if ($inString && $stringChar === $char) {
+                    $inString = false;
+                } elseif (!$inString) {
+                    $inString = true;
+                    $stringChar = $char;
+                }
+            }
+        }
+
+        // If statement ends with semicolon outside string literal
+        if (!$inString && preg_match('/;\s*$/', $line)) {
+            $sql = trim($statement);
+            if ($sql !== '' && $sql !== ';') {
+                try {
+                    $db->exec($sql);
+                    $statementsExecuted++;
+                } catch (Throwable $e) {
+                    $errors[] = [
+                        "statement_num" => $statementsExecuted + 1,
+                        "error" => $e->getMessage(),
+                        "snippet" => substr($sql, 0, 150)
+                    ];
+                }
+            }
+            $statement = '';
+        }
+    }
+    fclose($handle);
+
+    if (trim($statement) !== '') {
+        try {
+            $db->exec(trim($statement));
+            $statementsExecuted++;
+        } catch (Throwable $e) {
+            $errors[] = [
+                "statement_num" => $statementsExecuted + 1,
+                "error" => $e->getMessage(),
+                "snippet" => substr(trim($statement), 0, 150)
+            ];
+        }
+    }
+
+    $db->exec("SET FOREIGN_KEY_CHECKS = 1;");
 
     // Count tables and records
     $allTablesStmt = $db->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME");
@@ -98,7 +153,7 @@ try {
         "status" => "success",
         "message" => "Database successfully populated with all sacred canonical content.",
         "database" => $currentDbName,
-        "queries_executed" => $executed,
+        "queries_executed" => $statementsExecuted,
         "errors_count" => count($errors),
         "sample_errors" => array_slice($errors, 0, 5),
         "total_tables" => count($tables),

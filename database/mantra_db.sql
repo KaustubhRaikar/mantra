@@ -3102,7 +3102,57 @@ INSERT INTO `vrat_katha` (`id`, `katha_name`, `deity_name`, `vrat_duration`, `vr
 -- --------------------------------------------------------
 
 DROP TABLE IF EXISTS `vrat_kathas`;
-;
+CREATE TABLE `vrat_kathas` (
+  `id` varchar(64) NOT NULL,
+  `katha_name` varchar(150) NOT NULL COMMENT 'Name of the vrat katha',
+  `deity_name` varchar(100) NOT NULL COMMENT 'Main deity associated',
+  `vrat_duration` varchar(100) DEFAULT NULL COMMENT 'Duration of the vrat (e.g., 16 Mondays, 1 day, etc.)',
+  `vrat_day` varchar(50) DEFAULT NULL COMMENT 'Day of the week (Monday, Friday, etc.)',
+  `vrat_month` varchar(50) DEFAULT NULL COMMENT 'Month(s) when observed',
+  `tithi` varchar(100) DEFAULT NULL COMMENT 'Lunar day (Purnima, Ekadashi, etc.)',
+  `description` text DEFAULT NULL COMMENT 'Brief description of the vrat',
+  `significance` text DEFAULT NULL COMMENT 'Significance of observing this vrat',
+  `benefits` text DEFAULT NULL COMMENT 'Benefits of observing this vrat',
+  `rules` text DEFAULT NULL COMMENT 'Rules to follow during the vrat',
+  `katha_chapters` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON array of katha chapters with story text' CHECK (json_valid(`katha_chapters`)),
+  `vidhi` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'JSON array of ritual steps' CHECK (json_valid(`vidhi`)),
+  `samagri_list` text DEFAULT NULL COMMENT 'List of items needed',
+  `opening_verse` text DEFAULT NULL COMMENT 'Opening verse/mantra',
+  `closing_verse` text DEFAULT NULL COMMENT 'Closing verse/mantra',
+  `aarti_name` varchar(100) DEFAULT NULL COMMENT 'Associated aarti name',
+  `audio_url` varchar(500) DEFAULT NULL COMMENT 'Audio URL for the katha',
+  `video_url` varchar(500) DEFAULT NULL COMMENT 'Video URL',
+  `is_premium` tinyint(1) DEFAULT 0,
+  `views_count` int(11) DEFAULT 0,
+  `likes_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `translation_gu` text DEFAULT NULL,
+  `translation_mr` text DEFAULT NULL,
+  `translation_bn` text DEFAULT NULL,
+  `translation_te` text DEFAULT NULL,
+  `translation_ta` text DEFAULT NULL,
+  `translation_kn` text DEFAULT NULL,
+  `vrat_significance` text DEFAULT NULL,
+  `duration` text DEFAULT NULL,
+  `synopsis` text DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `sanskrit` varchar(255) DEFAULT NULL,
+  `sanskrit_title` varchar(255) DEFAULT NULL,
+  `category` varchar(64) DEFAULT 'vrat_katha',
+  `category_label` varchar(100) DEFAULT 'व्रत कथा',
+  `deity` varchar(100) DEFAULT NULL,
+  `katha_text` longtext DEFAULT NULL,
+  `chapters` longtext DEFAULT NULL,
+  `translation_hi` longtext DEFAULT NULL,
+  `translation_en` longtext DEFAULT NULL,
+  `is_featured` tinyint(1) DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_deity` (`deity_name`),
+  KEY `idx_vrat_day` (`vrat_day`),
+  KEY `idx_vrat_month` (`vrat_month`),
+  KEY `idx_tithi` (`tithi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vrat Kathas - Stories for fasting observances';
 
 -- Dumping data for table `vrat_kathas`
 INSERT INTO `vrat_kathas` (`id`, `katha_name`, `deity_name`, `vrat_duration`, `vrat_day`, `vrat_month`, `tithi`, `description`, `significance`, `benefits`, `rules`, `katha_chapters`, `vidhi`, `samagri_list`, `opening_verse`, `closing_verse`, `aarti_name`, `audio_url`, `video_url`, `is_premium`, `views_count`, `likes_count`, `created_at`, `updated_at`, `translation_gu`, `translation_mr`, `translation_bn`, `translation_te`, `translation_ta`, `translation_kn`, `vrat_significance`, `duration`, `synopsis`, `title`, `sanskrit`, `sanskrit_title`, `category`, `category_label`, `deity`, `katha_text`, `chapters`, `translation_hi`, `translation_en`, `is_featured`) VALUES
