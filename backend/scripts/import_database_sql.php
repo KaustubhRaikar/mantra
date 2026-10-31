@@ -55,35 +55,29 @@ try {
         throw new RuntimeException("Failed to read SQL dump file.");
     }
 
-    $sqlContent = str_replace(["\r\n", "\r"], "\n", $sqlContent);
+    // Read connection parameters from environment
+    $host   = getenv('DB_HOST') ?: 'localhost';
+    $dbName = getenv('DB_NAME') ?: 'u885706413_mantra';
+    $user   = getenv('DB_USER') ?: 'u885706413_mantra';
+    $pass   = getenv('DB_PASS') ?: 'Mantra@2026DBPass';
 
-    // Split and execute statements
-    $db->exec("SET FOREIGN_KEY_CHECKS = 0;");
-    $db->exec("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';");
-    $db->exec("SET NAMES utf8mb4;");
+    $multiPdo = new PDO("mysql:host={$host};dbname={$dbName};charset=utf8mb4", $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::MYSQL_ATTR_MULTI_STATEMENTS => true
+    ]);
 
-    // Execute the dump using preg_split by semicolon followed by newline
-    $queries = preg_split('/;\s*\n/', $sqlContent);
-    $executed = 0;
-    $errors = [];
-
-    foreach ($queries as $query) {
-        $trimmed = trim($query);
-        if ($trimmed === '' || strpos($trimmed, '--') === 0) {
-            continue;
-        }
-        try {
-            $db->exec("SET FOREIGN_KEY_CHECKS = 0;\n" . $trimmed);
-            $executed++;
-        } catch (Throwable $qe) {
-            $errors[] = [
-                "error" => $qe->getMessage(),
-                "query" => substr($trimmed, 0, 150)
-            ];
-        }
+    // 1. Drop all existing tables cleanly with FOREIGN_KEY_CHECKS = 0
+    $existingTables = $multiPdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+    $multiPdo->exec("SET FOREIGN_KEY_CHECKS = 0;");
+    foreach ($existingTables as $tbl) {
+        $multiPdo->exec("DROP TABLE IF EXISTS `{$tbl}`;");
     }
 
-    $db->exec("SET FOREIGN_KEY_CHECKS = 1;");
+    // 2. Execute entire SQL dump atomically
+    $multiPdo->exec($sqlContent);
+
+    // Ensure all statement result sets are consumed
+    while ($multiPdo->nextRowset()) {}
 
     // Count tables and records
     $allTablesStmt = $db->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME");
