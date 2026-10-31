@@ -39,18 +39,20 @@ All previous embedded/hardcoded ("coded db") TypeScript fallback arrays and sile
 ## 🖥️ How to Access phpMyAdmin
 
 ### 1. In Hostinger hPanel
-> [!IMPORTANT]
-> **Why you may not see the database under `mantra.aarambhtech.in`:**  
-> In Hostinger hPanel, databases are indexed by the parent website under which they were provisioned. The database `u885706413_mantra` is attached to **`aarambhtech.in`**.
-> If you select `mantra.aarambhtech.in` in the top dropdown, Hostinger filters and shows zero databases.
+> [!NOTE]
+> The database `u885706413_mantra` is provisioned and directly assigned to **`mantra.aarambhtech.in`**.
 
 **Follow these exact steps to open the database in Hostinger phpMyAdmin:**
 1. Log in to [Hostinger hPanel](https://hpanel.hostinger.com).
-2. In the top navigation or Websites list, select **`aarambhtech.in`**.
-3. In the left sidebar, click **Databases** ➔ **Management**.
-4. Scroll to the database named **`u885706413_mantra`**.
+2. In the top navigation or Websites dropdown, ensure **`mantra.aarambhtech.in`** is selected.
+3. In the left sidebar, click **Databases** ➔ **Management** (or **phpMyAdmin**).
+4. Under **List of Current MySQL Databases And Users**, you will see:
+   - **Database:** `u885706413_mantra`
+   - **User:** `u885706413_mantra`
+   - **Domain:** `mantra.aarambhtech.in`
+   - **Size:** ~14 MB
 5. Click the purple **Enter phpMyAdmin** button next to it.
-6. All 32 tables and 2,311 records will be immediately visible and editable.
+6. All 32 tables and 2,300+ records are immediately accessible, browsable, and editable.
 
 ### 2. In Local XAMPP
 1. Start Apache & MySQL in the XAMPP Control Panel.

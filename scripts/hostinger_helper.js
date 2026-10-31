@@ -22,16 +22,14 @@ async function runMcpOperation(operation, params = {}) {
         try {
           const msg = JSON.parse(line);
           if (msg.id === 1) {
+            const isSearch = operation === 'search';
             const callReq = JSON.stringify({
               jsonrpc: '2.0',
               id: 2,
               method: 'tools/call',
               params: {
-                name: 'execute',
-                arguments: {
-                  operation,
-                  params
-                }
+                name: isSearch ? 'search' : 'execute',
+                arguments: isSearch ? params : { operation, params }
               }
             }) + '\n';
             p.stdin.write(callReq);
