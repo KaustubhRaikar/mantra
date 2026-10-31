@@ -55,13 +55,15 @@ try {
         throw new RuntimeException("Failed to read SQL dump file.");
     }
 
+    $sqlContent = str_replace(["\r\n", "\r"], "\n", $sqlContent);
+
     // Split and execute statements
     $db->exec("SET FOREIGN_KEY_CHECKS = 0;");
     $db->exec("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';");
     $db->exec("SET NAMES utf8mb4;");
 
-    // Execute the dump using multi-query PDO
-    $queries = explode(";\n", $sqlContent);
+    // Execute the dump using preg_split by semicolon followed by newline
+    $queries = preg_split('/;\s*\n/', $sqlContent);
     $executed = 0;
     $errors = [];
 
@@ -74,7 +76,10 @@ try {
             $db->exec($trimmed);
             $executed++;
         } catch (Throwable $qe) {
-            $errors[] = substr($qe->getMessage(), 0, 120);
+            $errors[] = [
+                "error" => $qe->getMessage(),
+                "query" => substr($trimmed, 0, 100)
+            ];
         }
     }
 
