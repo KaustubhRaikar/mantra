@@ -66,7 +66,7 @@ async function runMcpOperation(operation, params = {}) {
         p.kill();
         reject(new Error('Operation timed out'));
       }
-    }, 25000);
+    }, 90000);
   });
 }
 
