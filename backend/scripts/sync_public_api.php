@@ -124,6 +124,16 @@ try {
         $db->exec("DELETE FROM api_sliding_rate_limits");
         $results["db_flush"] = "api_sliding_rate_limits successfully truncated";
 
+        // Diagnostic info
+        $currentDbName = $db->query("SELECT DATABASE()")->fetchColumn();
+        $dbDriver = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $results["connected_database"] = [
+            "driver" => $dbDriver,
+            "database_name" => $currentDbName,
+            "bak_file_exists" => file_exists($configDir . '/database.php.original_bak'),
+            "bak_snippet" => file_exists($configDir . '/database.php.original_bak') ? substr(file_get_contents($configDir . '/database.php.original_bak'), 0, 500) : null
+        ];
+
         // Schema diagnostics for categories, mantras, vrat_katha
         $schemaDiagnostics = [];
         $tablesToInspect = ['categories', 'mantras', 'vrat_katha', 'vrat_kathas'];
