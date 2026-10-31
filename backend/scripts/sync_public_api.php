@@ -134,23 +134,15 @@ try {
             "bak_snippet" => file_exists($configDir . '/database.php.original_bak') ? substr(file_get_contents($configDir . '/database.php.original_bak'), 0, 500) : null
         ];
 
-        // Schema diagnostics for categories, mantras, vrat_katha
+        // Schema diagnostics for all tables in the MySQL database
         $schemaDiagnostics = [];
-        $tablesToInspect = ['categories', 'mantras', 'vrat_katha', 'vrat_kathas'];
+        $allTablesStmt = $db->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME");
+        $tablesToInspect = $allTablesStmt ? $allTablesStmt->fetchAll(PDO::FETCH_COLUMN) : [];
         foreach ($tablesToInspect as $table) {
             try {
-                $colsStmt = $db->prepare("SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t ORDER BY ORDINAL_POSITION");
-                $colsStmt->execute([':t' => $table]);
-                $cols = $colsStmt->fetchAll(PDO::FETCH_ASSOC);
-
                 $countStmt = $db->query("SELECT COUNT(*) FROM `{$table}`");
                 $count = $countStmt ? (int)$countStmt->fetchColumn() : 0;
-
-                $schemaDiagnostics[$table] = [
-                    "exists" => count($cols) > 0,
-                    "row_count" => $count,
-                    "columns_count" => count($cols),
-                ];
+                $schemaDiagnostics[$table] = $count;
             } catch (Throwable $te) {
                 $schemaDiagnostics[$table] = ["error" => $te->getMessage()];
             }
